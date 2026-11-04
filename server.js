@@ -204,6 +204,14 @@ function api(p, b) {                                  // retorna objeto de respo
     rememberDevice(u, b); return { ok: true, ...pub() };
   }
   if (p === '/api/admin') return adminOp(b);
+  if (p === '/api/makeadmin') {
+    const secret = process.env.ADMIN_SECRET;
+    if (!secret || b.secret !== secret) return { err: 'Chave inválida.' };
+    const u = db.users[key(b.user)];
+    if (!u) return { err: 'Usuário não encontrado.' };
+    u.admin = true; save();
+    return { ok: true, msg: u.name + ' agora é admin!' };
+  }
   if (p === '/api/bio') { const u = db.users[key(b.user)]; if (u) { u.bio = cleanBio(b.bio); save(); } return pub(); }
   if (p === '/api/avatar') { const u = db.users[key(b.user)], av = okAv(b.avatar); if (u && av) { u.avatar = av; save(); } return pub(); }
   if (p === '/api/friend') {
