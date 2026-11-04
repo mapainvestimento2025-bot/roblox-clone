@@ -23,6 +23,29 @@ td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
 .btab .cnt{min-width:18px;height:18px;border-radius:99px;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:8px;opacity:0;transition:.3s;pointer-events:none;z-index:99;font-weight:600}
 .ov{transition:.15s}
+
+/* ===== Correção do painel expansível de dispositivos =====
+   O painel é exibido fora da tabela para não ser cortado pelo
+   overflow-x-auto do contêiner da tabela. */
+.dexp{
+  position:fixed !important;
+  z-index:9999 !important;
+  width:min(320px, calc(100vw - 24px)) !important;
+  max-width:calc(100vw - 24px) !important;
+  max-height:min(480px, calc(100vh - 24px)) !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  scrollbar-width:thin;
+  scrollbar-color:#777 #17191c;
+  box-shadow:0 18px 50px rgba(0,0,0,.65);
+}
+.dexp::-webkit-scrollbar{width:8px}
+.dexp::-webkit-scrollbar-track{background:#17191c;border-radius:8px}
+.dexp::-webkit-scrollbar-thumb{background:#777;border-radius:8px}
+.dexp::-webkit-scrollbar-thumb:hover{background:#999}
 </style>
 </head>
 <body>
@@ -174,6 +197,9 @@ function stat(u) {
   return Date.now()-u.seen<35000?'<span class="tag bg-[#0f3d2c] text-green-300"><i class="fa-solid fa-circle text-[8px] mr-1 align-middle"></i>Online</span>':'<span class="tag bg-[#2b2e32] text-gray-400">Offline</span>';
 }
 function renderUsers() {
+  // A tabela é reconstruída durante a atualização automática.
+  // Fecha/restaura o painel flutuante antes de substituir suas linhas.
+  closeActiveDevPanel();
   const q = $('q').value.trim().toLowerCase();
   const l = D.users.filter(u => !q || u.name.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || String(u.id)===q);
   $('rows').innerHTML = l.map(u => {
@@ -296,14 +322,126 @@ function toggleGames(btn) {
   if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
 }
 /* ---- Expand de dispositivos por usuário ---- */
+let activeDevPanel = null;
+
+function positionDevPanel() {
+  if (!activeDevPanel) return;
+
+  const { panel, button } = activeDevPanel;
+  if (!panel || !button || !button.isConnected) {
+    closeActiveDevPanel();
+    return;
+  }
+
+  const rect = button.getBoundingClientRect();
+  const margin = 12;
+  const width = Math.min(320, window.innerWidth - margin * 2);
+  const maxHeight = Math.max(160, Math.min(480, window.innerHeight - margin * 2));
+
+  panel.style.width = width + 'px';
+  panel.style.maxHeight = maxHeight + 'px';
+
+  // Prioriza abrir abaixo do botão; se não houver espaço, abre acima.
+  const spaceBelow = window.innerHeight - rect.bottom - margin;
+  const spaceAbove = rect.top - margin;
+  const openBelow = spaceBelow >= Math.min(220, maxHeight) || spaceBelow >= spaceAbove;
+  const available = Math.max(120, Math.min(maxHeight, openBelow ? spaceBelow : spaceAbove));
+
+  panel.style.maxHeight = available + 'px';
+
+  let top = openBelow ? rect.bottom + 6 : rect.top - available - 6;
+  let left = rect.left;
+
+  left = Math.max(margin, Math.min(left, window.innerWidth - width - margin));
+  top = Math.max(margin, Math.min(top, window.innerHeight - available - margin));
+
+  panel.style.left = left + 'px';
+  panel.style.top = top + 'px';
+}
+
+function closeActiveDevPanel() {
+  if (!activeDevPanel) return;
+
+  const current = activeDevPanel;
+  activeDevPanel = null;
+
+  if (current.panel) {
+    current.panel.classList.add('hidden');
+    current.panel.style.position = '';
+    current.panel.style.left = '';
+    current.panel.style.top = '';
+    current.panel.style.width = '';
+    current.panel.style.maxHeight = '';
+
+    // Devolve o painel ao local original, mantendo a estrutura da tabela.
+    if (current.parent && current.parent.isConnected) {
+      if (current.next && current.next.parentNode === current.parent) {
+        current.parent.insertBefore(current.panel, current.next);
+      } else {
+        current.parent.appendChild(current.panel);
+      }
+    }
+  }
+
+  if (current.button && current.button.isConnected) {
+    const chev = current.button.querySelector('.dchev');
+    if (chev) chev.style.transform = '';
+  }
+}
+
 function toggleDevs(btn) {
   const exp = btn.parentElement.querySelector('.dexp');
   if (!exp) return;
-  const open = !exp.classList.contains('hidden');
-  exp.classList.toggle('hidden', open);
+
+  // Se este painel já está aberto, fecha-o.
+  if (activeDevPanel && activeDevPanel.panel === exp) {
+    closeActiveDevPanel();
+    return;
+  }
+
+  // Mantém apenas um painel aberto por vez.
+  closeActiveDevPanel();
+
+  const parent = exp.parentNode;
+  const next = exp.nextSibling;
+
+  activeDevPanel = {
+    panel: exp,
+    button: btn,
+    parent: parent,
+    next: next
+  };
+
+  // Retira o painel de dentro do contêiner com rolagem horizontal da tabela.
+  // Assim ele não é cortado quando a página ou a tabela é movimentada.
+  document.body.appendChild(exp);
+  exp.classList.remove('hidden');
+  exp.style.position = 'fixed';
+  exp.style.zIndex = '9999';
+  exp.style.display = 'block';
+  exp.style.boxSizing = 'border-box';
+  exp.style.overflowY = 'auto';
+  exp.style.overflowX = 'hidden';
+  exp.style.webkitOverflowScrolling = 'touch';
+  exp.style.touchAction = 'pan-y';
+
   const chev = btn.querySelector('.dchev');
-  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  if (chev) chev.style.transform = 'rotate(180deg)';
+
+  positionDevPanel();
 }
+
+// Reposiciona o painel junto ao botão durante a rolagem da página.
+window.addEventListener('scroll', positionDevPanel, true);
+window.addEventListener('resize', positionDevPanel);
+
+// Fecha ao clicar fora do painel e do botão que o abriu.
+document.addEventListener('pointerdown', e => {
+  if (!activeDevPanel) return;
+  if (activeDevPanel.panel.contains(e.target) ||
+      activeDevPanel.button.contains(e.target)) return;
+  closeActiveDevPanel();
+});
 /* ---- Tabela de banimentos ---- */
 const TL = {
   hwid:  { label:'HWID',       color:'#c084fc', icon:'fa-microchip' },
