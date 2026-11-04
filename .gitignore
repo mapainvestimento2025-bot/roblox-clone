@@ -1,0 +1,5 @@
+node_modules/
+.env
+*.bat
+iniciar.sh
+HOSPEDAGEM-INFINITYFREE.md

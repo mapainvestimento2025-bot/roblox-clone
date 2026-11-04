@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Painel Admin - Roblox Clone</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="auth.js?v=3"></script>
+<style>
+body{background:#111214;color:#e4e4e7;font-family:'Segoe UI',sans-serif}
+.card{background:#1d1f22;border:1px solid #2e3135;border-radius:12px}
+.btn{padding:6px 12px;border-radius:7px;font-weight:700;font-size:12px;transition:.12s;border:1px solid transparent;cursor:pointer}
+.b1{background:#335fff}.b1:hover{background:#4d74ff}.b2{background:#2b2e32;border-color:#3d4146}.b2:hover{background:#383c42}
+.b3{background:#00a665}.b3:hover{background:#00c27a}.b4{background:#c0392b}.b4:hover{background:#e74c3c}.b5{background:#9a6b00}.b5:hover{background:#b78100}
+.inp{background:#15171a;border:1px solid #3a3d41;color:#fff;border-radius:8px;padding:8px 10px;outline:none;width:100%}.inp:focus{border-color:#335fff}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#7d8288;text-align:left;padding:8px 10px;font-weight:700}
+td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700}
+.tab{padding:10px 16px;font-weight:700;color:#8f949a;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-size:13px;display:flex;align-items:center;gap:6px;transition:.1s}
+.tab:hover{color:#ccc}.tab.on{color:#fff;border-color:#335fff}
+.btab{padding:8px 14px;font-weight:700;color:#8f949a;border:1px solid #2e3135;border-radius:8px;cursor:pointer;font-size:12px;transition:.1s;display:flex;align-items:center;gap:5px}
+.btab:hover{color:#ccc;background:#232527}.btab.on{color:#fff;background:#1a2040;border-color:#335fff}
+.btab .cnt{min-width:18px;height:18px;border-radius:99px;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:9px 20px;border-radius:8px;opacity:0;transition:.3s;pointer-events:none;z-index:99;font-weight:600}
+.ov{transition:.15s}
+</style>
+</head>
+<body>
+<header class="h-12 bg-[#0b0c0e] border-b border-[#2e3135] flex items-center justify-between px-4 sticky top-0 z-50">
+  <a href="index.html" class="text-xl font-black tracking-tighter"><i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>ROBLOX <span class="text-xs font-bold bg-[#c0392b] px-2 py-0.5 rounded ml-1 align-middle">ADMIN</span></a>
+  <div class="flex items-center gap-4 text-sm">
+    <a href="index.html" class="text-gray-300 hover:text-white"><i class="fa-solid fa-house mr-1"></i>Início</a>
+    <button id="outBtn" onclick="logoutAdm()" class="hidden text-gray-400 hover:text-white"><i class="fa-solid fa-right-from-bracket mr-1"></i>Sair</button>
+  </div>
+</header>
+
+<!-- ===================== GATE ===================== -->
+<main id="gate" class="max-w-sm mx-auto mt-20 px-4">
+  <div class="card p-6">
+    <h1 class="text-xl font-black mb-1"><i class="fa-solid fa-shield-halved text-[#c0392b] mr-2"></i>Painel de administração</h1>
+    <p class="text-sm text-gray-400 mb-4">Confirme usuário e senha de uma conta <b>admin</b>.</p>
+    <input id="gu" class="inp mb-2" placeholder="Usuário" autocomplete="username">
+    <input id="gp" type="password" class="inp mb-3" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')enter()">
+    <button class="btn b1 w-full !py-2.5 !text-sm" onclick="enter()">Entrar no painel</button>
+    <p id="gerr" class="text-red-400 text-sm mt-3 hidden"></p>
+  </div>
+</main>
+
+<!-- ===================== PAINEL ===================== -->
+<main id="panel" class="hidden max-w-7xl mx-auto p-3 md:p-6">
+  <!-- KPIs -->
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-5" id="kpis"></div>
+
+  <!-- Abas principais -->
+  <div class="card">
+    <div class="flex border-b border-[#2e3135] overflow-x-auto">
+      <div class="tab on" data-t="users"><i class="fa-solid fa-users"></i>Usuários</div>
+      <div class="tab" data-t="bans"><i class="fa-solid fa-gavel"></i>Banimentos <span id="banNtab" class="text-xs bg-[#c0392b] rounded-full px-1.5 ml-0.5 leading-5"></span></div>
+    </div>
+
+    <!-- ---- ABA USUÁRIOS ---- -->
+    <div id="p_users" class="p-4">
+      <div class="flex gap-2 mb-3 flex-wrap">
+        <input id="q" class="inp !w-auto flex-1 min-w-[220px]" placeholder="Buscar por nome, e-mail ou ID" oninput="renderUsers()">
+        <button class="btn b2" onclick="openBan(null,'ip')"><i class="fa-solid fa-globe mr-1"></i>Banir IP</button>
+        <button class="btn b2" onclick="openBan(null,'email')"><i class="fa-solid fa-envelope mr-1"></i>Banir e-mail</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm"><thead><tr>
+          <th>ID</th><th>Usuário</th><th>E-mail</th><th>Último acesso</th><th>Jogos / Peças</th><th>Status</th><th class="text-right">Ações</th>
+        </tr></thead><tbody id="rows"></tbody></table>
+      </div>
+    </div>
+
+    <!-- ---- ABA BANIMENTOS ---- -->
+    <div id="p_bans" class="p-4 hidden">
+      <!-- sub-abas de tipo de ban -->
+      <div class="flex flex-wrap gap-2 mb-4" id="banTypeTabs">
+        <button class="btab on" data-bt="all"><i class="fa-solid fa-list"></i>Todos<span class="cnt bg-[#2e3135]" id="bc_all">0</span></button>
+        <button class="btab" data-bt="hwid"><i class="fa-solid fa-microchip"></i>HWID<span class="cnt bg-[#c084fc]/20 text-[#c084fc]" id="bc_hwid">0</span></button>
+        <button class="btab" data-bt="ip"><i class="fa-solid fa-globe"></i>IP<span class="cnt bg-[#f97316]/20 text-[#f97316]" id="bc_ip">0</span></button>
+        <button class="btab" data-bt="email"><i class="fa-solid fa-envelope"></i>E-mail<span class="cnt bg-[#f59e0b]/20 text-[#f59e0b]" id="bc_email">0</span></button>
+        <button class="btab" data-bt="temp"><i class="fa-solid fa-clock"></i>Temporário<span class="cnt bg-[#38bdf8]/20 text-[#38bdf8]" id="bc_temp">0</span></button>
+        <button class="btab" data-bt="perm"><i class="fa-solid fa-skull-crossbones"></i>Permanente<span class="cnt bg-[#ef4444]/20 text-[#ef4444]" id="bc_perm">0</span></button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm"><thead><tr>
+          <th>#</th><th>Tipo</th><th>Alvo / Identificadores</th><th>Motivo</th><th>Expira</th><th>Admin</th><th></th>
+        </tr></thead><tbody id="brows"></tbody></table>
+      </div>
+      <p id="bempty" class="text-center text-gray-500 py-10 hidden"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>Nenhum banimento nesta categoria.</p>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== MODAL BAN ===================== -->
+<div id="bm" class="hidden fixed inset-0 z-50 bg-black/80 items-center justify-center p-4" onclick="if(event.target===this)closeBan()">
+  <div class="card w-full max-w-lg p-5 max-h-[94vh] overflow-y-auto">
+    <div class="flex justify-between items-start mb-4">
+      <h2 class="text-lg font-black"><i class="fa-solid fa-gavel text-[#e74c3c] mr-2"></i>Banir <span id="bmName" class="text-[#3794ff]"></span></h2>
+      <button onclick="closeBan()" class="text-gray-400 hover:text-white w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Tipo de ban (opções únicas por cartão) -->
+    <div id="bmOpts" class="space-y-2 text-sm"></div>
+
+    <!-- Campos extras por tipo -->
+    <div id="bmEmailBox" class="hidden mt-3">
+      <label class="text-xs text-gray-400 block mb-1">E-mail a banir</label>
+      <input id="bmEmail" class="inp" placeholder="usuario@email.com">
+    </div>
+    <div id="bmIpBox" class="hidden mt-3">
+      <label class="text-xs text-gray-400 block mb-1">Endereço IP a banir</label>
+      <input id="bmIp" class="inp" placeholder="Ex.: 192.168.1.100">
+      <p class="text-xs text-amber-400 mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Cuidado com IPs dinâmicos — podem bloquear usuários legítimos na mesma rede.</p>
+    </div>
+
+    <div class="mt-3">
+      <label class="text-xs text-gray-400 block mb-1">Motivo (a pessoa vai ver)</label>
+      <input id="bmReason" class="inp" maxlength="200" placeholder="Ex.: uso de hack, ofensas no chat...">
+    </div>
+    <p id="bmWarn" class="text-xs text-amber-400 mt-3 min-h-[1.2rem]"></p>
+    <div class="flex justify-end gap-2 mt-4">
+      <button class="btn b2 !px-4 !py-2" onclick="closeBan()">Cancelar</button>
+      <button class="btn b4 !px-4 !py-2 text-sm" onclick="doBan()"><i class="fa-solid fa-ban mr-1"></i>Aplicar ban</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let CRED = null, D = null, target = null, kind = 'hours', curBanType = 'all', STATS = { totalViews: 0, online: 0 };
+const toast = (m, bad) => { const t = $('toast'); t.textContent = m; t.style.background = bad ? '#c0392b' : '#00a665'; t.style.opacity = 1; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.opacity = 0, 2200); };
+const dt = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+async function call(op, extra) {
+  try { return await (await fetch('/api/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: CRED.user, hash: CRED.hash, op, ...extra }) })).json(); }
+  catch { return { err: 'Sem conexão. Rode o node server.js.' }; }
+}
+async function enter() {
+  const u = $('gu').value.trim(), p = $('gp').value; if (!u || !p) return;
+  CRED = { user: u, hash: await Auth.hash(p) }; const j = await call('list');
+  if (j.err) { CRED = null; $('gerr').textContent = j.err; $('gerr').classList.remove('hidden'); return; }
+  try { sessionStorage.setItem('admCred', JSON.stringify(CRED)); } catch {}
+  show(j);
+}
+function logoutAdm() { try { sessionStorage.removeItem('admCred'); } catch {} location.reload(); }
+async function show(j) { D = j; $('gate').classList.add('hidden'); $('panel').classList.remove('hidden'); $('outBtn').classList.remove('hidden'); await fetchStats(); render(); }
+function render() { renderKpis(); renderUsers(); renderBans(); }
+
+/* ---- KPIs ---- */
+async function fetchStats() { try { const j = await (await fetch('/api/stats', { cache: 'no-store' })).json(); STATS = j; } catch (e) {} }
+function fmtN(n) { return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0); }
+function renderKpis() {
+  const u = D.users, now = Date.now();
+  const k = (ic, c, v, l) => `<div class="card p-4 flex items-center gap-3"><div style="width:42px;height:42px;border-radius:11px;background:${c}22;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-${ic}" style="color:${c};font-size:18px"></i></div><div><div class="text-2xl font-black" style="color:${c}">${v}</div><div class="text-xs text-gray-400">${l}</div></div></div>`;
+  $('kpis').innerHTML =
+    const totalJogos = u.reduce((s,x)=>s+(x.games||[]).length,0);
+    const totalPecas = u.reduce((s,x)=>s+(x.totalParts||0),0);
+    $('kpis').innerHTML =
+    k('users','#3794ff', u.length, 'Contas') +
+    k('circle-check','#4aa3ff', u.filter(x=>x.verified).length, 'Verificadas') +
+    k('cubes','#a78bfa', fmtN(totalJogos)+' / '+fmtN(totalPecas), 'Jogos / Peças') +
+    k('eye','#00b06f', fmtN(STATS.totalViews), 'Views totais') +
+    k('signal','#22d3ee', STATS.online, 'Online agora') +
+    k('ban','#e74c3c', D.bans.length, 'Banimentos');
+}
+
+/* ---- Tabela de usuários ---- */
+function stat(u) {
+  if (u.ban) return `<span class="tag bg-[#4a1d1d] text-red-300" title="${esc(u.ban.text)}"><i class="fa-solid fa-ban mr-1"></i>${u.ban.type==='temp'?'Banido até '+dt(u.ban.until):u.ban.type==='hwid'?'Banido (HWID)':u.ban.type==='ip'?'Banido (IP)':u.ban.type==='email'?'Banido (e-mail)':'Banido'}</span>`;
+  return Date.now()-u.seen<35000?'<span class="tag bg-[#0f3d2c] text-green-300"><i class="fa-solid fa-circle text-[8px] mr-1 align-middle"></i>Online</span>':'<span class="tag bg-[#2b2e32] text-gray-400">Offline</span>';
+}
+function renderUsers() {
+  const q = $('q').value.trim().toLowerCase();
+  const l = D.users.filter(u => !q || u.name.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || String(u.id)===q);
+  $('rows').innerHTML = l.map(u => {
+    const gCount = (u.games||[]).length;
+    const gamesHtml = gCount ? (u.games||[]).map(g => `
+      <div class="flex items-center gap-2 py-1 border-t border-[#232527] first:border-0">
+        <i class="fa-solid fa-cube text-[#3794ff] text-[10px] shrink-0"></i>
+        <span class="font-semibold text-xs text-white truncate max-w-[130px]" title="${esc(g.name)}">${esc(g.name)}</span>
+        <span class="ml-auto flex items-center gap-2 text-[10px] text-gray-500 shrink-0">
+          <span title="Peças/blocos"><i class="fa-solid fa-puzzle-piece mr-0.5"></i>${fmtN(g.blocks)}</span>
+          <span title="Visitas"><i class="fa-solid fa-eye mr-0.5"></i>${fmtN(g.visits)}</span>
+        </span>
+      </div>`).join('') : '<div class="text-gray-600 text-xs py-1">Nenhum jogo publicado</div>';
+    const partsCell = `<td class="text-xs">
+      <button onclick="toggleGames(this)" class="flex items-center gap-1.5 text-gray-300 hover:text-white transition font-semibold" title="Ver jogos">
+        <i class="fa-solid fa-cubes text-[#3794ff]"></i>${gCount} jogo${gCount!==1?'s':''}
+        ${gCount?`<span class="text-gray-500">· ${fmtN(u.totalParts||0)} peças</span>`:''}
+        ${gCount?'<i class="fa-solid fa-chevron-down text-gray-600 text-[9px] ml-0.5 chev"></i>':''}
+      </button>
+      ${gCount?`<div class="hidden mt-2 bg-[#15171a] rounded-lg p-2 border border-[#2a2d31] min-w-[220px] gexp">${gamesHtml}</div>`:''}
+    </td>`;
+    /* ---- card expandível de dispositivos ---- */
+    const devList = (u.deviceList || []);
+    const devCellInner = devList.length === 0
+      ? `<span class="text-gray-600 text-xs"><i class="fa-solid fa-circle-question mr-1"></i>Sem dados</span>`
+      : devList.map((dv, i) => {
+          const inf = dv.info || {};
+          const isMobile = dv.mobile;
+          const ico = isMobile ? 'fa-mobile-screen-button text-emerald-400' : 'fa-desktop text-blue-400';
+          const tipo = isMobile ? 'Celular / Tablet' : 'PC / Notebook';
+          const model = (inf.model||'').trim() || '—';
+          const gpu   = (inf.gpu||'').trim() || '—';
+          const res   = inf.res || '—';
+          const dprV  = inf.dpr ? inf.dpr + 'x' : '—';
+          const cpu   = inf.cpu ? inf.cpu + ' núcl.' : '—';
+          const ram   = inf.ram ? inf.ram + ' GB RAM' : '—';
+          const lang  = inf.lang || '—';
+          const tz    = (inf.tz||'').replace('America/','') || '—';
+          const conn  = inf.conn || '—';
+          const touch = inf.touch != null ? (inf.touch === 0 ? 'Sem touch' : inf.touch + ' pontos') : '—';
+          const plat  = inf.platform || '—';
+          const localIp = inf.localIp || '—';
+          const ip    = dv.ip || '—';
+          const ua    = inf.ua || '';
+          const hwShort = (dv.hw||'').slice(0,16)+'…';
+          const dvShort = (dv.dv||'').slice(0,16)+'…';
+          return `<div class="rounded-lg border border-[#2a2d31] bg-[#0f1013] p-2.5 mb-2 last:mb-0 text-[11px]">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fa-solid ${ico} text-base"></i>
+              <span class="font-bold text-white text-sm">${esc(model)}</span>
+              <span class="ml-auto text-gray-500 text-[10px] shrink-0">${dv.t ? dt(dv.t) : '—'}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-gray-400">
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">Tipo</span><br><span class="text-gray-200">${tipo}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">GPU</span><br><span class="text-gray-200 break-all">${esc(gpu)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">Resolução física</span><br><span class="text-gray-200">${esc(res)} <span class="text-gray-600">(${dprV})</span></span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">CPU / RAM</span><br><span class="text-gray-200">${esc(cpu)} · ${esc(ram)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">IP público</span><br><span class="text-[#f97316] font-mono select-all">${esc(ip)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">IP local (rede)</span><br><span class="text-yellow-400 font-mono">${esc(localIp)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">Idioma / Fuso</span><br><span class="text-gray-200">${esc(lang)} · ${esc(tz)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">Conexão / Touch</span><br><span class="text-gray-200">${esc(conn)} · ${esc(touch)}</span></div>
+              <div><span class="text-gray-600 uppercase text-[9px] tracking-wide">Plataforma</span><br><span class="text-gray-200">${esc(plat)}</span></div>
+              <div></div>
+              <div class="col-span-2 border-t border-[#2a2d31] pt-1.5 mt-0.5">
+                <span class="text-gray-600 uppercase text-[9px] tracking-wide">HWID (fingerprint hardware)</span><br>
+                <span class="text-[#c084fc] font-mono text-[10px] select-all">${esc(dv.hw||'—')}</span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-gray-600 uppercase text-[9px] tracking-wide">Device UUID (Android ID)</span><br>
+                <span class="text-[#c084fc] font-mono text-[10px] select-all">${esc(dv.dv||'—')}</span>
+              </div>
+              ${ua ? `<div class="col-span-2">
+                <span class="text-gray-600 uppercase text-[9px] tracking-wide">User-Agent</span><br>
+                <span class="text-gray-500 break-all leading-tight">${esc(ua)}</span>
+              </div>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+    /* resumo rápido: pega modelo + IP do dispositivo mais recente */
+    const lastDev = devList.length ? devList[devList.length - 1] : null;
+    const lastModel = lastDev && lastDev.info && lastDev.info.model ? lastDev.info.model : '';
+    const lastIp    = lastDev ? (lastDev.ip || '') : '';
+    const devLabel  = devList.length === 0
+      ? '<span class="text-gray-600">Sem dados</span>'
+      : `<i class="fa-solid fa-${u.mobile?'mobile-screen-button text-emerald-400':'desktop text-blue-400'} mr-1"></i><span class="text-white font-semibold">${devList.length} disp.</span>`;
+    const devCell = `<td class="text-xs min-w-[120px]">
+      ${devList.length ? `<button onclick="toggleDevs(this)" class="text-left w-full">
+        <div class="flex items-center gap-1.5 text-gray-300 hover:text-white transition">
+          ${devLabel}
+          <i class="fa-solid fa-chevron-down text-gray-600 text-[9px] ml-auto dchev"></i>
+        </div>
+        ${lastModel ? `<div class="text-gray-400 mt-0.5 truncate max-w-[160px]" title="${esc(lastModel)}">${esc(lastModel)}</div>` : ''}
+        ${lastIp    ? `<div class="text-[#f97316] font-mono mt-0.5">${esc(lastIp)}</div>` : ''}
+      </button>` : devLabel}
+      ${devList.length?`<div class="hidden mt-2 bg-[#15171a] rounded-lg p-2 border border-[#2a2d31] w-[320px] max-h-[480px] overflow-y-auto dexp z-50 relative">${devCellInner}</div>`:''}
+    </td>`;
+    return `<tr class="ov hover:bg-white/[.02]">
+      <td class="text-gray-400 font-mono">#${u.id}</td>
+      <td><a href="profile.html?u=${encodeURIComponent(u.name)}&id=${u.id}" class="font-bold hover:underline">${esc(u.name)}</a>${u.verified?' <i class="fa-solid fa-circle-check text-[#3794ff] text-xs" title="Verificado"></i>':''}${u.admin?' <span class="tag bg-[#4a1d1d] text-red-300 text-[10px]">ADMIN</span>':''}</td>
+      <td class="text-gray-400 text-xs">${esc(u.email)}</td>
+      <td class="text-gray-400 text-xs">${u.seen?dt(u.seen):'—'}</td>
+      ${devCell}
+      ${partsCell}
+      <td>${stat(u)}</td>
+      <td class="text-right whitespace-nowrap">
+        <button class="btn ${u.verified?'b5':'b1'} mr-1" onclick="toggleVerify('${esc(u.name)}',${!u.verified})"><i class="fa-solid fa-circle-check mr-1"></i>${u.verified?'Tirar verificado':'Verificar'}</button>
+        <button class="btn b2 mr-1" onclick="toggleAdmin('${esc(u.name)}',${!u.admin})" ${u.name.toLowerCase()===CRED.user.toLowerCase()?'disabled style="opacity:.4"':''}><i class="fa-solid fa-user-shield mr-1"></i>${u.admin?'Tirar admin':'Dar admin'}</button>
+        ${u.admin?'':` <button class="btn b4" onclick="openBan('${esc(u.name)}','hwid')"><i class="fa-solid fa-gavel mr-1"></i>Banir</button>`}
+      </td></tr>`;
+  }).join('') || `<tr><td colspan="8" class="text-center text-gray-500 py-10">Nenhum usuário encontrado.</td></tr>`;
+}
+
+/* ---- Expand de jogos por usuário ---- */
+function toggleGames(btn) {
+  const exp = btn.parentElement.querySelector('.gexp');
+  if (!exp) return;
+  const open = !exp.classList.contains('hidden');
+  exp.classList.toggle('hidden', open);
+  const chev = btn.querySelector('.chev');
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+/* ---- Expand de dispositivos por usuário ---- */
+function toggleDevs(btn) {
+  const exp = btn.parentElement.querySelector('.dexp');
+  if (!exp) return;
+  const open = !exp.classList.contains('hidden');
+  exp.classList.toggle('hidden', open);
+  const chev = btn.querySelector('.dchev');
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+}
+/* ---- Tabela de banimentos ---- */
+const TL = {
+  hwid:  { label:'HWID',       color:'#c084fc', icon:'fa-microchip' },
+  ip:    { label:'IP',         color:'#f97316', icon:'fa-globe' },
+  email: { label:'E-mail',     color:'#f59e0b', icon:'fa-envelope' },
+  temp:  { label:'Temporário', color:'#38bdf8', icon:'fa-clock' },
+  perm:  { label:'Permanente', color:'#ef4444', icon:'fa-skull-crossbones' },
+};
+function renderBans() {
+  const all = D.bans;
+  // contar por tipo
+  for (const bt of ['all','hwid','ip','email','temp','perm']) {
+    const cnt = bt === 'all' ? all.length : all.filter(b=>b.type===bt).length;
+    const el = $('bc_'+bt); if (el) el.textContent = cnt || '';
+  }
+  $('banNtab').textContent = all.length || '';
+  const list = curBanType === 'all' ? all : all.filter(b=>b.type===curBanType);
+  $('bempty').classList.toggle('hidden', !!list.length);
+  $('brows').innerHTML = list.map(b => {
+    const tl = TL[b.type] || TL.temp;
+    const badge = `<span class="tag" style="background:${tl.color}22;color:${tl.color}"><i class="fa-solid ${tl.icon} mr-1"></i>${tl.label}${b.type==='temp'?' · '+b.amount+(b.unit==='hours'?'h':'d'):''}</span>`;
+    let target2 = esc(b.username||b.email||b.ip||'—');
+    let sub = [];
+    if (b.email) sub.push('<i class="fa-solid fa-envelope text-[#f59e0b] mr-1 text-[10px]"></i>'+esc(b.email));
+    if (b.ip && b.type !== 'ip') sub.push('<i class="fa-solid fa-globe text-[#f97316] mr-1 text-[10px]"></i>'+esc(b.ip));
+    if (b.type==='hwid') sub.push(((b.hw||[]).length+(b.dv||[]).length)+' hw/dv id(s)');
+    return `<tr class="ov hover:bg-white/[.02]">
+      <td class="text-gray-500 font-mono text-xs">${b.id}</td>
+      <td>${badge}</td>
+      <td class="font-semibold">${target2}${sub.length?'<div class="text-[11px] text-gray-500 mt-0.5">'+sub.join(' &nbsp;')+'</div>':''}</td>
+      <td class="text-gray-300 text-xs max-w-[180px]">${esc(b.reason)||'<span class="text-gray-600">—</span>'}</td>
+      <td class="text-xs text-gray-400">${b.until?dt(b.until):'<span class="text-red-400 font-bold">Permanente</span>'}</td>
+      <td class="text-xs text-gray-400">${esc(b.by||'—')}<div class="text-gray-600 mt-0.5">${dt(b.created)}</div></td>
+      <td><button class="btn b3" onclick="unban(${b.id})"><i class="fa-solid fa-rotate-left mr-1"></i>Remover</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---- Abas principais ---- */
+document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  $('p_users').classList.toggle('hidden', t.dataset.t!=='users');
+  $('p_bans').classList.toggle('hidden', t.dataset.t!=='bans');
+});
+/* ---- Sub-abas ban type ---- */
+document.querySelectorAll('.btab').forEach(t => t.onclick = () => {
+  document.querySelectorAll('.btab').forEach(x=>x.classList.toggle('on',x===t));
+  curBanType = t.dataset.bt; renderBans();
+});
+
+/* ---- Ações ---- */
+async function act(op, extra, okMsg) { const j = await call(op, extra); if (j.err) return toast(j.err, true); D = j; render(); if (okMsg) toast(okMsg); return true; }
+const toggleVerify = (t, on) => act('verify', {target:t, on}, on?t+' agora é verificado ✔':'Verificado removido de '+t);
+const toggleAdmin  = (t, on) => act('admin',  {target:t, on}, on?t+' agora é admin':'Admin removido de '+t);
+function unban(id) { if (confirm('Remover este banimento?')) act('unban', {id}, 'Banimento removido'); }
+
+/* ======== MODAL DE BAN ======== */
+const KINDS = [
+  { id:'hwid',  icon:'fa-microchip',        label:'HWID — banir o dispositivo', desc:'Bloqueia o hardware/navegador. Impossível contornar sem trocar de computador.' },
+  { id:'ip',    icon:'fa-globe',             label:'IP — banir o endereço de rede', desc:'Bloqueia o IP. Cuidado: IPs dinâmicos mudam e podem bloquear outros usuários.' },
+  { id:'email', icon:'fa-envelope',          label:'E-mail', desc:'Bloqueia o e-mail de login e novo cadastro.' },
+  { id:'hours', icon:'fa-clock',             label:'Ban temporário por horas', desc:'De 1 a 24 horas.' },
+  { id:'days',  icon:'fa-calendar-days',     label:'Ban temporário por dias', desc:'De 1 a 365 dias.' },
+  { id:'perm',  icon:'fa-skull-crossbones',  label:'Permanente — excluir conta', desc:'Apaga a conta, mapas e amizades. Irrecuperável.' },
+];
+
+function openBan(name, defaultKind) {
+  target = name; kind = defaultKind || 'hwid';
+  $('bmName').textContent = name || (defaultKind === 'ip' ? 'IP' : 'e-mail');
+  $('bmReason').value = ''; $('bmEmail').value = ''; if ($('bmIp')) $('bmIp').value = '';
+  const toShow = name ? KINDS : KINDS.filter(k => k.id === 'email' || k.id === 'ip');
+  $('bmEmailBox').classList.toggle('hidden', !!name || defaultKind !== 'email');
+  $('bmIpBox').classList.toggle('hidden', !!name || defaultKind !== 'ip');
+  $('bmOpts').innerHTML = toShow.map(k => `
+    <label class="flex gap-3 items-start p-3 rounded-xl border ${k.id===kind?'border-[#335fff] bg-[#1a2040]':'border-[#3a3d41] hover:bg-[#23262a]'} cursor-pointer transition">
+      <input type="radio" name="bk" value="${k.id}" ${k.id===kind?'checked':''} class="mt-0.5 accent-[#335fff]" onchange="setKind('${k.id}')">
+      <div class="flex-1">
+        <div class="font-bold text-sm"><i class="fa-solid ${k.icon} mr-2 text-gray-400"></i>${k.label}</div>
+        <div class="text-xs text-gray-400 mt-0.5">${k.desc}</div>
+        <div id="ex_${k.id}" class="mt-2"></div>
+      </div>
+    </label>`).join('');
+  buildExtras();
+  setKind(kind);
+  $('bm').classList.remove('hidden'); $('bm').classList.add('flex');
+}
+function buildExtras() {
+  const h = $('ex_hours'), d = $('ex_days'), hw = $('ex_hwid'), pm = $('ex_perm');
+  if (h) h.innerHTML = '<select id="amHours" class="inp !py-1 !w-auto text-sm">'+Array.from({length:24},(_,i)=>`<option value="${i+1}">${i+1} hora${i?'s':''}</option>`).join('')+'</select>';
+  if (d) d.innerHTML = '<select id="amDays" class="inp !py-1 !w-auto text-sm">'+Array.from({length:365},(_,i)=>`<option value="${i+1}">${i+1} dia${i?'s':''}</option>`).join('')+'</select>';
+  if (hw) hw.innerHTML = `
+    <label class="text-xs text-gray-300 flex items-center gap-2 mb-1"><input type="checkbox" id="alsoEmail" class="accent-[#335fff]"> Banir também o e-mail desta conta</label>
+    <label class="text-xs text-gray-300 flex items-center gap-2"><input type="checkbox" id="alsoIp" class="accent-[#335fff]"> Banir também o último IP</label>`;
+  if (pm) pm.innerHTML = '<label class="text-xs text-red-300 flex items-center gap-2"><input type="checkbox" id="alsoDev" checked class="accent-[#ef4444]"> Banir também o dispositivo (HWID)</label>';
+}
+function setKind(k) {
+  kind = k;
+  if (!target) {
+    $('bmEmailBox').classList.toggle('hidden', k !== 'email');
+    $('bmIpBox').classList.toggle('hidden', k !== 'ip');
+  }
+  $('bmWarn').textContent =
+    k==='perm'  ? '⚠ Isto APAGA a conta, mapas, amizades e mensagens. Não tem como desfazer.' :
+    k==='hwid'  ? 'O dispositivo só é reconhecido se o usuário já entrou nesta versão do site.' :
+    k==='ip'    ? '⚠ Banir um IP pode afetar outros usuários na mesma rede (escola, lan house).' : '';
+}
+function closeBan() { $('bm').classList.add('hidden'); $('bm').classList.remove('flex'); }
+async function doBan() {
+  const x = { target, kind, reason: $('bmReason').value };
+  if (kind === 'email') { x.email = $('bmEmail').value.trim(); if (!x.email && !target) return toast('Informe o e-mail', true); }
+  if (kind === 'ip')    { x.manualIp = $('bmIp').value.trim(); if (!x.manualIp)           return toast('Informe o IP', true); }
+  if (kind === 'hours') { x.amount = +$('amHours').value; }
+  if (kind === 'days')  { x.amount = +$('amDays').value; }
+  if (kind === 'hwid')  { x.alsoEmail = $('alsoEmail')?.checked; x.alsoIp = $('alsoIp')?.checked; }
+  if (kind === 'perm')  { x.device = $('alsoDev')?.checked; if (!confirm('Excluir a conta de '+target+' para sempre?')) return; }
+  if (await act('ban', x, 'Ban aplicado com sucesso')) closeBan();
+}
+
+/* ---- atalho Esc ---- */
+addEventListener('keydown', e => { if (e.key==='Escape') closeBan(); });
+
+/* ---- restore session ---- */
+(async () => {
+  try { const c = JSON.parse(sessionStorage.getItem('admCred')); if (c) { CRED = c; const j = await call('list'); if (!j.err) show(j); else CRED = null; } } catch {}
+  const me = Auth.current(); if (me && !$('gu').value) $('gu').value = me;
+})();
+setInterval(async () => { if (CRED && D) { const [j] = await Promise.all([call('list'), fetchStats()]); if (!j.err) { D = j; render(); } } }, 8000);
+</script>
+
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>
+</html>

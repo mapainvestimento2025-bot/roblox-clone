@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Roblox Clone - Início</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="auth.js?v=3"></script>
+<script>if(typeof Auth==='undefined'||!Auth.avatar){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p></body>');window.stop();throw new Error('auth.js antigo')}</script>
+<style>
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
+body{background:#111214;color:#fff}.si:hover{background:rgba(255,255,255,.1)}#gameModal{display:none;background:rgba(0,0,0,.8)}
+.gcard:hover .gi{transform:scale(1.1)}.gi{transition:.2s}
+/* Mobile bottom nav */
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none;transition:.15s}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+#mobileSearchBar{display:none;padding:8px 12px;background:#1a1c1e;border-bottom:1px solid #2e3033}
+@media(max-width:767px){
+  #mobileNav{display:flex}
+  #mobileSearchBar{display:block}
+  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
+  #desktopChat{display:none}
+  .main-content{padding:12px !important}
+  .games-grid{grid-template-columns:repeat(2,1fr) !important}
+}
+@media(max-width:480px){
+  .games-grid{grid-template-columns:repeat(2,1fr) !important}
+}
+</style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-sm">
+<header class="h-12 bg-[#111214] border-b border-gray-700 flex items-center justify-between px-4 shrink-0 z-40">
+  <div class="flex items-center space-x-6">
+    <div class="text-xl font-black tracking-tighter"><i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>ROBLOX</div>
+    <nav class="hidden md:flex space-x-4 font-medium">
+      <a href="#" class="text-white">Home</a>
+      <a href="batepapo.html" class="text-white relative">Bate-papo<span class="chatDot hidden absolute -top-1 -right-2 w-2 h-2 rounded-full bg-[#335fff]"></span></a>
+      <a href="studio.html" class="text-white font-bold bg-blue-600 px-3 py-1 rounded hover:bg-blue-500">Criar (Studio)</a>
+      <a href="admin.html" id="admLink" class="hidden text-white font-bold bg-[#c0392b] px-3 py-1 rounded hover:bg-[#e74c3c]"><i class="fa-solid fa-shield-halved mr-1"></i>Admin</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <input id="q" oninput="renderGames()" placeholder="Buscar jogos..." class="hidden md:block bg-[#232527] border border-gray-600 rounded-full px-4 py-1 outline-none focus:border-blue-500 w-56">
+    <span class="font-bold cursor-pointer hover:underline" id="hdrUser" onclick="go(ME)" title="Ver meu perfil"></span>
+    <button onclick="Auth.logout()" class="text-gray-400 hover:text-white" title="Sair da conta"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+  </div>
+</header>
+
+<!-- Mobile search bar -->
+<div id="mobileSearchBar">
+  <input id="qMobile" oninput="document.getElementById('q').value=this.value;renderGames()" placeholder="Buscar jogos..." class="w-full bg-[#232527] border border-gray-600 rounded-full px-4 py-2 outline-none focus:border-blue-500 text-sm">
+</div>
+
+<div class="flex flex-1 overflow-hidden">
+  <aside class="w-48 bg-[#111214] overflow-y-auto border-r border-gray-700 hidden lg:flex flex-col py-2 shrink-0">
+    <div class="px-4 py-2 flex items-center space-x-3 mb-2 cursor-pointer si rounded-md mx-2" onclick="go(ME)" title="Ver meu perfil">
+      <div id="avatar" class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center font-black"></div>
+      <span class="font-bold truncate" id="sideUser"></span>
+    </div>
+    <a href="#" class="flex items-center space-x-3 px-4 py-2 si bg-white/10 rounded-md mx-2"><i class="fa-solid fa-house w-5 text-center"></i><span>Início</span></a>
+    <a href="batepapo.html" class="flex items-center space-x-3 px-4 py-2 si rounded-md mx-2"><i class="fa-solid fa-comments w-5 text-center"></i><span>Bate-papo</span><span class="chatDot hidden w-2 h-2 rounded-full bg-[#335fff] ml-auto"></span></a>
+    <a href="studio.html" class="flex items-center space-x-3 px-4 py-2 si rounded-md mx-2"><i class="fa-solid fa-hammer w-5 text-center"></i><span>Studio</span></a>
+    <a href="avatar.html" class="flex items-center space-x-3 px-4 py-2 si rounded-md mx-2"><i class="fa-solid fa-shirt w-5 text-center"></i><span>Avatar</span></a>
+  </aside>
+  <main class="flex-1 overflow-y-auto bg-[#232527] p-6 main-content">
+    <h1 class="text-3xl font-bold mb-1">Início</h1>
+    <p class="text-gray-400 mb-6">Bem-vindo, <b id="welcome" class="text-white cursor-pointer hover:underline" onclick="go(ME)"></b>!</p>
+    <div id="reqBox" class="mb-8 hidden"><h2 class="text-lg font-bold mb-3">Solicitações de amizade (<span id="reqCount">0</span>)</h2><div id="reqList" class="flex gap-3 flex-wrap"></div></div>
+    <div class="mb-8">
+      <h2 class="text-lg font-bold mb-4">Amizades (<span id="friendCount">0</span>)</h2>
+      <div class="flex space-x-4 overflow-x-auto pb-4" id="friendsList"></div>
+    </div>
+    <div>
+      <h2 class="text-xl font-bold mb-1">Recomendações para você</h2>
+      <p id="rt" class="text-xs text-gray-500 mb-4"></p>
+      <div id="gamesGrid" class="games-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Desktop chat button -->
+<a href="batepapo.html" id="desktopChat" class="fixed bottom-4 right-4 z-30 bg-[#232527] hover:bg-[#2d3033] border border-gray-600 shadow-xl rounded-full px-4 py-2.5 flex items-center gap-2 font-bold" title="Bate-papo com amigos">
+  <i class="fa-solid fa-comments"></i>Bate-papo<span class="chatDot hidden w-2.5 h-2.5 rounded-full bg-[#335fff]"></span></a>
+
+<!-- Mobile bottom navigation -->
+<nav id="mobileNav">
+  <a href="index.html" class="active"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="batepapo.html"><i class="fa-solid fa-comments"></i>Bate-papo<span class="chatDot hidden w-2 h-2 rounded-full bg-[#335fff] absolute -top-1 -right-1"></span></a>
+  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
+  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
+  <a href="#" onclick="go(ME);return false;" id="mobileProfileLink"><i class="fa-solid fa-user"></i>Perfil</a>
+</nav>
+
+<div id="addModal" class="hidden fixed inset-0 z-50 bg-black/75 items-center justify-center p-4" onclick="if(event.target===this)closeAdd()">
+  <div class="bg-[#232527] w-full max-w-lg rounded-xl border border-gray-700 shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-700"><h2 class="text-lg font-bold"><i class="fa-solid fa-user-plus mr-2"></i>Adicionar amigos</h2>
+      <button onclick="closeAdd()" class="text-gray-400 hover:text-white text-xl"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="p-4 border-b border-gray-700"><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+      <input id="addQ" oninput="renderAdd()" placeholder="Buscar por nome de usuário" class="w-full bg-[#111214] border border-gray-600 focus:border-blue-500 rounded-lg pl-10 pr-3 py-2 outline-none"></div></div>
+    <div id="addList" class="overflow-y-auto p-2 flex-1"></div>
+    <div id="addNote" class="px-4 py-2 text-xs text-gray-500 border-t border-gray-700"></div>
+  </div>
+</div>
+<div id="gameModal" class="fixed inset-0 z-50 hidden items-start md:items-center justify-center p-3 md:p-6 overflow-y-auto" style="background:rgba(6,8,12,.82);backdrop-filter:blur(6px)" onclick="if(event.target===this)closeModal()">
+  <div class="gm w-full max-w-4xl rounded-2xl relative border border-[#34373b] shadow-2xl overflow-hidden my-auto" style="background:#1d1f22">
+    <button onclick="closeModal()" class="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-gray-200 hover:text-white flex items-center justify-center transition" title="Fechar (Esc)"><i class="fa-solid fa-xmark"></i></button>
+    <div class="flex flex-col md:flex-row">
+      <div class="md:w-[46%] shrink-0 relative">
+        <div id="mIcon" class="w-full aspect-video md:aspect-auto md:h-full md:min-h-[300px] bg-cover bg-center flex items-center justify-center"><i class="fa-solid fa-cubes text-6xl text-white"></i></div>
+        <div class="absolute inset-0 pointer-events-none" style="background:linear-gradient(to top,rgba(0,0,0,.55),transparent 45%)"></div>
+        <div class="absolute left-3 top-3 flex gap-2"><span id="mGenreTag" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/60 backdrop-blur text-white"></span><span id="mVipTag" class="hidden px-2.5 py-1 rounded-full text-[11px] font-bold bg-yellow-400 text-black"><i class="fa-solid fa-crown mr-1"></i>VIP</span></div>
+        <div class="absolute left-3 bottom-3 flex items-center gap-2 text-xs font-semibold"><span id="mLivePill" class="px-2.5 py-1 rounded-full bg-black/65 backdrop-blur"></span></div>
+      </div>
+      <div class="flex-1 p-5 md:p-7 flex flex-col min-w-0">
+        <h2 id="mTitle" class="text-2xl md:text-[28px] font-black leading-tight pr-10 break-words"></h2>
+        <div id="mCreator" class="text-gray-400 text-sm mt-1.5 flex items-center gap-2 flex-wrap"></div>
+        <div class="flex items-center gap-4 mt-4 text-sm">
+          <div class="flex items-center gap-1.5 text-gray-300"><i class="fa-solid fa-eye text-[#3794ff]"></i><b id="mVisBig" class="text-white"></b><span class="text-gray-500">visitas</span></div>
+          <div class="w-px h-4 bg-gray-700"></div>
+          <div class="flex items-center gap-1.5 text-gray-300"><i class="fa-solid fa-user-group text-[#00b06f]"></i><b id="mActBig" class="text-white"></b><span class="text-gray-500">jogando</span></div>
+          <div class="w-px h-4 bg-gray-700"></div>
+          <div class="flex items-center gap-1.5 text-gray-300"><i class="fa-solid fa-heart text-pink-400"></i><b id="mFavBig" class="text-white"></b><span class="text-gray-500">favoritos</span></div>
+        </div>
+        <div class="flex items-center gap-3 mt-4">
+          <button id="mUp" onclick="voteGame('like')" class="vbtn"><i class="fa-solid fa-thumbs-up"></i><b id="mUpN">0</b></button>
+          <button id="mDown" onclick="voteGame('dislike')" class="vbtn"><i class="fa-solid fa-thumbs-down"></i><b id="mDownN">0</b></button>
+          <div class="flex-1 min-w-0"><div class="h-1.5 rounded-full bg-[#3a3d42] overflow-hidden"><div id="mBar" class="h-full bg-[#00b06f]" style="width:0"></div></div><div id="mPct" class="text-[11px] text-gray-500 mt-1">Sem avaliações</div></div>
+        </div>
+        <p class="text-sm text-gray-300 mt-4 leading-relaxed line-clamp-4" id="mDescTop"></p>
+        <div class="mt-auto pt-5">
+          <button onclick="playGame()" class="w-full bg-[#00b06f] hover:bg-[#00c87c] active:scale-[.99] font-black py-3.5 rounded-xl text-xl flex items-center justify-center gap-3 transition shadow-lg shadow-[#00b06f]/20"><i class="fa-solid fa-play"></i>Jogar</button>
+          <div class="flex gap-2 mt-2.5">
+            <button id="mFav" onclick="toggleFav()" class="flex-1 bg-[#2b2e32] hover:bg-[#363a3f] border border-[#3d4146] rounded-lg py-2 text-sm font-bold transition"><i class="fa-regular fa-heart mr-2"></i><span>Favoritar</span></button>
+            <button onclick="shareGame()" class="flex-1 bg-[#2b2e32] hover:bg-[#363a3f] border border-[#3d4146] rounded-lg py-2 text-sm font-bold transition"><i class="fa-solid fa-link mr-2"></i>Copiar link</button>
+            <button id="mEdit" onclick="editInStudio()" class="hidden flex-1 bg-[#0078d7] hover:bg-[#1a8cf0] rounded-lg py-2 text-sm font-bold transition"><i class="fa-solid fa-hammer mr-2"></i>Studio</button>
+            <button id="mDel" onclick="deleteGame()" class="hidden bg-red-600/80 hover:bg-red-600 px-3.5 rounded-lg transition" title="Excluir meu mapa"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="border-t border-[#2e3135] flex px-3 md:px-5 gap-1" id="mTabs">
+      <div class="mtab on" data-t="about"><i class="fa-solid fa-circle-info mr-2"></i>Sobre</div>
+      <div class="mtab" data-t="servers"><i class="fa-solid fa-server mr-2"></i>Servidores <span id="mSrvN" class="ml-1 px-1.5 rounded bg-[#2f3338] text-[10px]"></span></div>
+    </div>
+    <div class="px-5 md:px-7 pb-6 pt-4 bg-[#191b1e]">
+      <div id="mpAbout">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Descrição</h3>
+        <p id="mDesc" class="text-sm text-gray-300 whitespace-pre-wrap break-words mb-5"></p>
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Informações</h3>
+        <div id="mStats" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+        <p id="mInfo" class="text-[11px] text-gray-600 mt-4"></p>
+      </div>
+      <div id="mpServers" class="hidden"><div id="mSrvList" class="space-y-2"></div></div>
+      <p id="mLive" class="hidden"></p>
+    </div>
+  </div>
+</div>
+<style>
+.mtab{padding:13px 16px;font-weight:700;font-size:14px;color:#8f949a;border-bottom:3px solid transparent;cursor:pointer;user-select:none;white-space:nowrap}
+.mtab:hover{color:#fff}.mtab.on{color:#fff;border-color:#335fff}
+.mst{background:#212428;border:1px solid #2f3338;border-radius:10px;padding:11px 12px}
+.mst .ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:#2b2f36;margin-bottom:8px}
+.mst b{display:block;font-size:15px;line-height:1.2;word-break:break-word}.mst span{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#7d8288}
+.vbtn{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:9px;background:#2b2e32;border:1px solid #3d4146;color:#c3c7cc;font-size:14px;transition:.12s}.vbtn:hover{background:#363a3f;color:#fff}.vbtn.on-up{background:#0f3d2c;border-color:#00b06f;color:#4ade80}.vbtn.on-down{background:#4a1d1d;border-color:#e74c3c;color:#f87171}
+.gm{animation:gmin .18s ease-out}@keyframes gmin{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+</style>
+
+<script>
+const ME = Auth.require(), ML = ME.toLowerCase(), FKEY = 'robloxFriends:' + ML;
+['hdrUser','sideUser','welcome'].forEach(i => document.getElementById(i).textContent = ME);
+document.getElementById('avatar').textContent = ME[0].toUpperCase();
+const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) * 37 % 360;
+let current = null;
+
+/* ---- Amigos ---- */
+const go = n => location.href = Auth.profileUrl(n);
+const circ = (n, size) => { const d = document.createElement('div'); d.className = 'rounded-full flex items-center justify-center font-black shrink-0 text-[#222]'; d.style.cssText = `width:${size}px;height:${size}px;background:${Auth.avatar(n).head};font-size:${size / 2.4}px`; d.textContent = n[0].toUpperCase(); return d; };
+const sb = (t, c, f) => { const b = document.createElement('button'); b.className = 'px-3 py-1.5 rounded-lg font-bold text-xs ' + c; b.innerHTML = t; if (f) b.onclick = e => { e.stopPropagation(); f(); }; return b; };
+document.getElementById('avatar').style.cssText = `background:${Auth.avatar(ME).head};color:#222`;
+
+function renderFriends() {
+  const box = document.getElementById('friendsList'), f = Auth.friends(ME);
+  box.innerHTML = '<div class="flex flex-col items-center w-20 shrink-0 cursor-pointer" onclick="openAdd()"><div class="w-16 h-16 rounded-full bg-[#111214] border border-gray-600 flex items-center justify-center text-2xl mb-2 hover:bg-gray-700 transition"><i class="fa-solid fa-plus"></i></div><span class="text-xs text-gray-300">Adicionar</span></div>';
+  f.forEach(n => {
+    const d = document.createElement('div'); d.className = 'flex flex-col items-center w-20 shrink-0 cursor-pointer group';
+    const c = circ(n, 64); c.classList.add('relative', 'mb-2', 'group-hover:ring-2', 'ring-white', 'transition');
+    const pi = Auth.pres.info(n);
+    if (pi.k !== 'off') c.insertAdjacentHTML('beforeend', '<div class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#232527]" style="background:' + Auth.pres.COLOR[pi.k] + '"></div>');
+    const sp = document.createElement('span'); sp.className = 'text-xs text-center truncate w-full'; sp.textContent = n;
+    const st = document.createElement('span'); st.className = 'text-[10px] text-center w-full leading-tight'; st.style.color = Auth.pres.COLOR[pi.k]; st.textContent = pi.k === 'off' ? '' : pi.t; st.title = pi.t; if (pi.k === 'play') st.classList.add('line-clamp-2');
+    d.append(c, sp, st); d.onclick = () => go(n); box.appendChild(d);
+  });
+  document.getElementById('friendCount').textContent = f.length;
+}
+function renderRequests() {
+  const r = Auth.requests(ME), box = document.getElementById('reqList'); box.innerHTML = '';
+  document.getElementById('reqBox').classList.toggle('hidden', !r.length);
+  document.getElementById('reqCount').textContent = r.length;
+  r.forEach(n => {
+    const d = document.createElement('div'); d.className = 'flex items-center gap-3 bg-[#2d2f32] border border-gray-700 rounded-xl p-3 cursor-pointer hover:bg-[#35383b]';
+    const nm = document.createElement('div'); nm.className = 'font-bold pr-2'; nm.textContent = n;
+    d.append(circ(n, 44), nm, sb('Aceitar', 'bg-[#00b06f] hover:bg-[#008f5a]', () => { Auth.accept(ME, n); refresh(); }), sb('Recusar', 'bg-gray-600 hover:bg-gray-500', () => { Auth.decline(ME, n); refresh(); }));
+    d.onclick = () => go(n); box.appendChild(d);
+  });
+}
+function refresh() { renderFriends(); renderRequests(); if (!addModal.classList.contains('hidden')) renderAdd(); }
+function openAdd() { addNote.textContent = Auth.server ? '' : '⚠ Modo local: só aparecem contas criadas neste navegador.'; addModal.classList.remove('hidden'); addModal.classList.add('flex'); addQ.value = ''; renderAdd(); addQ.focus(); }
+function closeAdd() { addModal.classList.add('hidden'); addModal.classList.remove('flex'); }
+function renderAdd() {
+  const q = addQ.value.trim().toLowerCase(), box = document.getElementById('addList'); box.innerHTML = '';
+  const list = Object.values(Auth.users()).filter(u => u.name.toLowerCase() !== ML && u.name.toLowerCase().includes(q)).slice(0, 30);
+  if (!list.length) { box.innerHTML = '<p class="text-center text-gray-500 py-10">' + (q ? 'Nenhum usuário encontrado.' : 'Ainda não há outros usuários.') + '</p>'; return; }
+  if (!q) box.insertAdjacentHTML('beforeend', '<div class="px-3 py-1 text-xs text-gray-400 font-bold uppercase">Pessoas que você talvez conheça</div>');
+  list.forEach(u => {
+    const st = Auth.status(ME, u.name), row = document.createElement('div');
+    row.className = 'flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 cursor-pointer';
+    const info = document.createElement('div'); info.className = 'flex-1 min-w-0';
+    info.innerHTML = '<div class="font-bold truncate"></div><div class="text-xs text-gray-400 truncate"></div>';
+    info.firstChild.textContent = u.name; info.lastChild.textContent = '@' + u.name.toLowerCase();
+    const act = st === 'none' ? sb('<i class="fa-solid fa-user-plus mr-1"></i>Adicionar', 'bg-[#0078d7] hover:bg-[#1a8cf0]', () => { Auth.sendRequest(ME, u.name); renderAdd(); })
+      : st === 'sent' ? sb('<i class="fa-solid fa-clock mr-1"></i>Pendente', 'bg-gray-600 opacity-70 cursor-default')
+      : st === 'received' ? sb('Aceitar', 'bg-[#00b06f] hover:bg-[#008f5a]', () => { Auth.accept(ME, u.name); refresh(); })
+      : sb('<i class="fa-solid fa-check mr-1"></i>Amigos', 'bg-gray-700 cursor-default');
+    row.append(circ(u.name, 44), info, act); row.onclick = () => go(u.name); box.appendChild(row);
+  });
+}
+addEventListener('keydown', e => { if (e.key === 'Escape') { closeAdd(); closeModal(); } });
+
+/* ---- Jogos ---- */
+const loadGames = () => Auth.games();
+const thumbOf = g => g.thumb || '';
+const fallbackBg = g => `linear-gradient(135deg,hsl(${hue(g.name)},60%,45%),hsl(${hue(g.name) + 40},60%,30%))`;
+function creatorEl(name) {
+  const w = document.createElement('span'); w.className = 'inline-flex items-center gap-1.5';
+  w.appendChild(circ(name, 18));
+  const a = document.createElement('a'); a.textContent = name; a.className = 'text-gray-300 hover:underline cursor-pointer font-semibold';
+  a.onclick = e => { e.stopPropagation(); go(name); }; w.appendChild(a); return w;
+}
+function fmtCount(n) {
+  n = n || 0;
+  if (n >= 1e9) return (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B+';
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M+';
+  if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+  return String(n);
+}
+function fmtDate(ts) { return ts ? new Date(ts).toLocaleDateString('pt-BR') : '—'; }
+function renderGames() {
+  const q = document.getElementById('q').value.toLowerCase(), grid = document.getElementById('gamesGrid');
+  const list = [...loadGames().reverse()];
+  grid.innerHTML = '';
+  if (!list.length) grid.innerHTML = '<p class="text-gray-500 col-span-full">Nenhum mapa publicado ainda. Vá no <b>Studio</b> e clique em <b>Postar Mapa</b>!</p>';
+  list.filter(g => g.name.toLowerCase().includes(q) || g.creator.toLowerCase().includes(q)).forEach(g => {
+    const d = document.createElement('div'); d.className = 'cursor-pointer gcard';
+    d.innerHTML = '<div class="aspect-square rounded-lg overflow-hidden mb-2 relative"><div class="gi absolute inset-0 flex items-center justify-center bg-cover bg-center"><i class="fa-solid fa-cube text-6xl text-white"></i></div></div><h3 class="font-bold text-sm truncate"></h3><div class="text-xs text-gray-400 mt-1 flex items-center flex-wrap gap-x-3"><span class="by"></span><span class="cnt"></span></div>';
+    const gi = d.querySelector('.gi'), t = thumbOf(g);
+    if (t) { gi.style.backgroundImage = `url(${t})`; gi.firstChild.remove(); } else gi.style.background = fallbackBg(g);
+    d.querySelector('h3').textContent = g.name;
+    d.querySelector('.by').append('Por ', creatorEl(g.creator)); d.querySelector('.cnt').dataset.k = g.name + '|' + g.creator;
+    d.onclick = () => openModal(g); grid.appendChild(d);
+  });
+  updateCounts();
+}
+const FAVK = () => 'robloxFavs:' + ML, gid = g => g.name + '|' + g.creator;
+const favs = () => { try { return JSON.parse(localStorage.getItem(FAVK())) || []; } catch (e) { return []; } };
+function renderStats(g) {
+  const base = gid(g), size = g.serverSize || 20, ins = Auth.presence.instancesOf(base);
+  const online = Auth.presence.totalCount(base), servers = Object.keys(ins).length;
+  const stat = (ic, col, v, l) => `<div class="mst"><div class="ic" style="color:${col}"><i class="fa-solid fa-${ic}"></i></div><b>${v}</b><span>${l}</span></div>`;
+  mStats.innerHTML =
+    stat('user-group', '#00b06f', online, 'Ativo') +
+    stat('eye', '#3794ff', fmtCount(g.visits || 0), 'Visitas') +
+    stat('calendar-plus', '#a78bfa', fmtDate(g.created), 'Criado') +
+    stat('rotate', '#f59e0b', fmtDate(g.updated || g.created), 'Atualizado') +
+    stat('users', '#38bdf8', size, 'Tamanho do servidor') +
+    stat('server', '#34d399', servers, 'Servidores') +
+    stat('tag', '#f472b6', g.genre || 'Outro', 'Gênero') +
+    stat('crown', g.vip ? '#facc15' : '#6b7280', g.vip ? 'Sim' : 'Não', 'VIP');
+  mVisBig.textContent = fmtCount(g.visits || 0); mActBig.textContent = online; mSrvN.textContent = servers;
+  mLivePill.innerHTML = online ? '<i class="fa-solid fa-circle text-[7px] text-green-400 align-middle mr-1.5"></i>' + online + ' jogando agora' : '<i class="fa-regular fa-moon mr-1.5 text-gray-400"></i>Ninguém jogando';
+  const L = mSrvList; L.innerHTML = '';
+  const keys = Object.keys(ins).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (!keys.length) L.innerHTML = '<div class="text-center text-gray-500 py-8"><i class="fa-solid fa-server text-3xl mb-2 block opacity-50"></i>Nenhum servidor ativo.</div>';
+  keys.forEach((k, n) => {
+    const c = ins[k], who = Auth.presence.who ? (Auth.presence.who(k) || []) : [], pct = Math.min(100, Math.round(c / size * 100));
+    const row = document.createElement('div'); row.className = 'mst flex items-center gap-4';
+    row.innerHTML = '<div class="ic !mb-0 shrink-0" style="color:#34d399"><i class="fa-solid fa-server"></i></div><div class="flex-1 min-w-0"><div class="flex justify-between text-sm"><b class="!text-sm">Servidor ' + (n + 1) + '</b><span class="!text-xs !normal-case !tracking-normal">' + c + ' / ' + size + '</span></div><div class="h-1.5 rounded bg-[#2b2f36] mt-2 overflow-hidden"><div class="h-full rounded" style="width:' + pct + '%;background:' + (pct >= 100 ? '#ef4444' : '#00b06f') + '"></div></div><div class="text-[11px] text-gray-500 mt-1.5 truncate"></div></div>';
+    row.querySelector('.truncate').textContent = who.length ? who.join(', ') : '';
+    L.appendChild(row);
+  });
+}
+function openModal(g) {
+  current = g; showMTab('about');
+  mTitle.textContent = g.name; mCreator.innerHTML = ''; mCreator.append('Por ', creatorEl(g.creator));
+  mCreator.insertAdjacentHTML('beforeend', Auth.badge(g.creator).replace('verified-badge', 'verified-badge text-xs'));
+  mInfo.textContent = (g.blocks || 0) + ' objetos · Criado no Studio';
+  const d = g.desc || ''; mDesc.textContent = d || 'O criador ainda não escreveu uma descrição.'; mDesc.style.fontStyle = d ? '' : 'italic'; mDescTop.textContent = d; mDescTop.classList.toggle('hidden', !d);
+  mGenreTag.textContent = g.genre || 'Outro'; mVipTag.classList.toggle('hidden', !g.vip);
+  const t = thumbOf(g); mIcon.style.background = t ? `center/cover url(${t})` : fallbackBg(g); mIcon.firstChild && (mIcon.firstChild.style.display = t ? 'none' : '');
+  mDel.classList.toggle('hidden', g.creator !== ME); mEdit.classList.toggle('hidden', g.creator !== ME);
+  paintFav(); renderStats(g);
+  gameModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; updateCounts();
+}
+function showMTab(t) { document.querySelectorAll('.mtab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); mpAbout.classList.toggle('hidden', t !== 'about'); mpServers.classList.toggle('hidden', t !== 'servers'); }
+document.querySelectorAll('.mtab').forEach(x => x.onclick = () => showMTab(x.dataset.t));
+const GM = () => loadGames().find(x => gid(x) === gid(current)) || current;
+function paintFav() {
+  const g = GM(), f = (g.favs || []).includes(ME), n = (g.favs || []).length, up = (g.likes || []), dn = (g.dislikes || []), tot = up.length + dn.length;
+  mFav.innerHTML = (f ? '<i class="fa-solid fa-heart mr-2 text-pink-400"></i><span>Favoritado</span>' : '<i class="fa-regular fa-heart mr-2"></i><span>Favoritar</span>') + '<span class="ml-2 text-xs text-gray-400">' + fmtCount(n) + '</span>';
+  mFavBig.textContent = fmtCount(n); mFavBig.parentElement.style.cursor = 'pointer'; mFavBig.parentElement.onclick = toggleFav;
+  mUpN.textContent = fmtCount(up.length); mDownN.textContent = fmtCount(dn.length);
+  mUp.classList.toggle('on-up', up.includes(ME)); mDown.classList.toggle('on-down', dn.includes(ME));
+  mBar.style.width = tot ? Math.round(up.length / tot * 100) + '%' : '0'; mBar.style.background = tot && up.length / tot < .4 ? '#e74c3c' : '#00b06f';
+  mPct.textContent = tot ? Math.round(up.length / tot * 100) + '% aprovação · ' + tot + (tot === 1 ? ' avaliação' : ' avaliações') : 'Sem avaliações';
+}
+async function voteGame(k) { await Auth.vote(current.name, current.creator, k); paintFav(); }
+async function toggleFav() { await Auth.vote(current.name, current.creator, 'fav'); paintFav(); }
+function shareGame() { const u = location.origin + location.pathname + '?g=' + encodeURIComponent(gid(current)); (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => alert('Link copiado!'), () => prompt('Copie o link:', u)); }
+function editInStudio() { localStorage.setItem('robloxDraft', JSON.stringify(current.parts)); localStorage.setItem('robloxDraftName', current.name); location.href = 'studio.html'; }
+function closeModal() { gameModal.style.display = 'none'; document.body.style.overflow = ''; }
+function playGame() { localStorage.setItem('robloxPlay', current.name); localStorage.setItem('robloxPlayCreator', current.creator); location.href = 'game.html'; }
+function deleteGame() {
+  if (!confirm('Excluir o mapa "' + current.name + '"?')) return;
+  Auth.deleteGame(current.name, ME).then(() => { closeModal(); renderGames(); });
+}
+function updateCounts() {
+  document.querySelectorAll('.cnt').forEach(el => {
+    const n = Auth.presence.totalCount(el.dataset.k);
+    el.innerHTML = n ? `<span class="text-green-400"><i class="fa-solid fa-circle text-[7px] align-middle mr-1"></i>${n} jogando</span>` : '<span class="text-gray-500"><i class="fa-solid fa-user text-[9px] mr-1"></i>0</span>';
+  });
+  if (current && gameModal.style.display === 'flex') { renderStats(current); paintFav(); }
+}
+addEventListener('storage', updateCounts);
+Auth.presence.init().then(on => {
+  document.getElementById('rt').innerHTML = on ? '<span class="text-green-400">● Servidor conectado</span> — contas compartilhadas entre navegadores. <span class="opacity-60">(' + location.host + ')</span>'
+    : 'Modo local — conta só neste navegador. Rode <code>node server.js</code> para funcionar em rede.';
+  setInterval(async () => { await Auth.presence.sync(); updateCounts(); }, 1500);
+  if (on) fetch('/api/health').then(r => r.json()).then(j => document.getElementById('rt').insertAdjacentHTML('beforeend', ' · Banco: <b class="' + (j.db === 'mysql' ? 'text-green-400' : 'text-yellow-400') + '">' + (j.db === 'mysql' ? 'MySQL (XAMPP)' : 'arquivo data.json') + '</b>')).catch(() => {});
+});
+async function chatDot() { try { const u = Auth.chat.unread(ME, await Auth.chat.dmSummary(ME)); document.querySelectorAll('.chatDot').forEach(e => e.classList.toggle('hidden', !u.length)); } catch (e) {} }
+chatDot(); setInterval(chatDot, 4000);
+renderFriends(); renderRequests(); renderGames(); updateCounts();
+const admShow = () => document.getElementById('admLink').classList.toggle('hidden', !Auth.isAdmin(ME)); admShow();
+let paramDone = false;
+function openFromParam() { if (paramDone) return; const k = new URLSearchParams(location.search).get('g'); if (!k) return; const g = loadGames().find(x => gid(x) === k); if (g) { paramDone = true; openModal(g); } }
+openFromParam();
+Auth.init().then(on => { if (!on) return; admShow(); Auth.pres.watch(() => Auth.friends(ME), renderFriends); refresh(); renderGames(); openFromParam(); setInterval(async () => { if (await Auth.sync()) { refresh(); renderGames(); } }, 2000); });
+</script>
+</body>
+</html>

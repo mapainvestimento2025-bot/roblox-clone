@@ -1,0 +1,1951 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0c0e">
+
+    <title>Política de Privacidade - Roblox Clone</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        body {
+            margin: 0;
+            background: #111214;
+            color: #e4e4e7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: #335fff;
+            color: white;
+        }
+
+        /* HEADER */
+
+        .main-header {
+            height: 66px;
+            background: rgba(11, 12, 14, .96);
+            border-bottom: 1px solid #2e3135;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(18px);
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: 950;
+            letter-spacing: -1px;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-link {
+            color: #a1a1aa;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: .2s;
+            padding: 22px 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link.active {
+            color: white;
+            border-color: #335fff;
+        }
+
+        .mobile-menu-button {
+            display: none;
+            width: 42px;
+            height: 42px;
+            border: 1px solid #303238;
+            background: #1d1f22;
+            color: white;
+            border-radius: 11px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .mobile-menu {
+            display: none;
+            background: #101114;
+            border-bottom: 1px solid #2e3135;
+            padding: 12px 18px 18px;
+        }
+
+        .mobile-menu.open {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: .2s;
+        }
+
+        .mobile-menu a:hover,
+        .mobile-menu a.active {
+            background: #1a2040;
+            color: white;
+        }
+
+        /* CONTEÚDO */
+
+        .page-container {
+            width: min(100% - 40px, 1000px);
+            margin: auto;
+            padding: 65px 0 80px;
+        }
+
+        /* HERO */
+
+        .hero {
+            text-align: center;
+            margin-bottom: 42px;
+        }
+
+        .hero-icon {
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 25px;
+            color: #3794ff;
+            background: linear-gradient(145deg, #1b2857, #151b36);
+            border: 1px solid rgba(55, 148, 255, .35);
+            box-shadow: 0 10px 45px rgba(51, 95, 255, .12);
+            font-size: 35px;
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 46px);
+            font-weight: 950;
+            letter-spacing: -1.8px;
+            color: white;
+            line-height: 1.15;
+            margin: 0 0 15px;
+        }
+
+        .hero-description {
+            max-width: 650px;
+            margin: auto;
+            color: #92949d;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 22px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 13px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-blue {
+            background: #1a2040;
+            color: #93b5ff;
+            border: 1px solid #29366b;
+        }
+
+        .badge-green {
+            background: #103526;
+            color: #6ee7b7;
+            border: 1px solid #20583f;
+        }
+
+        /* AVISO INICIAL */
+
+        .intro-notice {
+            display: flex;
+            gap: 16px;
+            padding: 21px;
+            margin-bottom: 27px;
+            background: linear-gradient(120deg, #172247, #191b25);
+            border: 1px solid #293d78;
+            border-radius: 15px;
+        }
+
+        .intro-notice > i {
+            color: #60a5fa;
+            font-size: 23px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .intro-notice h2 {
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+
+        .intro-notice p {
+            color: #b8c5e2;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* ÍNDICE */
+
+        .index-card {
+            background: #1d1f22;
+            border: 1px solid #2e3135;
+            border-radius: 16px;
+            padding: 23px;
+            margin-bottom: 25px;
+        }
+
+        .index-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 17px;
+        }
+
+        .index-header i {
+            color: #3794ff;
+            font-size: 19px;
+        }
+
+        .index-header h2 {
+            font-size: 17px;
+            font-weight: 850;
+            color: white;
+            margin: 0;
+        }
+
+        .index-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 9px;
+        }
+
+        .index-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 12px;
+            background: #15171a;
+            border: 1px solid #303238;
+            border-radius: 10px;
+            color: #aeb0b8;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            transition: .2s;
+            min-width: 0;
+        }
+
+        .index-link:hover {
+            color: white;
+            border-color: #335fff;
+            background: #1a2040;
+        }
+
+        .index-link span {
+            color: #60a5fa;
+            font-weight: 900;
+            flex-shrink: 0;
+        }
+
+        /* SEÇÕES */
+
+        .privacy-card {
+            background: #1d1f22;
+            border: 1px solid #2e3135;
+            border-radius: 17px;
+            overflow: hidden;
+        }
+
+        .privacy-section {
+            padding: 25px;
+            border-bottom: 1px solid #2e3135;
+            scroll-margin-top: 90px;
+        }
+
+        .privacy-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .section-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+            background: #1a2040;
+            color: #60a5fa;
+        }
+
+        .section-heading h2 {
+            color: white;
+            font-size: 17px;
+            font-weight: 850;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .section-heading small {
+            display: block;
+            color: #858791;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 3px;
+        }
+
+        .section-content p {
+            color: #b5b8be;
+            font-size: 13px;
+            line-height: 1.85;
+            margin: 0 0 12px;
+        }
+
+        .section-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+
+        .section-content li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #b5b8be;
+            font-size: 13px;
+            line-height: 1.75;
+        }
+
+        .section-content li::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            margin-top: 8px;
+            background: #3794ff;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .section-content strong {
+            color: #f4f4f5;
+            font-weight: 800;
+        }
+
+        /* DESTAQUES */
+
+        .highlight {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 14px 16px;
+            margin-top: 15px;
+            border-radius: 10px;
+            background: #172b23;
+            border: 1px solid #24513d;
+        }
+
+        .highlight i {
+            color: #4ade80;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .highlight p {
+            color: #b4e5c7;
+            font-size: 12px;
+            line-height: 1.75;
+            margin: 0;
+        }
+
+        .warning-highlight {
+            background: #2d2516;
+            border-color: #66502a;
+        }
+
+        .warning-highlight i {
+            color: #fbbf24;
+        }
+
+        .warning-highlight p {
+            color: #e8d7a9;
+        }
+
+        /* CARDS DE DIREITOS */
+
+        .rights-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .right-card {
+            padding: 16px;
+            background: #15171a;
+            border: 1px solid #303238;
+            border-radius: 12px;
+        }
+
+        .right-card i {
+            color: #60a5fa;
+            font-size: 18px;
+            margin-bottom: 11px;
+        }
+
+        .right-card h3 {
+            color: white;
+            font-size: 13px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+
+        .right-card p {
+            color: #999ba4;
+            font-size: 12px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        /* AVISO FINAL */
+
+        .final-notice {
+            padding: 25px;
+            margin-top: 27px;
+            border: 1px solid #293d78;
+            border-radius: 17px;
+            background: linear-gradient(120deg, #1a2040, #1d1f22);
+        }
+
+        .final-notice-content {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .final-notice-icon {
+            color: #60a5fa;
+            font-size: 25px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .final-notice h2 {
+            font-size: 18px;
+            font-weight: 850;
+            color: white;
+            margin: 0 0 8px;
+        }
+
+        .final-notice p {
+            color: #c2c8d8;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* BOTÕES */
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 19px;
+        }
+
+        .action-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 9px;
+            min-height: 43px;
+            padding: 0 17px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: .2s;
+        }
+
+        .primary-button {
+            color: white;
+            background: #335fff;
+        }
+
+        .primary-button:hover {
+            background: #4d74ff;
+            transform: translateY(-1px);
+        }
+
+        .secondary-button {
+            color: white;
+            background: #2b2e32;
+            border: 1px solid #41454c;
+        }
+
+        .secondary-button:hover {
+            background: #383c42;
+        }
+
+        /* FOOTER */
+
+        .main-footer {
+            border-top: 1px solid #2e3135;
+            background: #0b0c0e;
+            padding: 32px 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 22px;
+            margin-bottom: 18px;
+        }
+
+        .footer-links a {
+            color: #858791;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-copy {
+            color: #656771;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        /* PROGRESSO DE LEITURA */
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #335fff, #3794ff);
+            z-index: 200;
+            transition: width .1s linear;
+        }
+
+        /* VOLTAR AO TOPO */
+
+        .back-to-top {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            width: 45px;
+            height: 45px;
+            border-radius: 13px;
+            background: #335fff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 5px 25px rgba(51,95,255,.3);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: .25s;
+            z-index: 80;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: #4d74ff;
+        }
+
+        /* TABLET */
+
+        @media (max-width: 768px) {
+            .main-header {
+                height: 62px;
+            }
+
+            .desktop-nav {
+                display: none !important;
+            }
+
+            .mobile-menu-button {
+                display: flex;
+            }
+
+            .page-container {
+                width: min(100% - 32px, 650px);
+                padding-top: 45px;
+                padding-bottom: 60px;
+            }
+
+            .hero {
+                margin-bottom: 34px;
+            }
+
+            .hero-icon {
+                width: 76px;
+                height: 76px;
+                font-size: 30px;
+                border-radius: 22px;
+            }
+
+            .privacy-section {
+                padding: 21px;
+            }
+        }
+
+        /* CELULAR */
+
+        @media (max-width: 520px) {
+            .page-container {
+                width: calc(100% - 26px);
+                padding-top: 36px;
+            }
+
+            .hero {
+                margin-bottom: 28px;
+            }
+
+            .hero-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 27px;
+                border-radius: 19px;
+                margin-bottom: 20px;
+            }
+
+            .hero h1 {
+                font-size: 29px;
+                letter-spacing: -1px;
+                margin-bottom: 12px;
+            }
+
+            .hero-description {
+                font-size: 13px;
+                line-height: 1.75;
+            }
+
+            .hero-badges {
+                gap: 7px;
+                margin-top: 17px;
+            }
+
+            .badge {
+                font-size: 10px;
+                padding: 7px 10px;
+            }
+
+            .intro-notice {
+                padding: 16px;
+                gap: 12px;
+                border-radius: 13px;
+            }
+
+            .intro-notice > i {
+                font-size: 19px;
+            }
+
+            .intro-notice h2 {
+                font-size: 14px;
+            }
+
+            .intro-notice p {
+                font-size: 12px;
+            }
+
+            .index-card {
+                padding: 16px;
+                border-radius: 13px;
+            }
+
+            .index-header h2 {
+                font-size: 15px;
+            }
+
+            .index-grid {
+                grid-template-columns: 1fr;
+                gap: 7px;
+            }
+
+            .index-link {
+                padding: 11px;
+                font-size: 12px;
+            }
+
+            .privacy-card {
+                border-radius: 14px;
+            }
+
+            .privacy-section {
+                padding: 18px 15px;
+            }
+
+            .section-heading {
+                gap: 11px;
+                margin-bottom: 13px;
+            }
+
+            .section-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 11px;
+                font-size: 16px;
+            }
+
+            .section-heading h2 {
+                font-size: 14px;
+            }
+
+            .section-heading small {
+                font-size: 10px;
+            }
+
+            .section-content p {
+                font-size: 12px;
+                line-height: 1.8;
+            }
+
+            .section-content li {
+                font-size: 12px;
+                line-height: 1.75;
+            }
+
+            .section-content ul {
+                gap: 8px;
+            }
+
+            .highlight {
+                padding: 12px;
+                gap: 9px;
+            }
+
+            .highlight p {
+                font-size: 11px;
+            }
+
+            .rights-grid {
+                grid-template-columns: 1fr;
+                gap: 9px;
+            }
+
+            .right-card {
+                padding: 14px;
+            }
+
+            .right-card p {
+                font-size: 11px;
+            }
+
+            .final-notice {
+                padding: 19px 16px;
+                border-radius: 14px;
+            }
+
+            .final-notice-content {
+                gap: 12px;
+            }
+
+            .final-notice-icon {
+                font-size: 21px;
+            }
+
+            .final-notice h2 {
+                font-size: 16px;
+            }
+
+            .final-notice p {
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
+                min-height: 45px;
+            }
+
+            .footer-links {
+                gap: 13px 18px;
+            }
+
+            .footer-links a {
+                font-size: 12px;
+            }
+
+            .main-footer {
+                padding: 27px 15px;
+            }
+
+            .back-to-top {
+                width: 42px;
+                height: 42px;
+                right: 14px;
+                bottom: 14px;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .hero h1 {
+                font-size: 25px;
+            }
+
+            .section-heading h2 {
+                font-size: 13px;
+            }
+
+            .privacy-section {
+                padding: 15px 12px;
+            }
+
+            .section-content p,
+            .section-content li {
+                font-size: 11px;
+            }
+
+            .badge {
+                font-size: 9px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+                animation-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- HEADER -->
+    <header class="main-header">
+
+        <div class="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between">
+
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>
+                ROBLOX
+            </a>
+
+            <nav class="desktop-nav flex items-center gap-7 h-full">
+                <a href="index.html" class="nav-link">Início</a>
+                <a href="regras.html" class="nav-link">Regras</a>
+                <a href="termos.html" class="nav-link">Termos</a>
+                <a href="privacidade.html" class="nav-link active">Privacidade</a>
+            </nav>
+
+            <button
+                class="mobile-menu-button"
+                id="mobileMenuButton"
+                type="button"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+                aria-controls="mobileMenu"
+            >
+                <i class="fa-solid fa-bars" id="menuIcon"></i>
+            </button>
+
+        </div>
+
+        <!-- MENU MOBILE -->
+        <nav class="mobile-menu" id="mobileMenu">
+
+            <a href="index.html">
+                <i class="fa-solid fa-house w-5"></i>
+                Início
+            </a>
+
+            <a href="regras.html">
+                <i class="fa-solid fa-scale-balanced w-5"></i>
+                Regras
+            </a>
+
+            <a href="termos.html">
+                <i class="fa-solid fa-file-contract w-5"></i>
+                Termos de Uso
+            </a>
+
+            <a href="privacidade.html" class="active">
+                <i class="fa-solid fa-shield-halved w-5"></i>
+                Política de Privacidade
+            </a>
+
+        </nav>
+
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="page-container">
+
+        <!-- HERO -->
+        <section class="hero">
+
+            <div class="hero-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <h1>Política de Privacidade</h1>
+
+            <p class="hero-description">
+                Sua privacidade é importante. Saiba como as informações
+                relacionadas à sua conta são coletadas, utilizadas,
+                armazenadas e protegidas durante o uso da plataforma.
+            </p>
+
+            <div class="hero-badges">
+
+                <span class="badge badge-green">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Atualizado em outubro de 2026
+                </span>
+
+                <span class="badge badge-blue">
+                    <i class="fa-solid fa-lock"></i>
+                    Proteção de dados
+                </span>
+
+            </div>
+
+        </section>
+
+        <!-- AVISO INICIAL -->
+        <section class="intro-notice">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            <div>
+
+                <h2>Sobre esta Política de Privacidade</h2>
+
+                <p>
+                    Este documento explica quais informações podem ser
+                    utilizadas pela plataforma, por que elas são necessárias
+                    e quais cuidados são adotados para proteger os usuários.
+                    Recomendamos a leitura completa antes de utilizar nossos serviços.
+                </p>
+
+            </div>
+
+        </section>
+
+        <!-- ÍNDICE -->
+        <section class="index-card">
+
+            <div class="index-header">
+                <i class="fa-solid fa-list-ul"></i>
+                <h2>Nesta página</h2>
+            </div>
+
+            <div class="index-grid">
+
+                <a href="#secao-1" class="index-link">
+                    <span>01.</span>
+                    Dados que coletamos
+                </a>
+
+                <a href="#secao-2" class="index-link">
+                    <span>02.</span>
+                    Como usamos seus dados
+                </a>
+
+                <a href="#secao-3" class="index-link">
+                    <span>03.</span>
+                    Criptografia das mensagens
+                </a>
+
+                <a href="#secao-4" class="index-link">
+                    <span>04.</span>
+                    Armazenamento de dados
+                </a>
+
+                <a href="#secao-5" class="index-link">
+                    <span>05.</span>
+                    Compartilhamento
+                </a>
+
+                <a href="#secao-6" class="index-link">
+                    <span>06.</span>
+                    Cookies e armazenamento local
+                </a>
+
+                <a href="#secao-7" class="index-link">
+                    <span>07.</span>
+                    Segurança
+                </a>
+
+                <a href="#secao-8" class="index-link">
+                    <span>08.</span>
+                    Seus direitos
+                </a>
+
+                <a href="#secao-9" class="index-link">
+                    <span>09.</span>
+                    Alterações na política
+                </a>
+
+                <a href="#contato" class="index-link">
+                    <span>10.</span>
+                    Informações finais
+                </a>
+
+            </div>
+
+        </section>
+
+        <!-- POLÍTICA -->
+        <div class="privacy-card">
+
+            <!-- SEÇÃO 1 -->
+            <section class="privacy-section" id="secao-1">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-database"></i>
+                    </div>
+
+                    <div>
+                        <h2>1. Dados que Coletamos</h2>
+                        <small>Informações utilizadas pela plataforma</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        Ao criar uma conta e utilizar a Plataforma, determinadas
+                        informações podem ser coletadas ou fornecidas por você.
+                        Esses dados ajudam a identificar sua conta, manter os
+                        serviços funcionando e proteger a comunidade.
+                    </p>
+
+                    <ul>
+
+                        <li>
+                            <span>
+                                <strong>Nome de usuário:</strong>
+                                utilizado para identificar publicamente seu perfil
+                                e permitir que outros jogadores encontrem você.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>E-mail:</strong>
+                                utilizado para autenticação, identificação da conta
+                                e comunicações importantes relacionadas ao serviço.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Senha:</strong>
+                                informação utilizada para autenticação, que deve
+                                ser armazenada por meio de um mecanismo adequado
+                                de proteção criptográfica, nunca em texto puro.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Fingerprint do dispositivo (HWID):</strong>
+                                identificador técnico que pode ser utilizado
+                                para segurança, prevenção de abusos e identificação
+                                de atividades suspeitas.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Endereço IP:</strong>
+                                informação técnica que pode auxiliar na moderação,
+                                segurança e prevenção de atividades indevidas.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Dados de atividade:</strong>
+                                informações como última vez online, mapas visitados
+                                e amizades, conforme os recursos utilizados.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Conteúdo criado:</strong>
+                                mapas, mensagens, informações de perfil e outros
+                                conteúdos enviados por você à plataforma.
+                            </span>
+                        </li>
+
+                    </ul>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        <p>
+                            Recomendamos que você não utilize informações pessoais
+                            sensíveis como nome público, descrição do perfil ou
+                            conteúdo de mensagens.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 2 -->
+            <section class="privacy-section" id="secao-2">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-gears"></i>
+                    </div>
+
+                    <div>
+                        <h2>2. Como Usamos seus Dados</h2>
+                        <small>Finalidades do tratamento das informações</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        As informações coletadas são utilizadas para oferecer
+                        os recursos da plataforma, manter a segurança das contas
+                        e melhorar a experiência dos jogadores.
+                    </p>
+
+                    <ul>
+
+                        <li>Autenticar você na plataforma.</li>
+
+                        <li>Exibir seu perfil e status para outros jogadores, conforme as configurações disponíveis.</li>
+
+                        <li>Sincronizar progresso e mapas entre dispositivos, quando esse recurso estiver disponível.</li>
+
+                        <li>Prevenir abusos, trapaças, fraudes e atividades suspeitas.</li>
+
+                        <li>Identificar tentativas de criação de múltiplas contas para burlar restrições.</li>
+
+                        <li>Aplicar medidas de moderação em caso de violação das regras.</li>
+
+                        <li>Manter o funcionamento, a estabilidade e a segurança dos serviços.</li>
+
+                    </ul>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-circle-check"></i>
+
+                        <p>
+                            Não comercializamos informações pessoais dos usuários.
+                            Qualquer compartilhamento necessário para operação,
+                            segurança ou cumprimento de obrigações legais deve
+                            respeitar as finalidades aplicáveis e a legislação.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 3 -->
+            <section class="privacy-section" id="secao-3">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+
+                    <div>
+                        <h2>3. Criptografia de Ponta a Ponta nas Mensagens</h2>
+                        <small>Proteção das conversas privadas</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        As mensagens privadas entre amigos podem utilizar
+                        <strong>criptografia de ponta a ponta (E2EE)</strong>,
+                        caso esse recurso esteja implementado e funcionando
+                        corretamente na versão utilizada da plataforma.
+                    </p>
+
+                    <p>
+                        No modelo de criptografia de ponta a ponta, o conteúdo
+                        é protegido no dispositivo de origem e somente pode
+                        ser interpretado por dispositivos que possuam as
+                        chaves necessárias.
+                    </p>
+
+                    <ul>
+
+                        <li>
+                            As mensagens são criptografadas no dispositivo
+                            antes de serem enviadas ao servidor.
+                        </li>
+
+                        <li>
+                            As chaves de criptografia são utilizadas para
+                            proteger e recuperar o conteúdo das conversas.
+                        </li>
+
+                        <li>
+                            O servidor pode armazenar dados cifrados,
+                            sem acesso direto ao conteúdo original.
+                        </li>
+
+                        <li>
+                            A implementação pode utilizar AES-GCM de 256 bits
+                            por meio da Web Crypto API do navegador.
+                        </li>
+
+                    </ul>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-lock"></i>
+
+                        <p>
+                            A proteção efetiva depende da implementação real
+                            da criptografia, da geração e do gerenciamento das
+                            chaves e da segurança dos dispositivos envolvidos.
+                            Não considere as mensagens protegidas por E2EE
+                            sem que esses mecanismos tenham sido verificados.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 4 -->
+            <section class="privacy-section" id="secao-4">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+
+                    <div>
+                        <h2>4. Armazenamento de Dados</h2>
+                        <small>Onde as informações ficam armazenadas</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        Os dados da plataforma podem ser armazenados em
+                        infraestrutura própria ou em serviços de hospedagem
+                        utilizados para manter o funcionamento do sistema.
+                    </p>
+
+                    <p>
+                        A estrutura técnica pode utilizar banco de dados
+                        para armazenar informações relacionadas
+                        às contas, perfis, mapas e demais funcionalidades.
+                    </p>
+
+                    <p>
+                        As informações são mantidas pelo período necessário
+                        para cumprir suas finalidades, atender obrigações
+                        aplicáveis e preservar a segurança da plataforma.
+                    </p>
+
+                    <ul>
+
+                        <li>
+                            Os dados da conta podem permanecer armazenados
+                            enquanto ela estiver ativa.
+                        </li>
+
+                        <li>
+                            Registros técnicos podem ser mantidos pelo tempo
+                            necessário para segurança e prevenção de abusos.
+                        </li>
+
+                        <li>
+                            Solicitações de exclusão serão analisadas conforme
+                            os procedimentos disponíveis e as obrigações legais.
+                        </li>
+
+                    </ul>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-hard-drive"></i>
+
+                        <p>
+                            A exclusão de uma conta não significa necessariamente
+                            a remoção imediata de todos os registros. Alguns
+                            dados poderão ser preservados quando houver
+                            obrigação legal ou necessidade legítima de segurança.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 5 -->
+            <section class="privacy-section" id="secao-5">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+
+                    <div>
+                        <h2>5. Compartilhamento de Informações</h2>
+                        <small>O que outros usuários podem visualizar</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        Algumas informações podem ser exibidas para outros
+                        jogadores como parte das funcionalidades sociais
+                        da plataforma.
+                    </p>
+
+                    <ul>
+
+                        <li>
+                            <span>
+                                <strong>Nome de usuário, avatar e bio:</strong>
+                                podem ser visíveis publicamente nos perfis.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Status "Online":</strong>
+                                pode ser exibido para outros usuários.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Mapa em que está jogando:</strong>
+                                pode ser visível apenas para amigos,
+                                conforme o funcionamento da plataforma.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span>
+                                <strong>Última vez visto:</strong>
+                                pode ser exibida para outros usuários,
+                                conforme os recursos disponíveis.
+                            </span>
+                        </li>
+
+                    </ul>
+
+                    <p>
+                        Informações como e-mail, endereço IP e identificadores
+                        técnicos de dispositivo não devem ser exibidas em
+                        perfis públicos ou APIs destinadas a outros jogadores.
+                    </p>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-user-shield"></i>
+
+                        <p>
+                            Não publique informações pessoais no perfil.
+                            Outros usuários poderão visualizar e copiar
+                            qualquer informação que você decidir tornar pública.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 6 -->
+            <section class="privacy-section" id="secao-6">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-cookie-bite"></i>
+                    </div>
+
+                    <div>
+                        <h2>6. Cookies e Armazenamento Local</h2>
+                        <small>Informações salvas no navegador</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        A plataforma pode utilizar cookies, localStorage ou
+                        outros mecanismos de armazenamento do navegador para
+                        manter determinadas funcionalidades.
+                    </p>
+
+                    <p>Esses mecanismos podem ser utilizados para:</p>
+
+                    <ul>
+
+                        <li>Manter a sessão de login ativa.</li>
+
+                        <li>Armazenar identificadores técnicos necessários à segurança.</li>
+
+                        <li>Salvar preferências locais de interface.</li>
+
+                        <li>Melhorar a experiência de navegação.</li>
+
+                    </ul>
+
+                    <p>
+                        O armazenamento local fica no próprio navegador
+                        do usuário e pode ser removido pelas configurações
+                        do dispositivo.
+                    </p>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-cookie"></i>
+
+                        <p>
+                            A limpeza dos dados do navegador pode encerrar
+                            sua sessão ou remover preferências salvas.
+                            A utilização de cookies e tecnologias semelhantes
+                            deve ser informada conforme sua finalidade.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 7 -->
+            <section class="privacy-section" id="secao-7">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+
+                    <div>
+                        <h2>7. Segurança das Informações</h2>
+                        <small>Medidas para proteger seus dados</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        A segurança das informações é importante para manter
+                        a confiança dos usuários. A plataforma deve adotar
+                        medidas técnicas e administrativas adequadas para
+                        reduzir riscos de acesso não autorizado, alteração,
+                        perda ou divulgação indevida.
+                    </p>
+
+                    <p>Entre as medidas que podem ser utilizadas estão:</p>
+
+                    <ul>
+
+                        <li>
+                            <strong>Proteção de senhas:</strong>
+                            armazenamento com funções apropriadas de hash
+                            para senhas, como Argon2id, bcrypt ou
+                            PBKDF2, com parâmetros seguros.
+                        </li>
+
+                        <li>
+                            <strong>Comunicação protegida:</strong>
+                            utilização de HTTPS para proteger a transmissão
+                            de informações entre navegador e servidor.
+                        </li>
+
+                        <li>
+                            <strong>Proteção de mensagens:</strong>
+                            mecanismos de criptografia quando implementados
+                            corretamente.
+                        </li>
+
+                        <li>
+                            <strong>Controle de acesso:</strong>
+                            restrição de informações sensíveis a pessoas
+                            e sistemas autorizados.
+                        </li>
+
+                        <li>
+                            <strong>Prevenção de abusos:</strong>
+                            ferramentas de monitoramento e moderação
+                            para identificar atividades suspeitas.
+                        </li>
+
+                        <li>
+                            <strong>Proteção de APIs:</strong>
+                            medidas para impedir que informações privadas
+                            sejam expostas indevidamente.
+                        </li>
+
+                    </ul>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-lock"></i>
+
+                        <p>
+                            Nenhum sistema conectado à internet é completamente
+                            livre de riscos. Por isso, também recomendamos
+                            utilizar uma senha forte e não compartilhar
+                            suas credenciais com outras pessoas.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 8 -->
+            <section class="privacy-section" id="secao-8">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-user-check"></i>
+                    </div>
+
+                    <div>
+                        <h2>8. Seus Direitos</h2>
+                        <small>Controle sobre suas informações pessoais</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        Você pode exercer os direitos previstos na legislação
+                        aplicável de proteção de dados, incluindo a Lei Geral
+                        de Proteção de Dados Pessoais (LGPD), quando aplicável.
+                    </p>
+
+                    <div class="rights-grid">
+
+                        <article class="right-card">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                            <h3>Confirmação e acesso</h3>
+
+                            <p>
+                                Solicitar confirmação sobre o tratamento
+                                dos seus dados e acesso às informações.
+                            </p>
+                        </article>
+
+                        <article class="right-card">
+                            <i class="fa-solid fa-pen-to-square"></i>
+
+                            <h3>Correção</h3>
+
+                            <p>
+                                Solicitar a atualização de informações
+                                incompletas, incorretas ou desatualizadas.
+                            </p>
+                        </article>
+
+                        <article class="right-card">
+                            <i class="fa-solid fa-trash"></i>
+
+                            <h3>Exclusão</h3>
+
+                            <p>
+                                Solicitar a exclusão de dados pessoais,
+                                respeitadas as hipóteses legais de conservação.
+                            </p>
+                        </article>
+
+                        <article class="right-card">
+                            <i class="fa-solid fa-circle-question"></i>
+
+                            <h3>Informações</h3>
+
+                            <p>
+                                Solicitar esclarecimentos sobre o uso
+                                e o compartilhamento dos seus dados.
+                            </p>
+                        </article>
+
+                    </div>
+
+                    <p class="mt-4">
+                        Você também pode atualizar as informações disponíveis
+                        no seu perfil e solicitar a exclusão da conta
+                        a um administrador, conforme os recursos oferecidos.
+                    </p>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-scale-balanced"></i>
+
+                        <p>
+                            As solicitações serão avaliadas de acordo com
+                            a legislação aplicável. Alguns dados podem
+                            precisar ser mantidos quando houver obrigação
+                            legal ou outra hipótese legítima de conservação.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- SEÇÃO 9 -->
+            <section class="privacy-section" id="secao-9">
+
+                <div class="section-heading">
+
+                    <div class="section-icon">
+                        <i class="fa-solid fa-file-pen"></i>
+                    </div>
+
+                    <div>
+                        <h2>9. Alterações nesta Política</h2>
+                        <small>Atualizações e novas versões</small>
+                    </div>
+
+                </div>
+
+                <div class="section-content">
+
+                    <p>
+                        Esta Política de Privacidade poderá ser atualizada
+                        periodicamente para refletir mudanças nos recursos,
+                        nos procedimentos de segurança ou nas práticas
+                        de tratamento de informações da plataforma.
+                    </p>
+
+                    <p>
+                        Quando ocorrerem alterações relevantes, a plataforma
+                        poderá disponibilizar uma versão atualizada desta
+                        página e indicar a data da última revisão.
+                    </p>
+
+                    <p>
+                        Recomendamos consultar esta página regularmente
+                        para acompanhar as informações mais recentes.
+                    </p>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-calendar-check"></i>
+
+                        <p>
+                            A data de atualização exibida no início da página
+                            deve corresponder à data real da última revisão
+                            deste documento.
+                        </p>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- INFORMAÇÕES FINAIS -->
+        <section class="final-notice" id="contato">
+
+            <div class="final-notice-content">
+
+                <i class="fa-solid fa-headset final-notice-icon"></i>
+
+                <div class="flex-1 min-w-0">
+
+                    <h2>Dúvidas sobre sua privacidade?</h2>
+
+                    <p>
+                        Se você deseja obter informações sobre seus dados,
+                        corrigir informações da sua conta ou solicitar
+                        a exclusão de dados pessoais, entre em contato
+                        com a administração da plataforma pelos canais
+                        oficiais disponibilizados.
+                    </p>
+
+                    <div class="action-buttons">
+
+                        <a href="termos.html" class="action-button primary-button">
+                            <i class="fa-solid fa-file-contract"></i>
+                            Termos de Uso
+                        </a>
+
+                        <a href="regras.html" class="action-button secondary-button">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                            Regras
+                        </a>
+
+                        <a href="index.html" class="action-button secondary-button">
+                            <i class="fa-solid fa-house"></i>
+                            Início
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- OBSERVAÇÃO -->
+        <div class="mt-6 text-center px-3">
+
+            <p class="text-xs text-gray-500 leading-7">
+                Este documento apresenta as diretrizes de privacidade
+                da plataforma. As informações devem refletir as práticas
+                técnicas realmente implementadas no sistema.
+            </p>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+
+        <div class="footer-links">
+
+            <a href="regras.html">Regras</a>
+
+            <a href="termos.html">Termos de Uso</a>
+
+            <a href="privacidade.html">Política de Privacidade</a>
+
+            <a href="index.html">Início</a>
+
+        </div>
+
+        <p class="footer-copy">
+            © 2026 Roblox Clone — Plataforma de jogos online.
+            Todos os direitos reservados.
+        </p>
+
+    </footer>
+
+    <!-- VOLTAR AO TOPO -->
+    <button
+        class="back-to-top"
+        id="backToTop"
+        type="button"
+        aria-label="Voltar ao topo"
+        title="Voltar ao topo"
+    >
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script>
+
+        // MENU MOBILE
+
+        const menuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+
+        menuButton.addEventListener('click', function () {
+
+            const isOpen = mobileMenu.classList.toggle('open');
+
+            menuButton.setAttribute('aria-expanded', String(isOpen));
+
+            menuIcon.className = isOpen
+                ? 'fa-solid fa-xmark'
+                : 'fa-solid fa-bars';
+
+        });
+
+        // FECHAR MENU AO CLICAR EM UM LINK
+
+        mobileMenu.querySelectorAll('a').forEach(function (link) {
+
+            link.addEventListener('click', function () {
+
+                mobileMenu.classList.remove('open');
+
+                menuButton.setAttribute('aria-expanded', 'false');
+
+                menuIcon.className = 'fa-solid fa-bars';
+
+            });
+
+        });
+
+        // FECHAR MENU COM ESC
+
+        document.addEventListener('keydown', function (event) {
+
+            if (event.key === 'Escape') {
+
+                mobileMenu.classList.remove('open');
+
+                menuButton.setAttribute('aria-expanded', 'false');
+
+                menuIcon.className = 'fa-solid fa-bars';
+
+            }
+
+        });
+
+        // PROGRESSO DE LEITURA
+
+        const readingProgress = document.getElementById('readingProgress');
+
+        const backToTop = document.getElementById('backToTop');
+
+        function updatePageProgress() {
+
+            const scrollTop = window.scrollY;
+
+            const documentHeight =
+                document.documentElement.scrollHeight - window.innerHeight;
+
+            const progress = documentHeight > 0
+                ? (scrollTop / documentHeight) * 100
+                : 0;
+
+            readingProgress.style.width =
+                Math.min(progress, 100) + '%';
+
+            if (scrollTop > 350) {
+
+                backToTop.classList.add('visible');
+
+            } else {
+
+                backToTop.classList.remove('visible');
+
+            }
+
+        }
+
+        window.addEventListener('scroll', updatePageProgress, {
+            passive: true
+        });
+
+        window.addEventListener('resize', updatePageProgress);
+
+        updatePageProgress();
+
+        // VOLTAR AO TOPO
+
+        backToTop.addEventListener('click', function () {
+
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+
+        });
+
+    </script>
+
+
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>
+</html>

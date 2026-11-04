@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Roblox Clone - Perfil</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="auth.js?v=3"></script>
+<script>if(typeof Auth==='undefined'||!Auth.avatar){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p>
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>');window.stop();throw new Error('auth.js antigo')}</script>
+<style>
+body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
+#view{background:radial-gradient(circle at 50% 30%,#5a97d6,#1a2b3d 80%);cursor:grab;touch-action:none}#view:active{cursor:grabbing}
+.btn{padding:8px 18px;border-radius:8px;font-weight:700;transition:.15s;font-size:14px}
+.b1{background:#335fff}.b1:hover{background:#4d74ff}.b2{background:#393b3d;border:1px solid #4a4c4f}.b2:hover{background:#4a4c4f}
+.b3{background:#00b06f}.b3:hover{background:#008f5a}.b4{background:#c0392b}.b4:hover{background:#e74c3c}
+.dis{opacity:.55;cursor:default}
+input[type=color]{width:42px;height:30px;border:0;background:none;cursor:pointer}
+.card{background:#1f2124;border:1px solid #2e3033;border-radius:12px}
+.tab{padding:12px 18px;font-weight:700;color:#9a9ea3;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.tab:hover{color:#fff}.tab.on{color:#fff;border-color:#335fff}
+.stat{text-align:center;padding:0 18px;border-right:1px solid #33363a}.stat:last-child{border:0}
+.stat b{display:block;font-size:20px}.stat span{font-size:12px;color:#9a9ea3}
+.mcard:hover .thumb{filter:brightness(1.12)}
+#bioTxt{white-space:pre-wrap;word-break:break-word}
+textarea{background:#15171a;border:1px solid #3a3d41;border-radius:8px;color:#fff;width:100%;padding:10px;resize:vertical;min-height:110px;outline:none}textarea:focus{border-color:#335fff}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00b06f;padding:8px 20px;border-radius:8px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
+</style>
+</head>
+<body>
+<header class="h-12 border-b border-[#2e3033] bg-[#1a1c1e] flex items-center justify-between px-4 sticky top-0 z-40">
+  <a href="index.html" class="text-xl font-black tracking-tighter"><i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>ROBLOX</a>
+  <div class="flex items-center gap-4"><a href="index.html" class="text-gray-300 hover:text-white"><i class="fa-solid fa-house mr-1"></i>Início</a>
+  <a href="batepapo.html" class="text-gray-300 hover:text-white"><i class="fa-solid fa-comment mr-1"></i>Bate-papo</a>
+  <a id="meLink" class="font-bold hover:underline cursor-pointer"></a></div>
+</header>
+<main class="max-w-5xl mx-auto p-3 md:p-6">
+  <div id="nf" class="hidden text-center py-24"><i class="fa-solid fa-user-slash text-6xl text-gray-600"></i><h1 class="text-2xl font-bold mt-4">Usuário não encontrado</h1><a href="index.html" class="text-blue-400 hover:underline">Voltar ao início</a></div>
+  <div id="pf">
+    <div class="card overflow-hidden">
+      <div class="h-24 md:h-28" style="background:linear-gradient(120deg,#1b3a8a,#335fff 55%,#00a2ff)"></div>
+      <div class="px-4 md:px-6 pb-5 flex flex-col md:flex-row gap-5 md:items-end -mt-16">
+        <div class="relative w-44 h-52 md:w-52 md:h-60 shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden border-4 border-[#1f2124] shadow-xl"><div id="view" class="w-full h-full"></div>
+          <div class="absolute bottom-1 w-full text-center text-[10px] text-gray-200 pointer-events-none"><i class="fa-solid fa-arrows-left-right mr-1"></i>Arraste para girar</div></div>
+        <div class="flex-1 min-w-0 text-center md:text-left md:pb-1">
+          <div class="flex items-center gap-2 justify-center md:justify-start flex-wrap md:pt-16">
+            <h1 id="pName" class="text-2xl md:text-3xl font-black truncate max-w-full"></h1><span id="vBadge" class="text-xl"></span>
+          </div>
+          <p class="text-gray-400 text-sm"><span id="pHandle"></span> · <span id="pOn"></span></p>
+          <div class="flex justify-center md:justify-start my-4 py-1 w-fit mx-auto md:mx-0">
+            <div class="stat pl-0"><b id="sF"></b><span>Amigos</span></div><div class="stat"><b id="sM"></b><span>Mapas</span></div>
+            <div class="stat"><b id="sV"></b><span>Visitas</span></div><div class="stat"><b id="sD"></b><span>Entrou em</span></div>
+          </div>
+          <div id="actions" class="flex gap-2 flex-wrap justify-center md:justify-start"></div>
+        </div>
+      </div>
+      <div class="border-t border-[#2e3033] flex px-2 overflow-x-auto" id="tabs">
+        <div class="tab on" data-t="about"><i class="fa-solid fa-id-card mr-2"></i>Sobre</div>
+        <div class="tab" data-t="maps"><i class="fa-solid fa-cube mr-2"></i>Mapas</div>
+        <div class="tab" data-t="friends"><i class="fa-solid fa-user-group mr-2"></i>Amigos</div>
+        <div class="tab hidden" data-t="avatar" id="tabAv"><i class="fa-solid fa-shirt mr-2"></i>Avatar</div>
+      </div>
+    </div>
+
+    <section id="p_about" class="pane mt-4 card p-5">
+      <div class="flex items-center justify-between mb-2"><h2 class="text-lg font-bold">Sobre</h2>
+        <button id="bioEdit" class="btn b2 hidden !py-1 !px-3 text-xs"><i class="fa-solid fa-pen mr-1"></i>Editar bio</button></div>
+      <p id="bioTxt" class="text-gray-300 text-[15px] leading-relaxed"></p>
+      <div id="bioBox" class="hidden">
+        <textarea id="bioIn" maxlength="300" placeholder="Conte quem você é, que mapas gosta de criar, o que costuma jogar..."></textarea>
+        <div class="flex items-center justify-between mt-2 flex-wrap gap-2"><span class="text-xs text-gray-400"><span id="bioN">0</span>/300</span>
+          <div class="flex gap-2"><button class="btn b2" id="bioCancel">Cancelar</button><button class="btn b3" id="bioSave"><i class="fa-solid fa-floppy-disk mr-2"></i>Salvar</button></div></div>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-5 text-sm">
+        <div class="bg-[#15171a] rounded-lg p-3"><div class="text-gray-400 text-xs">ID da conta</div><div id="iID" class="font-bold truncate"></div></div>
+        <div class="bg-[#15171a] rounded-lg p-3"><div class="text-gray-400 text-xs">Usuário</div><div id="iU" class="font-bold truncate"></div></div>
+        <div class="bg-[#15171a] rounded-lg p-3"><div class="text-gray-400 text-xs">Membro desde</div><div id="iD" class="font-bold"></div></div>
+        <div class="bg-[#15171a] rounded-lg p-3"><div class="text-gray-400 text-xs">Mapas publicados</div><div id="iM" class="font-bold"></div></div>
+        <div class="bg-[#15171a] rounded-lg p-3"><div class="text-gray-400 text-xs">Visitas nos mapas</div><div id="iV" class="font-bold"></div></div>
+      </div>
+    </section>
+    <section id="p_maps" class="pane hidden mt-4 card p-5"><h2 class="text-lg font-bold mb-3">Mapas criados</h2><div id="maps" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></section>
+    <section id="p_friends" class="pane hidden mt-4 card p-5"><h2 class="text-lg font-bold mb-3">Amigos</h2><div id="friends" class="flex flex-wrap gap-5"></div></section>
+    <section id="p_avatar" class="pane hidden mt-4 card p-5">
+      <h2 class="text-lg font-bold mb-3"><i class="fa-solid fa-shirt mr-2"></i>Personalizar avatar</h2>
+      <div class="grid grid-cols-2 gap-3 mb-3 max-w-md" id="pickers"></div>
+      <div class="text-xs text-gray-400 mb-1">Estilos prontos</div><div id="presets" class="flex gap-2 flex-wrap mb-4"></div>
+      <button class="btn b3" onclick="saveAv()"><i class="fa-solid fa-floppy-disk mr-2"></i>Salvar avatar</button>
+      <button class="btn b2 ml-2" onclick="applyAv(Auth.DEF)">Restaurar</button>
+    </section>
+  </div>
+</main>
+<div id="toast"></div>
+<script>
+const $ = id => document.getElementById(id);
+const ME = Auth.require(), QS = new URLSearchParams(location.search), param = QS.get('u') || (QS.get('id') ? '' : ME), paramId = +QS.get('id') || 0; let U;
+$('meLink').textContent = ME; $('meLink').href = Auth.profileUrl(ME);
+const toast = m => { const t = $('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 1800) };
+const hue = s => [...s].reduce((a, c) => a + c.charCodeAt(0), 0) * 37 % 360;
+const goProfile = n => location.href = Auth.profileUrl(n);
+let setAvatarColors = () => {}, cur;
+
+Auth.init().then(() => { const us = Auth.users(); U = (paramId && Object.values(us).find(x => x.id === paramId)) || us[param.toLowerCase()]; $('meLink').href = Auth.profileUrl(ME); if (U) history.replaceState(null, '', Auth.profileUrl(U.name)); if (!U) { $('pf').classList.add('hidden'); $('nf').classList.remove('hidden'); } else init(); });
+
+function init() {
+  const NAME = U.name, own = NAME.toLowerCase() === ME.toLowerCase();
+  document.title = NAME + ' - Roblox Clone';
+  $('pName').textContent = NAME; $('vBadge').innerHTML = Auth.badge(NAME); $('pHandle').textContent = '@' + NAME.toLowerCase();
+  const dt = new Date(U.created).toLocaleDateString('pt-BR'); $('sD').textContent = dt; $('iD').textContent = dt; $('iU').textContent = '@' + NAME.toLowerCase(); $('iID').textContent = U.id ? '#' + U.id : '—'; if (U.id) $('pHandle').textContent = '@' + NAME.toLowerCase() + ' · ID ' + U.id;
+  const fmtN = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.0', '') + ' mi' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.0', '') + ' mil' : String(n);
+  /* abas */
+  const showTab = t => { document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.t === t)); document.querySelectorAll('.pane').forEach(x => x.classList.toggle('hidden', x.id !== 'p_' + t)); };
+  document.querySelectorAll('.tab').forEach(x => x.onclick = () => showTab(x.dataset.t));
+  if (own) $('tabAv').classList.remove('hidden');
+  /* bio */
+  const bioOf = () => { const u = Auth.users()[NAME.toLowerCase()]; return (u && u.bio) || ''; };
+  const showBio = () => { const b = bioOf(), el = $('bioTxt'); el.textContent = b || (own ? 'Você ainda não escreveu nada. Clique em "Editar bio" e conte quem você é!' : NAME + ' ainda não escreveu uma bio.'); el.style.fontStyle = b ? 'normal' : 'italic'; el.style.color = b ? '' : '#7d8186'; };
+  let editing = false;
+  if (own) {
+    $('bioEdit').classList.remove('hidden');
+    const open = on => { editing = on; $('bioBox').classList.toggle('hidden', !on); $('bioTxt').classList.toggle('hidden', on); $('bioEdit').classList.toggle('hidden', on); if (on) { $('bioIn').value = bioOf(); $('bioN').textContent = $('bioIn').value.length; $('bioIn').focus(); } };
+    $('bioEdit').onclick = () => open(true); $('bioCancel').onclick = () => open(false);
+    $('bioIn').oninput = () => $('bioN').textContent = $('bioIn').value.length;
+    $('bioSave').onclick = async () => { $('bioSave').disabled = true; const r = await Auth.setBio($('bioIn').value); $('bioSave').disabled = false; open(false); showBio(); toast(r.server && !r.shared ? 'Salvo só neste navegador (reinicie o node server.js)' : 'Bio salva!'); };
+  }
+  showBio();
+  cur = Auth.avatar(NAME);
+
+  /* ---------- personagem 3D ---------- */
+  const box = $('view'), W = box.clientWidth, H = box.clientHeight;
+  const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(35, W / H, .1, 100);
+  cam.position.set(0, 3.4, 17); cam.lookAt(0, 3.1, 0);
+  const rd = new THREE.WebGLRenderer({ antialias: true, alpha: true }); rd.setSize(W, H); rd.setPixelRatio(devicePixelRatio); box.appendChild(rd.domElement);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, .95));
+  const dl = new THREE.DirectionalLight(0xffffff, .8); dl.position.set(5, 10, 8); scene.add(dl);
+  const g = new THREE.Group(); scene.add(g);
+  const mats = {}, add = (k, w, h, d, x, y) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({ color: cur[k] }));
+    m.position.set(x, y, 0); g.add(m); (mats[k] = mats[k] || []).push(m); return m;
+  };
+  add('legs', 1, 2, 1, -.5, 1); add('legs', 1, 2, 1, .5, 1); add('torso', 2, 2, 1, 0, 3);
+  const armL = add('arms', 1, 2, 1, -1.5, 3), armR = add('arms', 1, 2, 1, 1.5, 3), head = add('head', 1.6, 1.6, 1.6, 0, 4.8);
+  const fc = document.createElement('canvas'); fc.width = fc.height = 64; const fx = fc.getContext('2d'), ft = new THREE.CanvasTexture(fc);
+  const drawFace = () => {
+    fx.fillStyle = cur.head; fx.fillRect(0, 0, 64, 64); fx.fillStyle = '#222'; fx.fillRect(18, 22, 6, 10); fx.fillRect(40, 22, 6, 10);
+    fx.lineWidth = 4; fx.strokeStyle = '#222'; fx.beginPath(); fx.arc(32, 36, 13, .15 * Math.PI, .85 * Math.PI); fx.stroke(); ft.needsUpdate = true;
+  };
+  const hb = head.material; head.material = [hb, hb, hb, hb, new THREE.MeshStandardMaterial({ map: ft }), hb]; drawFace();
+  const floor = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, .1, 40), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: .3 })); floor.position.y = -.05; scene.add(floor);
+  setAvatarColors = av => { cur = Object.assign({}, av); Object.keys(mats).forEach(k => mats[k].forEach(m => { (Array.isArray(m.material) ? m.material[0] : m.material).color.set(cur[k]); })); drawFace(); };
+
+  let drag = false, px = 0, t = 0; g.rotation.y = -.5;
+  rd.domElement.addEventListener('pointerdown', e => { drag = true; px = e.clientX; rd.domElement.setPointerCapture(e.pointerId) });
+  addEventListener('pointerup', () => drag = false);
+  rd.domElement.addEventListener('pointermove', e => { if (drag) { g.rotation.y += (e.clientX - px) * .012; px = e.clientX } });
+  (function loop() { requestAnimationFrame(loop); t += .03; if (!drag) g.rotation.y += .004; armL.rotation.z = .04 + Math.sin(t) * .05; armR.rotation.z = -.04 - Math.sin(t) * .05; rd.render(scene, cam) })();
+
+  /* ---------- botões ---------- */
+  const btn = (txt, cls, fn, icon) => { const b = document.createElement('button'); b.className = 'btn ' + cls; b.innerHTML = (icon ? `<i class="fa-solid fa-${icon} mr-2"></i>` : '') + txt; if (fn) b.onclick = fn; else b.classList.add('dis'); return b };
+  function renderActions() {
+    const a = $('actions'); a.innerHTML = '';
+    $('sF').textContent = Auth.friends(NAME).length;
+    if (own) { a.append(btn('Editar avatar', 'b1', () => location.href='avatar.html', 'shirt'), btn('Editar bio', 'b2', () => { showTab('about'); $('bioEdit').click() }, 'pen'), btn('Início', 'b2', () => location.href = 'index.html', 'house')); return }
+    const st = Auth.status(ME, NAME), re = () => { renderActions(); renderFriends() };
+    if (st === 'none') a.append(btn('Adicionar amigo', 'b1', () => { Auth.sendRequest(ME, NAME); toast('Solicitação enviada!'); re() }, 'user-plus'));
+    if (st === 'sent') a.append(btn('Solicitação enviada', 'b2', null, 'clock'));
+    if (st === 'received') a.append(btn('Aceitar', 'b3', () => { Auth.accept(ME, NAME); toast('Vocês agora são amigos!'); re() }, 'check'), btn('Recusar', 'b4', () => { Auth.decline(ME, NAME); re() }, 'xmark'));
+    if (st === 'friends') a.append(btn('Amigos', 'b3', null, 'user-check'), btn('Mensagem', 'b1', () => location.href = 'batepapo.html?u=' + encodeURIComponent(NAME), 'comment'), btn('Remover', 'b4', () => { if (confirm('Remover ' + NAME + ' dos amigos?')) { Auth.unfriend(ME, NAME); re() } }, 'user-minus'));
+    a.append(btn('Voltar', 'b2', () => history.back(), 'arrow-left'));
+  }
+
+  /* ---------- editor de avatar ---------- */
+  if (own) {
+    const labels = { head: 'Cabeça', torso: 'Torso', arms: 'Braços', legs: 'Pernas' };
+    Object.keys(labels).forEach(k => {
+      const d = document.createElement('label'); d.className = 'flex items-center justify-between bg-[#232527] rounded px-3 py-1 text-sm'; d.innerHTML = `<span>${labels[k]}</span>`;
+      const i = document.createElement('input'); i.type = 'color'; i.id = 'c_' + k; i.value = cur[k]; i.oninput = () => setAvatarColors({ ...cur, [k]: i.value }); d.appendChild(i); $('pickers').appendChild(d);
+    });
+    [['Clássico', Auth.DEF], ['Ninja', { head: '#e0b184', torso: '#222222', arms: '#222222', legs: '#222222' }], ['Rubro', { head: '#f5cd30', torso: '#c0392b', arms: '#f5cd30', legs: '#7f1d1d' }],
+     ['Floresta', { head: '#e0b184', torso: '#27ae60', arms: '#e0b184', legs: '#6b4423' }], ['Neon', { head: '#ffe0bd', torso: '#9b59b6', arms: '#ffe0bd', legs: '#3498db' }], ['Gelo', { head: '#dff6ff', torso: '#74b9ff', arms: '#dff6ff', legs: '#0984e3' }]]
+      .forEach(([n, av]) => { const b = document.createElement('button'); b.className = 'btn b2 text-xs'; b.textContent = n; b.onclick = () => applyAv(av); $('presets').appendChild(b) });
+  }
+  window.applyAv = av => { setAvatarColors(av); ['head', 'torso', 'arms', 'legs'].forEach(k => { if ($('c_' + k)) $('c_' + k).value = cur[k] }) };
+  window.saveAv = () => { Auth.setAvatar(cur); toast('Avatar salvo!') };
+
+  /* ---------- mapas e amigos ---------- */
+  const games = Auth.games().filter(x => x.creator === NAME);
+  $('sM').textContent = games.length; $('iM').textContent = games.length;
+  const tv = games.reduce((a, x) => a + (x.visits || 0), 0); $('sV').textContent = fmtN(tv); $('iV').textContent = tv.toLocaleString('pt-BR');
+  if (!games.length) $('maps').innerHTML = '<p class="text-gray-500 text-sm col-span-full">Nenhum mapa publicado ainda.</p>';
+  games.forEach(x => {
+    const d = document.createElement('div'); d.className = 'cursor-pointer';
+    d.className = 'cursor-pointer mcard'; d.innerHTML = '<div class="thumb aspect-square rounded-lg flex items-center justify-center mb-2 transition bg-cover bg-center"><i class="fa-solid fa-cube text-5xl text-white"></i></div><div class="font-bold text-sm truncate"></div><div class="text-xs text-gray-400"><i class="fa-solid fa-eye mr-1"></i>' + fmtN(x.visits || 0) + '</div>';
+    if (x.thumb) { d.firstChild.style.backgroundImage = `url(${x.thumb})`; d.firstChild.firstChild.remove(); } else d.firstChild.style.background = `linear-gradient(135deg,hsl(${hue(x.name)},60%,45%),hsl(${hue(x.name) + 40},60%,30%))`; d.children[1].textContent = x.name;
+    d.onclick = () => { localStorage.setItem('robloxPlay', x.name); localStorage.setItem('robloxPlayCreator', x.creator); location.href = 'game.html' }; $('maps').appendChild(d);
+  });
+  function renderFriends() {
+    const f = Auth.friends(NAME), box = $('friends'); box.innerHTML = '';
+    if (!f.length) box.innerHTML = '<p class="text-gray-500 text-sm">Sem amigos por enquanto.</p>';
+    f.forEach(n => {
+      const d = document.createElement('div'); d.className = 'w-20 text-center cursor-pointer group';
+      d.innerHTML = '<div class="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-2xl font-black text-[#222] mb-1 group-hover:ring-2 ring-white transition"></div><div class="text-xs truncate"></div>';
+      d.firstChild.style.background = Auth.avatar(n).head; d.firstChild.textContent = n[0].toUpperCase(); d.lastChild.textContent = n;
+      const pi = Auth.pres.info(n); d.firstChild.style.position = 'relative'; if (pi.k !== 'off') { d.firstChild.insertAdjacentHTML('beforeend', '<span style="position:absolute;right:0;bottom:0;width:14px;height:14px;border-radius:50%;border:2px solid #1f2124;background:' + Auth.pres.COLOR[pi.k] + '"></span>'); const t = document.createElement('div'); t.className = 'text-[10px] leading-tight'; t.style.color = Auth.pres.COLOR[pi.k]; t.textContent = pi.t; d.appendChild(t); } d.onclick = () => goProfile(n); box.appendChild(d);
+    });
+  }
+  renderActions(); renderFriends();
+  const paintOn = () => { const i = Auth.pres.info(NAME), c = Auth.pres.COLOR[i.k]; $('pOn').innerHTML = (i.k === 'off' && !Auth.pres.get(NAME) ? 'Membro' : '<i class="fa-solid fa-circle text-[8px] mr-1" style="color:' + c + '"></i><span style="color:' + c + '"></span>'); const sp = $('pOn').querySelector('span'); if (sp) sp.textContent = i.t; };
+  paintOn(); if (Auth.server) Auth.pres.watch(() => [NAME, ...Auth.friends(NAME)], () => { paintOn(); renderFriends(); });
+  if (Auth.server) setInterval(async () => { if (await Auth.sync()) { renderActions(); renderFriends(); $('vBadge').innerHTML = Auth.badge(NAME); if (!editing) showBio(); } }, 2500);
+}
+</script>
+
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>
+</html>

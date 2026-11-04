@@ -1,0 +1,9 @@
+{
+  "name": "roblox-clone",
+  "version": "1.0.0",
+  "description": "Roblox Clone - servidor Node.js",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18.0.0" },
+  "dependencies": { "mysql2": "^3.11.0" }
+}
