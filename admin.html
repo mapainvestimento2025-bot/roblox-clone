@@ -157,8 +157,7 @@ function fmtN(n) { return n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1e3 ? (n/1e3)
 function renderKpis() {
   const u = D.users, now = Date.now();
   const k = (ic, c, v, l) => `<div class="card p-4 flex items-center gap-3"><div style="width:42px;height:42px;border-radius:11px;background:${c}22;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-${ic}" style="color:${c};font-size:18px"></i></div><div><div class="text-2xl font-black" style="color:${c}">${v}</div><div class="text-xs text-gray-400">${l}</div></div></div>`;
-  $('kpis').innerHTML =
-    const totalJogos = u.reduce((s,x)=>s+(x.games||[]).length,0);
+  const totalJogos = u.reduce((s,x)=>s+(x.games||[]).length,0);
     const totalPecas = u.reduce((s,x)=>s+(x.totalParts||0),0);
     $('kpis').innerHTML =
     k('users','#3794ff', u.length, 'Contas') +
