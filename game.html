@@ -4,272 +4,291 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Roblox Clone - Jogo</title>
-<script src="auth.js?v=3"></script>
-<script>if(typeof Auth==='undefined'||!Auth.avatar){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="auth.js?v=4"></script>
+<script>
+// Garante que auth.js carregou corretamente - sem bloquear o jogo
+if(typeof Auth==='undefined'||!Auth.avatar){
+  // tenta recarregar sem cache uma vez
+  if(!sessionStorage.getItem('authRetried')){
+    sessionStorage.setItem('authRetried','1');
+    location.reload(true);
+  }
+}
+</script>
+<style>
+/* ===== ROBLOX-LIKE UI ===== */
+:root{
+  --rbx-blue:#0066FF;
+  --rbx-blue2:#1a75ff;
+  --rbx-dark:#1a1a2e;
+  --rbx-panel:rgba(30,30,46,.97);
+  --rbx-line:rgba(255,255,255,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{font-family:'GothamSSm','Nunito','Segoe UI',Arial,sans-serif;background:#87b4e8;color:#fff;-webkit-font-smoothing:antialiased}
+canvas{display:block;outline:none}
+button,input{font:inherit;border:none;outline:none}
+button{-webkit-tap-highlight-color:transparent;cursor:pointer}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
-<style id="mobileNavStyle">
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+/* ===== TOPBAR estilo Roblox ===== */
+#topbar{
+  position:absolute;top:0;left:0;right:0;height:52px;z-index:50;
+  background:linear-gradient(180deg,rgba(10,12,20,.92) 0%,rgba(10,12,20,.0) 100%);
+  display:flex;align-items:center;gap:8px;padding:0 12px;
+  pointer-events:none;
+}
+#topbar > *{pointer-events:all}
+
+/* Logo / nome do jogo */
+#gameTitle{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:7px 14px;
+  backdrop-filter:blur(12px);
+  min-width:0;max-width:280px;
+}
+#gameTitle .icon{width:28px;height:28px;border-radius:6px;background:var(--rbx-blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#gameTitle .icon svg{width:16px;height:16px}
+#gameTitle .info{min-width:0}
+#gameTitle .info h2{font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+#gameTitle .info span{font-size:10px;color:rgba(255,255,255,.6);font-weight:600;white-space:nowrap}
+
+/* Botões da topbar */
+.tbtn{
+  width:40px;height:40px;border-radius:10px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(12px);color:#fff;
+  transition:background .15s,transform .12s,border-color .15s;
+  flex-shrink:0;
+}
+.tbtn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);transform:translateY(-1px)}
+.tbtn:active{transform:scale(.93)}
+.tbtn svg{width:18px;height:18px}
+
+/* Spacer */
+#topbar .sp{flex:1}
+
+/* Badge online */
+#onlineBadge{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:7px 12px;
+  font-size:12px;font-weight:700;
+  backdrop-filter:blur(12px);
+}
+#onlineBadge .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e}
+
+/* ===== MENU LATERAL (estilo Roblox ESC menu) ===== */
+#menuOverlay{
+  display:none;position:fixed;inset:0;z-index:80;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+}
+#menuOverlay.open{display:flex;animation:fadeIn .18s ease-out}
+#menuBox{
+  width:360px;max-width:calc(100vw - 32px);
+  background:linear-gradient(160deg,#1e2030,#161824);
+  border:1px solid rgba(255,255,255,.12);border-radius:20px;
+  padding:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);
+}
+#menuBox .logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+#menuBox .logo .rbx{width:36px;height:36px;border-radius:9px;background:var(--rbx-blue);display:flex;align-items:center;justify-content:center}
+#menuBox .logo h2{font-size:20px;font-weight:900;letter-spacing:-.4px}
+#menuBox .sub{font-size:11px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px}
+#menuBox .hint{
+  padding:13px 15px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  font-size:11px;line-height:2;color:rgba(255,255,255,.75);margin-bottom:16px
+}
+#menuBox .hint b{color:#fff}
+#menuBox .mbtn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:13px;border-radius:12px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+  color:#fff;font-size:14px;font-weight:700;margin-bottom:8px;
+  transition:background .15s,transform .12s
+}
+#menuBox .mbtn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+#menuBox .mbtn:active{transform:scale(.985)}
+#menuBox .mbtn.red{background:linear-gradient(135deg,#c0392b,#962d23);border-color:rgba(255,100,100,.2)}
+#menuBox .mbtn.red:hover{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+
+/* ===== CHAT estilo Roblox ===== */
+#chat{
+  position:absolute;bottom:72px;left:14px;width:340px;
+  max-width:calc(100vw - 28px);z-index:30;
+  transition:opacity .18s,transform .18s;
+}
+#chat.hid{opacity:0;pointer-events:none;transform:translateY(8px)}
+#clog{
+  height:160px;overflow-y:auto;padding:10px 12px;
+  border-radius:12px 12px 0 0;
+  background:rgba(0,0,0,.55);
+  font-size:12px;line-height:1.6;
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
+  backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-bottom:none;
+}
+#clog::-webkit-scrollbar{width:4px}
+#clog::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px}
+#clog .m{margin-bottom:4px;word-break:break-word}
+#clog .n{font-weight:800}
+#clog .sys{color:rgba(255,255,255,.5);font-style:italic}
+#clog .fail{color:#ff7c7c}
+#cform{
+  display:flex;gap:6px;padding:8px;
+  background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08);border-top:none;
+  border-radius:0 0 12px 12px;backdrop-filter:blur(10px);
+}
+#cin{
+  flex:1;height:36px;padding:0 12px;border-radius:8px;
+  background:rgba(255,255,255,.1);color:#fff;font-size:12px;
+  border:1px solid rgba(255,255,255,.12);transition:border-color .15s,background .15s;
+}
+#cin:focus{border-color:var(--rbx-blue);background:rgba(255,255,255,.14);box-shadow:0 0 0 2px rgba(0,102,255,.25)}
+#cin::placeholder{color:rgba(255,255,255,.4)}
+#csend{
+  width:36px;height:36px;border-radius:8px;flex-shrink:0;
+  background:var(--rbx-blue);display:flex;align-items:center;justify-content:center;
+  transition:filter .15s,transform .12s;
+}
+#csend:hover{filter:brightness(1.15);transform:translateY(-1px)}
+#csend:active{transform:scale(.93)}
+body.touch #clog{height:90px}
+
+/* ===== LISTA DE JOGADORES (direita) ===== */
+#plist{
+  position:absolute;top:60px;right:12px;width:175px;z-index:20;
+  pointer-events:none;font-size:12px;
+}
+.prow{
+  padding:9px 12px;margin-bottom:2px;
+  border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);
+  font-weight:700;backdrop-filter:blur(8px);
+  display:flex;align-items:center;gap:6px;
+}
+.prow::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);flex-shrink:0}
+.prow.me{background:rgba(0,102,255,.7);border-color:rgba(0,153,255,.4)}
+.prow.me::before{background:#7cf;box-shadow:0 0 5px #7cf}
+
+/* ===== CONTROLES MOBILE ===== */
+#joy,#jump{display:none;position:absolute;z-index:10;touch-action:none;-webkit-user-select:none;user-select:none}
+#joy{
+  left:20px;bottom:80px;width:130px;height:130px;border-radius:50%;
+  background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.4);
+  box-shadow:0 0 20px rgba(0,0,0,.2),inset 0 0 20px rgba(255,255,255,.05);
+  backdrop-filter:blur(4px);
+}
+#knob{
+  position:absolute;left:33px;top:33px;width:60px;height:60px;border-radius:50%;
+  background:rgba(255,255,255,.95);border:2px solid rgba(255,255,255,.8);
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+#jump{
+  right:22px;bottom:88px;width:82px;height:82px;border-radius:50%;
+  align-items:center;justify-content:center;
+  background:rgba(0,102,255,.75);border:2px solid rgba(100,170,255,.5);
+  box-shadow:0 6px 20px rgba(0,0,0,.3),inset 0 1px 10px rgba(255,255,255,.12);
+  backdrop-filter:blur(6px);transition:transform .1s,background .1s;
+}
+#jump:active{background:rgba(0,130,255,.9);transform:scale(.92)}
+body.touch #joy{display:block}
+body.touch #jump{display:flex}
+body.touch .hint{display:none}
+
+/* Nome do jogador (centro-baixo) — oculto com navbar */
+#name{display:none}
+
+/* ===== NAVBAR MOBILE INFERIOR ===== */
+#mobileNav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:rgba(10,12,20,.95);border-top:1px solid rgba(255,255,255,.1);
+  padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(16px);
+}
 #mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
 #mobileNav a:hover,#mobileNav a.active{color:#fff}
 #mobileNav a i{font-size:18px}
 @media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
-</style>
-<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
-<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
-</body>');window.stop();throw new Error('auth.js antigo')}</script>
-<style>
 
-:root{
-  color-scheme:dark;
-  --rbx-bg:rgba(18,20,25,.88);
-  --rbx-panel:rgba(25,28,35,.94);
-  --rbx-panel-2:rgba(34,38,47,.92);
-  --rbx-line:rgba(255,255,255,.11);
-  --rbx-text:#f7f7f8;
-  --rbx-muted:#aeb4c0;
-  --rbx-blue:#335fff;
-  --rbx-blue-2:#4778ff;
-  --rbx-shadow:0 18px 55px rgba(0,0,0,.38);
-}
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0}
-body{
-  overflow:hidden;
-  font-family:Inter,"Segoe UI",Arial,sans-serif;
-  background:#87b4e8;
-  color:var(--rbx-text);
-  -webkit-font-smoothing:antialiased;
-}
-canvas{display:block;outline:none}
-button,input{font:inherit}
-button{ -webkit-tap-highlight-color:transparent }
-
-/* HUD do mapa */
-#hud{
-  position:absolute;top:16px;left:116px!important;z-index:5;
-  max-width:min(440px,calc(100vw - 150px));
-  color:#fff;pointer-events:none;
-  padding:13px 17px 12px;
-  border:1px solid rgba(255,255,255,.16);
-  border-radius:14px;
-  background:linear-gradient(135deg,rgba(17,20,27,.82),rgba(17,20,27,.55));
-  box-shadow:0 8px 28px rgba(0,0,0,.2);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  text-shadow:0 2px 8px rgba(0,0,0,.45)
-}
-#hud h2{margin:0;font-size:19px;line-height:1.25;font-weight:800;letter-spacing:-.35px}
-#hud p{margin:5px 0 0!important;font-size:12px!important;color:rgba(255,255,255,.78);font-weight:600}
-
-/* Botões superiores */
-#mbtn,#cbtn{
-  position:absolute;top:16px;z-index:30;
-  width:46px;height:46px;border-radius:13px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(19,22,29,.82);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:#fff;
-  box-shadow:0 7px 22px rgba(0,0,0,.24);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease
-}
-#mbtn{left:16px}
-#cbtn{left:70px}
-#mbtn:hover,#cbtn:hover{
-  transform:translateY(-2px);
-  background:rgba(48,56,72,.96);
-  border-color:rgba(255,255,255,.34);
-  box-shadow:0 10px 26px rgba(0,0,0,.3)
-}
-#mbtn:active,#cbtn:active{transform:scale(.96)}
-#mbtn svg,#cbtn svg{filter:drop-shadow(0 1px 2px rgba(0,0,0,.2))}
-
-/* Menu principal */
-#menu{
-  position:absolute;top:72px;left:16px;width:292px;z-index:40;
-  display:none;padding:19px;
-  color:#fff;border:1px solid var(--rbx-line);border-radius:17px;
-  background:linear-gradient(155deg,rgba(31,35,44,.98),rgba(17,19,25,.98));
-  box-shadow:var(--rbx-shadow);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  animation:panelIn .18s ease-out
-}
-#menu.open{display:block}
-#menu h3{margin:0 0 4px;font-size:19px;font-weight:800;letter-spacing:-.35px}
-#menu small{display:block;margin-bottom:15px;color:var(--rbx-muted);font-size:11px;font-weight:700;letter-spacing:.45px;text-transform:uppercase}
-#menu .hint{
-  padding:12px 13px;margin-bottom:12px!important;
-  border:1px solid rgba(255,255,255,.08);border-radius:11px;
-  background:rgba(255,255,255,.045);color:#d7dbe3;
-  font-size:11px!important;line-height:1.9!important
-}
-#menu .hint b{color:#fff;font-weight:800}
-#menu button{
-  display:flex;align-items:center;justify-content:center;
-  width:100%;min-height:42px;margin-top:8px;padding:10px 13px;
-  border:1px solid rgba(255,255,255,.1);border-radius:10px;
-  background:rgba(255,255,255,.075);color:#f7f8fa;
-  font-size:13px;font-weight:700;cursor:pointer;
-  transition:background .18s ease,transform .18s ease,border-color .18s ease
-}
-#menu button:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2);transform:translateY(-1px)}
-#menu button:active{transform:scale(.985)}
-#menu button.leave{background:linear-gradient(135deg,#e34b55,#bd303d);border-color:rgba(255,255,255,.12);color:#fff}
-#menu button.leave:hover{background:linear-gradient(135deg,#f05b64,#d43a48)}
-
-/* Chat */
-#chat{
-  position:absolute;top:72px;left:16px;width:360px;
-  max-width:calc(100vw - 32px);z-index:25;
-  filter:drop-shadow(0 12px 28px rgba(0,0,0,.18));
-  transition:opacity .18s ease,transform .18s ease
-}
-#chat.hid{display:none}
-#clog{
-  height:174px;overflow-y:auto;padding:12px 13px;
-  border:1px solid rgba(255,255,255,.12);border-bottom:0;
-  border-radius:13px 13px 0 0;
-  background:linear-gradient(145deg,rgba(17,20,27,.82),rgba(22,25,32,.68));
-  color:#f7f8fb;font-size:12px;line-height:1.55;
-  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;
-  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)
-}
-#clog::-webkit-scrollbar{width:5px}
-#clog::-webkit-scrollbar-thumb{background:rgba(255,255,255,.24);border-radius:9px}
-#clog .m{margin-bottom:5px;word-break:break-word;text-shadow:0 1px 3px rgba(0,0,0,.5)}
-#clog .n{font-weight:800}
-#clog .sys{color:#c1c8d5;opacity:.82;font-style:italic}
-#clog .fail{color:#ff969d}
-#cform{
-  display:flex;gap:7px;padding:8px;
-  border:1px solid rgba(255,255,255,.12);border-top:1px solid rgba(255,255,255,.07);
-  border-radius:0 0 13px 13px;
-  background:rgba(20,23,30,.94);
-  backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px)
-}
-#cin{
-  flex:1;min-width:0;height:39px;padding:0 12px;
-  border:1px solid rgba(255,255,255,.1);border-radius:9px;
-  outline:0;background:rgba(255,255,255,.07);color:#fff;
-  font-size:12px;font-family:inherit;transition:border-color .18s,background .18s
-}
-#cin:focus{border-color:rgba(82,126,255,.85);background:rgba(255,255,255,.1);box-shadow:0 0 0 3px rgba(51,95,255,.16)}
-#cin::placeholder{color:#aeb5c2}
-#csend{
-  flex:0 0 42px;height:39px;border:0;border-radius:9px;
-  background:linear-gradient(135deg,var(--rbx-blue-2),#2548dc);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 12px rgba(38,78,230,.3);
-  transition:filter .18s,transform .18s
-}
-#csend:hover{filter:brightness(1.12);transform:translateY(-1px)}
-#csend:active{transform:scale(.96)}
-#csend svg{filter:drop-shadow(0 1px 2px rgba(0,0,0,.2))}
-body.touch #clog{height:112px}
-
-/* Lista de jogadores */
-#plist{
-  position:absolute;top:16px;right:16px;width:190px;z-index:8;
-  pointer-events:none;font-size:12px;color:#fff;
-  filter:drop-shadow(0 7px 18px rgba(0,0,0,.18))
-}
-.prow{
-  position:relative;padding:10px 13px;margin-bottom:3px;
-  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-  border:1px solid rgba(255,255,255,.09);
-  background:rgba(19,22,29,.78);
-  color:#e9edf5;font-weight:600;text-shadow:none;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
-}
-.prow:first-child{border-radius:12px 12px 0 0}
-.prow:last-child{border-radius:0 0 12px 12px;margin-bottom:0}
-.prow:only-child{border-radius:12px}
-.prow.me{background:rgba(51,95,255,.82);border-color:rgba(255,255,255,.2);color:#fff;font-weight:800}
-
-/* Controles mobile */
-#joy,#jump{
-  display:none;position:absolute;z-index:10;touch-action:none;
-  -webkit-user-select:none;user-select:none
-}
-#joy{
-  left:25px;bottom:27px;width:136px;height:136px;border-radius:50%;
-  background:rgba(18,22,31,.3);
-  border:2px solid rgba(255,255,255,.48);
-  box-shadow:inset 0 0 25px rgba(255,255,255,.08),0 8px 25px rgba(0,0,0,.16);
-  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)
-}
-#knob{
-  position:absolute;left:36px;top:36px;width:60px;height:60px;border-radius:50%;
-  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(205,213,228,.88));
-  border:1px solid rgba(255,255,255,.8);
-  box-shadow:0 5px 15px rgba(0,0,0,.25),inset 0 1px 2px rgba(255,255,255,.8)
-}
-#jump{
-  right:28px;bottom:35px;width:88px;height:88px;border-radius:50%;
-  align-items:center;justify-content:center;
-  border:2px solid rgba(255,255,255,.62);
-  background:linear-gradient(145deg,rgba(59,105,255,.7),rgba(34,65,183,.56));
-  box-shadow:0 8px 25px rgba(0,0,0,.22),inset 0 1px 12px rgba(255,255,255,.16);
-  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);
-  transition:transform .12s,background .12s
-}
-#jump:active{background:rgba(71,120,255,.9);transform:scale(.94)}
-body.touch #joy{display:block}
-body.touch #jump{display:flex}
-body.touch .hint{display:none}
-body.touch #name{display:none}
-#name{
-  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
-  padding:8px 16px;border:1px solid rgba(255,255,255,.18);border-radius:20px;
-  background:rgba(17,20,27,.72);color:#fff;font-size:12px;font-weight:700;
-  box-shadow:0 5px 18px rgba(0,0,0,.2);backdrop-filter:blur(10px)
-}
-@keyframes panelIn{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-
-/* Adaptação para tablets e celulares */
+/* Mobile adjustments */
 @media(max-width:700px){
-  #hud{top:12px;left:68px!important;max-width:calc(100vw - 150px);padding:10px 12px;border-radius:11px}
-  #hud h2{font-size:15px}
-  #hud p{font-size:10px!important}
-  #mbtn,#cbtn{top:12px;width:42px;height:42px;border-radius:11px}
-  #mbtn{left:12px}
-  #cbtn{left:60px}
-  #plist{top:66px;right:10px;width:145px;font-size:10px}
-  .prow{padding:7px 9px}
-  #chat{top:66px;left:10px;width:min(320px,calc(100vw - 20px))}
-  #clog{height:112px;padding:9px;font-size:11px}
-  #menu{top:62px;left:10px;width:min(285px,calc(100vw - 20px));padding:15px}
-  #name{bottom:10px;font-size:11px}
+  #gameTitle .info h2{font-size:11px}
+  #plist{width:140px;font-size:11px}
+  #chat{width:min(300px,calc(100vw - 28px));bottom:68px}
 }
-@media(max-width:390px){
-  #hud{max-width:calc(100vw - 126px);left:62px!important;padding:9px 10px}
-  #hud h2{font-size:13px}
-  #hud p{font-size:9px!important}
-  #mbtn,#cbtn{width:38px;height:38px}
-  #mbtn{left:9px}
-  #cbtn{left:53px}
-  #plist{width:125px;top:60px;right:8px}
-  #joy{left:16px;bottom:20px;width:118px;height:118px}
-  #knob{left:29px;top:29px;width:56px;height:56px}
-  #jump{right:17px;bottom:26px;width:76px;height:76px}
-}
-@media(prefers-reduced-motion:reduce){
-  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
-}
-
+@keyframes panelIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
+<!-- TOPBAR estilo Roblox -->
+<div id="topbar">
+  <!-- Menu burger -->
+  <button class="tbtn" onclick="toggleMenu()" title="Menu (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+  </button>
+  <!-- Chat -->
+  <button class="tbtn" onclick="toggleChat()" title="Chat (/)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+  <!-- Nome do jogo -->
+  <div id="gameTitle">
+    <div class="icon"><svg viewBox="0 0 24 24" fill="#fff"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div>
+    <div class="info">
+      <h2 id="title">Carregando...</h2>
+      <span id="srvInfo">Servidor 1</span>
+    </div>
+  </div>
+  <div class="sp"></div>
+  <!-- Badge online -->
+  <div id="onlineBadge"><div class="dot"></div><span id="onlineCnt">1 jogador</span></div>
+</div>
+
+<!-- Lista de jogadores (direita) -->
 <div id="plist"></div>
-<button id="mbtn" onclick="toggleMenu()" title="Menu (Esc)"><svg viewBox="0 0 24 24" width="22" height="22"><rect x="5" y="5" width="14" height="14" rx="2.5" transform="rotate(-15 12 12)" fill="#fff"/><rect x="10" y="10" width="4" height="4" transform="rotate(-15 12 12)" fill="#2a2d33"/></svg></button>
-<div id="menu"><h3 id="mnTitle">Menu</h3><small id="srvInfo"></small>
-  <div class="hint" style="font-size:12px;line-height:1.6;opacity:.85;margin-bottom:6px"><b>WASD</b> mover · <b>Espaço</b> pular · <b>Shift</b> correr<br><b>Botão direito</b> girar câmera · <b>Scroll</b> zoom<br><b>/</b> chat · <b>R</b> reaparecer · <b>Esc</b> menu</div>
-  <button onclick="respawnMe()">Reaparecer personagem</button>
-  <button class="leave" onclick="leaveGame()">Sair do jogo</button></div>
-<button id="cbtn" onclick="toggleChat()" title="Chat ( / )"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff"/></svg></button>
-<div id="chat"><div id="clog"></div><form id="cform" autocomplete="off"><input id="cin" maxlength="200" autocomplete="off" enterkeyhint="send" placeholder="Para falar no chat, clique aqui ou aperte /"><button id="csend" type="submit" title="Enviar"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 20l18-8L3 4v6l11 2-11 2z" fill="#fff"/></svg></button></form></div>
-<div id="hud"><h2 id="title">Carregando...</h2></div>
+
+<!-- Menu (overlay central estilo Roblox) -->
+<div id="menuOverlay" onclick="if(event.target===this)toggleMenu()">
+  <div id="menuBox">
+    <div class="logo">
+      <div class="rbx"><svg viewBox="0 0 24 24" fill="#fff" width="20" height="20"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div>
+      <h2 id="mnTitle">Menu</h2>
+    </div>
+    <div class="sub" id="mnSub">Roblox Clone</div>
+    <div class="hint"><b>WASD</b> mover &nbsp;·&nbsp; <b>Espaço</b> pular &nbsp;·&nbsp; <b>Shift</b> correr<br><b>Botão direito</b> girar câmera &nbsp;·&nbsp; <b>Scroll</b> zoom<br><b>/</b> abrir chat &nbsp;·&nbsp; <b>R</b> reaparecer &nbsp;·&nbsp; <b>Esc</b> menu</div>
+    <button class="mbtn" onclick="toggleMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Continuar jogando
+    </button>
+    <button class="mbtn" onclick="respawnMe()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      Reaparecer personagem
+    </button>
+    <button class="mbtn red" onclick="leaveGame()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sair do jogo
+    </button>
+  </div>
+</div>
+
+<!-- Chat -->
+<div id="chat" class="hid">
+  <div id="clog"></div>
+  <form id="cform" autocomplete="off">
+    <input id="cin" maxlength="200" autocomplete="off" enterkeyhint="send" placeholder="Escreva uma mensagem...">
+    <button id="csend" type="submit" title="Enviar">
+      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 20l18-8L3 4v6l11 2-11 2z" fill="#fff"/></svg>
+    </button>
+  </form>
+</div>
+
+<!-- Joystick mobile -->
 <div id="joy"><div id="knob"></div></div>
-<div id="jump"><svg viewBox="0 0 24 24" width="40" height="40"><path d="M12 4l8 9h-5v7H9v-7H4z" fill="#fff" opacity=".92"/></svg></div>
+<div id="jump"><svg viewBox="0 0 24 24" width="36" height="36"><path d="M12 4l8 9h-5v7H9v-7H4z" fill="#fff" opacity=".95"/></svg></div>
 <div id="name"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -354,10 +373,10 @@ let joyF=0,joyS=0;
 /* menu estilo Roblox */
 function showChat(){document.getElementById('chat').classList.remove('hid')}
 function toggleChat(){document.getElementById('chat').classList.toggle('hid')}
-function toggleMenu(){document.getElementById('menu').classList.toggle('open')}
-function respawnMe(){pos.copy(spawn);vel.set(0,0,0);document.getElementById('menu').classList.remove('open')}
+function toggleMenu(){document.getElementById('menuOverlay').classList.toggle('open')}
+function respawnMe(){pos.copy(spawn);vel.set(0,0,0);document.getElementById('menuOverlay').classList.remove('open')}
 function leaveGame(){location.href=(localStorage.getItem('robloxPlay')==='__draft__'?'studio.html':'index.html')}
-addEventListener('keydown',e=>{if(e.key==='Escape')toggleMenu()});
+addEventListener('keydown',e=>{if(e.key==='Escape'){toggleMenu()}});
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 
 /* ---------- física ---------- */
@@ -428,7 +447,10 @@ const myState=()=>({p:[+pos.x.toFixed(2),+pos.y.toFixed(2),+pos.z.toFixed(2)],r:
  let KEY=BASE,srvIdx=0;   // KEY só vira "BASE#N" depois de escolher o servidor (ver startNet abaixo)
  const draw=()=>{const w=tracked?Auth.presence.who(KEY):[ME];pl.innerHTML='';
   w.slice().sort((x,y)=>x===ME?-1:y===ME?1:x.localeCompare(y)).forEach(n=>{const r=document.createElement('div');r.className='prow'+(n===ME?' me':'');r.textContent=n;pl.appendChild(r)});
-  const si=document.getElementById('srvInfo');if(si)si.textContent=tracked?'Servidor '+(srvIdx+1)+' · '+w.length+' jogador'+(w.length===1?'':'es'):'Teste do Studio';
+  const si=document.getElementById('srvInfo');if(si)si.textContent=tracked?'Servidor '+(srvIdx+1):tracked?'Online':'Studio';
+  const oc=document.getElementById('onlineCnt');if(oc)oc.textContent=w.length+' jogador'+(w.length===1?'':'es');
+  const mn=document.getElementById('mnTitle');if(mn)mn.textContent=title||'Mapa Padrão';
+  const ms=document.getElementById('mnSub');if(ms)ms.textContent=tracked?'Servidor '+(srvIdx+1)+' · '+w.length+' jogador'+(w.length===1?'':'es'):'Teste do Studio';
   if(tracked){const now=performance.now();for(const u in others)if(!w.includes(u)&&now-others[u].seen>4000)removeOther(u)}};
  draw();
  function startNet(){   /* envia a SUA posição e recebe a dos outros, 10x por segundo */
@@ -490,15 +512,14 @@ const clog=document.getElementById('clog'),cin=document.getElementById('cin');le
   const bye=()=>{if(window.__blocked)return;Auth.presence.leave(KEY,ME);Auth.presence.release(BASE,ME)};addEventListener('pagehide',bye);addEventListener('beforeunload',bye);addEventListener('storage',draw);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()})}}
 </script>
 
-
-<style id="mobileNavStyle">
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
-</style>
-<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<!-- Navbar mobile -->
+<nav id="mobileNav">
+  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a>
+  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
+  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
+  <a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a>
+</nav>
 <script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
 </body>
 </html>
