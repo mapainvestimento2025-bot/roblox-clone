@@ -424,6 +424,8 @@ function toggleDevs(btn) {
   exp.style.overflowX = 'hidden';
   exp.style.webkitOverflowScrolling = 'touch';
   exp.style.touchAction = 'pan-y';
+  exp.style.overscrollBehavior = 'contain';
+  exp.style.webkitOverflowScrolling = 'touch';
 
   const chev = btn.querySelector('.dchev');
   if (chev) chev.style.transform = 'rotate(180deg)';
@@ -431,12 +433,13 @@ function toggleDevs(btn) {
   positionDevPanel();
 }
 
-// Reposiciona o painel junto ao botão durante a rolagem da página.
-window.addEventListener('scroll', positionDevPanel, true);
+// O painel é fixo na tela: não o reposicione enquanto a página rola.
+// Isso evita que ele desapareça durante gestos de arrastar para baixo.
 window.addEventListener('resize', positionDevPanel);
 
-// Fecha ao clicar fora do painel e do botão que o abriu.
-document.addEventListener('pointerdown', e => {
+// Fecha somente após um clique real fora do painel.
+// pointerdown foi removido porque dispara no início do gesto de rolagem.
+document.addEventListener('click', e => {
   if (!activeDevPanel) return;
   if (activeDevPanel.panel.contains(e.target) ||
       activeDevPanel.button.contains(e.target)) return;
@@ -568,7 +571,16 @@ addEventListener('keydown', e => { if (e.key==='Escape') closeBan(); });
   try { const c = JSON.parse(sessionStorage.getItem('admCred')); if (c) { CRED = c; const j = await call('list'); if (!j.err) show(j); else CRED = null; } } catch {}
   const me = Auth.current(); if (me && !$('gu').value) $('gu').value = me;
 })();
-setInterval(async () => { if (CRED && D) { const [j] = await Promise.all([call('list'), fetchStats()]); if (!j.err) { D = j; render(); } } }, 8000);
+setInterval(async () => {
+  if (CRED && D) {
+    const [j] = await Promise.all([call('list'), fetchStats()]);
+    if (!j.err) {
+      D = j;
+      // Não reconstrói a tabela enquanto os detalhes estiverem abertos.
+      if (!activeDevPanel) render();
+    }
+  }
+}, 8000);
 </script>
 
 
