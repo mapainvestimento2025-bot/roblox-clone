@@ -321,6 +321,21 @@ function issueWarning(ukey, source) {
   return { warned: true, count: n, msg };
 }
 const server = http.createServer(async (req, res) => {
+  // Redireciona HTTP → HTTPS automaticamente no Render/Railway
+  const proto = req.headers['x-forwarded-proto'] || '';
+  if (proto === 'http') {
+    const host = req.headers['host'] || '';
+    res.writeHead(301, { 'Location': 'https://' + host + req.url });
+    return res.end();
+  }
+  // Headers de segurança
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (proto === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  }
+
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/api/db' && req.method === 'GET') return json(res, +url.searchParams.get('v') === db.v ? { v: db.v, same: true } : pub());
   if (req.method === 'POST' && /^\/api\/(register|login|admin|avatar|bio|friend|game|game\/delete|game\/visit|game\/vote|import)$/.test(url.pathname)) {
