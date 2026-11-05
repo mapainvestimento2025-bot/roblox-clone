@@ -890,6 +890,56 @@
                 animation-duration: .01ms !important;
             }
         }
+
+        /* NAVEGAÇÃO INFERIOR MOBILE */
+
+        #mobileNav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: #111214;
+            border-top: 1px solid #2e3033;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        #mobileNav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            color: #8a8d91;
+            font-size: 10px;
+            gap: 3px;
+            text-decoration: none;
+        }
+
+        #mobileNav a:hover,
+        #mobileNav a.active {
+            color: #fff;
+        }
+
+        #mobileNav a i {
+            font-size: 18px;
+        }
+
+        @media (max-width: 767px) {
+            #mobileNav {
+                display: flex;
+            }
+
+            body {
+                padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+
+            .back-to-top {
+                bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+            }
+        }
     </style>
 </head>
 
@@ -1233,7 +1283,7 @@
 
             </section>
 
-            <!-- SEÇÃO 3 -->
+            <!-- SEÇÃO 3 ATUALIZADA -->
             <section class="privacy-section" id="secao-3">
 
                 <div class="section-heading">
@@ -1244,7 +1294,7 @@
 
                     <div>
                         <h2>3. Criptografia de Ponta a Ponta nas Mensagens</h2>
-                        <small>Proteção das conversas privadas</small>
+                        <small>Proteção exclusiva das conversas no Bate-papo</small>
                     </div>
 
                 </div>
@@ -1252,52 +1302,91 @@
                 <div class="section-content">
 
                     <p>
-                        As mensagens privadas entre amigos podem utilizar
-                        <strong>criptografia de ponta a ponta (E2EE)</strong>,
-                        caso esse recurso esteja implementado e funcionando
-                        corretamente na versão utilizada da plataforma.
+                        A plataforma disponibiliza o recurso de
+                        <strong>criptografia de ponta a ponta (E2EE)
+                        exclusivamente na página Bate-papo
+                        (batepapo.html)</strong>, destinada às conversas
+                        privadas entre amigos.
                     </p>
 
                     <p>
-                        No modelo de criptografia de ponta a ponta, o conteúdo
-                        é protegido no dispositivo de origem e somente pode
-                        ser interpretado por dispositivos que possuam as
-                        chaves necessárias.
+                        Isso significa que a proteção por criptografia
+                        de ponta a ponta é destinada às mensagens trocadas
+                        nessa área específica da plataforma. O recurso
+                        não se aplica automaticamente a outras áreas.
+                    </p>
+
+                    <div class="highlight">
+                        <i class="fa-solid fa-shield-halved"></i>
+
+                        <p>
+                            <strong>Importante:</strong>
+                            somente as conversas realizadas no
+                            <strong>Bate-papo (batepapo.html)</strong>
+                            possuem o recurso E2EE. O chat disponível
+                            dentro dos mapas <strong>NÃO possui
+                            criptografia de ponta a ponta</strong> e
+                            não deve ser considerado uma conversa
+                            protegida por E2EE.
+                        </p>
+                    </div>
+
+                    <p>
+                        No modelo de criptografia de ponta a ponta,
+                        o conteúdo é protegido no dispositivo de origem
+                        e somente pode ser interpretado pelos dispositivos
+                        que possuem as chaves criptográficas necessárias.
+                    </p>
+
+                    <p>
+                        A implementação do Bate-papo pode utilizar
+                        mecanismos como AES-GCM de 256 bits por meio
+                        da Web Crypto API do navegador, conforme
+                        os recursos efetivamente implementados.
                     </p>
 
                     <ul>
 
                         <li>
-                            As mensagens são criptografadas no dispositivo
-                            antes de serem enviadas ao servidor.
+                            As mensagens do Bate-papo são protegidas
+                            por mecanismos de criptografia antes do
+                            envio ao servidor, quando a implementação
+                            E2EE está ativa.
                         </li>
 
                         <li>
-                            As chaves de criptografia são utilizadas para
-                            proteger e recuperar o conteúdo das conversas.
+                            As chaves criptográficas são utilizadas
+                            para proteger e recuperar o conteúdo
+                            das conversas.
                         </li>
 
                         <li>
-                            O servidor pode armazenar dados cifrados,
-                            sem acesso direto ao conteúdo original.
+                            O servidor pode armazenar mensagens cifradas
+                            sem acesso direto ao conteúdo original,
+                            quando a implementação permitir.
                         </li>
 
                         <li>
-                            A implementação pode utilizar AES-GCM de 256 bits
-                            por meio da Web Crypto API do navegador.
+                            A proteção E2EE é exclusiva do Bate-papo
+                            e não deve ser confundida com a comunicação
+                            do chat dentro dos mapas.
                         </li>
 
                     </ul>
 
-                    <div class="highlight">
-                        <i class="fa-solid fa-lock"></i>
+                    <div class="highlight warning-highlight">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
 
                         <p>
-                            A proteção efetiva depende da implementação real
-                            da criptografia, da geração e do gerenciamento das
-                            chaves e da segurança dos dispositivos envolvidos.
-                            Não considere as mensagens protegidas por E2EE
-                            sem que esses mecanismos tenham sido verificados.
+                            <strong>Atenção:</strong>
+                            o chat dos mapas não possui criptografia
+                            de ponta a ponta. Portanto, evite compartilhar
+                            senhas, dados bancários, documentos ou outras
+                            informações pessoais sensíveis nesse ambiente.
+                            A proteção efetiva do Bate-papo também depende
+                            da implementação correta da criptografia,
+                            da geração e do gerenciamento das chaves
+                            e da segurança dos dispositivos envolvidos.
                         </p>
                     </div>
 
@@ -1936,16 +2025,63 @@
 
     </script>
 
+    <!-- NAVEGAÇÃO INFERIOR MOBILE -->
 
+    <nav id="mobileNav">
 
-<style id="mobileNavStyle">
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
-</style>
-<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
-<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+        <a href="index.html">
+            <i class="fa-solid fa-house"></i>
+            Início
+        </a>
+
+        <a href="batepapo.html">
+            <i class="fa-solid fa-comments"></i>
+            Chat
+        </a>
+
+        <a href="studio.html">
+            <i class="fa-solid fa-hammer"></i>
+            Studio
+        </a>
+
+        <a href="avatar.html">
+            <i class="fa-solid fa-shirt"></i>
+            Avatar
+        </a>
+
+        <a href="#" id="mobileProfileLink_nav">
+            <i class="fa-solid fa-user"></i>
+            Perfil
+        </a>
+
+    </nav>
+
+    <script>
+
+        // LINK DINÂMICO DO PERFIL
+
+        (function () {
+
+            var profileLink = document.getElementById('mobileProfileLink_nav');
+
+            if (
+                profileLink &&
+                typeof Auth !== 'undefined' &&
+                Auth.current &&
+                Auth.profileUrl
+            ) {
+
+                var currentUser = Auth.current();
+
+                if (currentUser) {
+                    profileLink.href = Auth.profileUrl(currentUser);
+                }
+
+            }
+
+        })();
+
+    </script>
+
 </body>
 </html>
