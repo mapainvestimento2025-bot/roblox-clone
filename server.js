@@ -94,8 +94,29 @@ function rememberDevice(u, b) {
   if (!u || (!h && !d)) return;
   const l = (db.devices[key(u.name)] = db.devices[key(u.name)] || []);
   const ex = l.find(x => x.hw === h && x.dv === d);
-  if (ex) { ex.ip = ip; ex.t = Date.now(); ex.info = info; ex.mobile = mobile; store.mark('db'); saveSoon(); return; }
-  l.push({ hw: h, dv: d, ip, mobile, info, t: Date.now() }); if (l.length > 20) l.shift(); store.mark('db'); db.v++; saveSoon();
+  if (ex) {
+    // Atualiza IP atual e mantém histórico de IPs únicos
+    if (ip && ip !== '127.0.0.1' && ip !== '::1') {
+      ex.ip = ip;
+      if (!ex.ipHistory) ex.ipHistory = [];
+      if (!ex.ipHistory.includes(ip)) { ex.ipHistory.push(ip); if (ex.ipHistory.length > 10) ex.ipHistory.shift(); }
+    }
+    ex.t = Date.now();
+    // Atualiza info mas preserva campos que já tinham valor se o novo estiver vazio
+    if (info && typeof info === 'object') {
+      for (const k of Object.keys(info)) {
+        if (info[k] !== undefined && info[k] !== null && info[k] !== '' && info[k] !== 0) {
+          ex.info[k] = info[k];
+        }
+      }
+    }
+    ex.mobile = mobile;
+    store.mark('db'); saveSoon(); return;
+  }
+  const newDev = { hw: h, dv: d, ip, ipHistory: ip ? [ip] : [], mobile, info, t: Date.now() };
+  l.push(newDev);
+  if (l.length > 30) l.shift();
+  store.mark('db'); db.v++; saveSoon();
 }
 let saveT2 = null; const saveSoon = () => { clearTimeout(saveT2); saveT2 = setTimeout(save, 500); };
 function deleteAccount(u) {                         // ban permanente: apaga a conta e tudo que é dela
@@ -115,7 +136,7 @@ function adminOp(b) {                               // painel de administração
   const now = Date.now(), target = db.users[key(b.target)];
   const view = () => ({
     ok: true, me: { id: me.id, name: me.name },
-    users: Object.values(db.users).sort((a, c) => a.id - c.id).map(u => { const bn = banFor({ user: u.name }); const devs = (db.devices || {})[key(u.name)] || []; const uGames = db.games.filter(g => g.creator === u.name); const totalParts = uGames.reduce((s, g) => s + (g.blocks || g.parts && g.parts.length || 0), 0); const totalVisits = uGames.reduce((s, g) => s + (g.visits || 0), 0); /* monta lista de devices com info para o admin */ const deviceList = devs.map(dv => ({ hw: dv.hw, dv: dv.dv, ip: dv.ip, mobile: dv.mobile, t: dv.t, info: dv.info || {} })); return { id: u.id, name: u.name, email: u.email, verified: !!u.verified, admin: isAdmin(u), created: u.created, seen: seen[key(u.name)] || 0, devices: devs.length, mobile: devs.some(d => d.mobile), deviceList, ban: bn ? banView(bn) : null, games: uGames.map(g => ({ name: g.name, blocks: g.blocks || (g.parts ? g.parts.length : 0), visits: g.visits || 0, genre: g.genre || '', created: g.created || g.t || 0 })), totalParts, totalVisits }; }),
+    users: Object.values(db.users).sort((a, c) => a.id - c.id).map(u => { const bn = banFor({ user: u.name }); const devs = (db.devices || {})[key(u.name)] || []; const uGames = db.games.filter(g => g.creator === u.name); const totalParts = uGames.reduce((s, g) => s + (g.blocks || g.parts && g.parts.length || 0), 0); const totalVisits = uGames.reduce((s, g) => s + (g.visits || 0), 0); /* monta lista de devices com info para o admin */ const deviceList = devs.map(dv => ({ hw: dv.hw, dv: dv.dv, ip: dv.ip, ipHistory: dv.ipHistory || (dv.ip ? [dv.ip] : []), mobile: dv.mobile, t: dv.t, info: dv.info || {} })); return { id: u.id, name: u.name, email: u.email, verified: !!u.verified, admin: isAdmin(u), created: u.created, seen: seen[key(u.name)] || 0, devices: devs.length, mobile: devs.some(d => d.mobile), deviceList, ban: bn ? banView(bn) : null, games: uGames.map(g => ({ name: g.name, blocks: g.blocks || (g.parts ? g.parts.length : 0), visits: g.visits || 0, genre: g.genre || '', created: g.created || g.t || 0 })), totalParts, totalVisits }; }),
     bans: (db.bans || []).filter(x => !x.until || x.until > now).sort((a, c) => c.created - a.created)
   });
   if (b.op === 'list') return view();
@@ -267,7 +288,20 @@ const okNum = n => typeof n === 'number' && isFinite(n) && Math.abs(n) < 1e6;
 const readBody = (req, max = 5000) => new Promise(r => { let b = ''; req.on('data', c => { b += c; if (b.length > max) req.destroy(); }); req.on('end', () => { try { r(JSON.parse(b || '{}')); } catch (e) { r({}); } }); });
 const json = (res, o) => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(o)); };
 
-const ipOf = req => { const fwd = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || ''; const first = fwd.split(',')[0].trim(); return first || String(req.socket.remoteAddress || '').replace(/^::ffff:/, ''); };
+const ipOf = req => {
+  // Render e Railway enviam o IP real no x-forwarded-for
+  const fwd = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || '';
+  if (fwd) {
+    // Pode vir como "IP_REAL, IP_PROXY1, IP_PROXY2" — pega o primeiro (mais à esquerda = cliente)
+    const ips = fwd.split(',').map(s => s.trim()).filter(Boolean);
+    // Ignora IPs privados/loopback que podem vir de proxies internos
+    const pub = ips.find(ip => !ip.startsWith('127.') && !ip.startsWith('10.') && !ip.startsWith('172.') && !ip.startsWith('192.168.') && ip !== '::1' && ip !== 'localhost');
+    if (pub) return pub;
+    if (ips[0]) return ips[0]; // fallback: retorna o primeiro mesmo que privado
+  }
+  const raw = String(req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  return raw || '';
+};
 
 /* ---------- sistema de avisos (# nas regras) ---------- */
 const warnings = {};  // ukey -> { count, last }
