@@ -30,6 +30,11 @@
   if(ml && typeof Auth !== 'undefined') ml.href = Auth.profileUrl(Auth.current && Auth.current() || '');
 })();
 </script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
 </body>');window.stop();throw new Error('auth.js antigo')}</script>
 <style>
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
@@ -50,6 +55,13 @@ body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
 .flash .bub{animation:flash 1.3s ease}@keyframes flash{0%,60%{box-shadow:0 0 0 3px rgba(255,214,102,.9)}100%{box-shadow:0 0 0 0 rgba(255,214,102,0)}}
 #replyBar{animation:up .15s ease}@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 </style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roblox Clone">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body class="flex flex-col h-screen overflow-hidden text-sm">
 <header class="h-12 bg-[#111214] border-b border-gray-700 flex items-center justify-between px-4 shrink-0 z-40">
@@ -293,15 +305,194 @@ $('form').onsubmit = async e => {
 function checkOld() { const o = $('oldBar'); o.textContent = '⚠ ' + Auth.chat.oldMsg; o.classList.toggle('hidden', !Auth.chat.old); }
 async function refreshSummary() { summary = await Auth.chat.dmSummary(ME) || {}; renderList(); }
 
+/* ════════════════════════════════════════════════
+   SISTEMA DE NOTIFICAÇÕES DE MENSAGEM
+   Mostra: nome do remetente + prévia da mensagem
+════════════════════════════════════════════════ */
+let _notifSW = null;        // referência ao SW registrado
+let _notifGranted = false;  // permissão concedida
+let _notifLastSeen = {};    // { amigo: último timestamp visto }
+let _notifAskDone = false;  // pediu permissão ao menos 1x
+
+// Inicializa o SW de notificação e pede permissão
+async function initNotifications() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+  // Carrega timestamps já vistos do localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('rbxNotifSeen') || '{}');
+    _notifLastSeen = saved;
+  } catch(e) { _notifLastSeen = {}; }
+
+  // Registra (ou reutiliza) o Service Worker
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+    _notifSW = reg;
+  } catch(e) {}
+
+  // Pede permissão de forma não-invasiva: aparece um banner explicativo primeiro
+  if (Notification.permission === 'granted') {
+    _notifGranted = true;
+  } else if (Notification.permission === 'default' && !_notifAskDone) {
+    _notifAskDone = true;
+    showNotifBanner();
+  }
+}
+
+// Banner explicativo antes de pedir permissão
+function showNotifBanner() {
+  if (document.getElementById('notifBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'notifBanner';
+  b.style.cssText = `
+    position:fixed;top:0;left:0;right:0;z-index:999;
+    background:linear-gradient(135deg,#1a2a6e,#0066ff);
+    color:#fff;padding:14px 16px;
+    display:flex;align-items:center;gap:12px;
+    box-shadow:0 4px 20px rgba(0,102,255,.4);
+    animation:slideDown .3s ease-out;
+  `;
+  b.innerHTML = `
+    <style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>
+    <span style="font-size:22px">🔔</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;font-size:14px">Ativar notificações de mensagem?</div>
+      <div style="font-size:12px;opacity:.8;margin-top:2px">Você será avisado quando receber mensagens de amigos</div>
+    </div>
+    <button id="notifYes" style="background:#fff;color:#0066ff;border:none;border-radius:8px;padding:8px 16px;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0">Ativar</button>
+    <button id="notifNo"  style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 12px;font-weight:600;font-size:12px;cursor:pointer;flex-shrink:0">Agora não</button>
+  `;
+  document.body.appendChild(b);
+
+  document.getElementById('notifYes').onclick = async () => {
+    b.remove();
+    const perm = await Notification.requestPermission();
+    _notifGranted = perm === 'granted';
+    if (_notifGranted) showNotifToast('✅ Notificações ativadas!', '#00b06f');
+  };
+  document.getElementById('notifNo').onclick = () => {
+    b.remove();
+    // Guarda que o usuário recusou por esta sessão
+    sessionStorage.setItem('rbxNotifDenied', '1');
+  };
+
+  // Auto-fecha após 12s se não interagir
+  setTimeout(() => { if (document.getElementById('notifBanner')) b.remove(); }, 12000);
+}
+
+// Toast de feedback (sucesso/erro)
+function showNotifToast(msg, bg) {
+  const t = document.createElement('div');
+  t.style.cssText = `
+    position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));
+    left:50%;transform:translateX(-50%);
+    background:${bg||'#1a1a2e'};color:#fff;
+    padding:10px 22px;border-radius:10px;
+    font-weight:700;font-size:13px;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);
+    z-index:9999;white-space:nowrap;
+    animation:fadeInUp .25s ease-out;
+    pointer-events:none;
+  `;
+  t.innerHTML = `<style>@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>` + msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// Envia notificação via Service Worker
+async function sendDMNotification(from, msgText) {
+  if (!_notifGranted || !_notifSW) return;
+
+  // Decodifica se for E2E (mostra prévia simplificada)
+  let preview = msgText || '';
+  if (preview.startsWith('e2e:')) preview = '🔒 Mensagem criptografada';
+  if (preview.length > 80) preview = preview.slice(0, 80) + '…';
+
+  // Manda pro SW exibir a notificação
+  try {
+    const sw = _notifSW.active || await navigator.serviceWorker.ready.then(r => r.active);
+    if (sw) {
+      sw.postMessage({
+        type:  'DM_NOTIFY',
+        from:  from,
+        msg:   preview,
+        icon:  '/icon-192.png',
+        url:   '/batepapo.html?u=' + encodeURIComponent(from),
+      });
+    }
+  } catch(e) {
+    // Fallback: Notification API direta
+    try {
+      new Notification(from, {
+        body:  preview,
+        icon:  '/icon-192.png',
+        tag:   'dm-' + from,
+        renotify: true,
+        data:  { url: '/batepapo.html?u=' + encodeURIComponent(from) }
+      });
+    } catch(e2) {}
+  }
+}
+
+// Checa mensagens novas e dispara notificação se necessário
+async function checkDMNotifications() {
+  if (!_notifGranted) return;
+  if (document.visibilityState === 'visible' && cur) return; // se está vendo a conversa, não notifica
+
+  try {
+    const newSummary = await Auth.chat.dmSummary(ME);
+    if (!newSummary) return;
+
+    for (const friend of Object.keys(newSummary)) {
+      const last = newSummary[friend];
+      if (!last) continue;
+      // Só notifica se a mensagem é do amigo (não minha) e é nova
+      if (last.u && last.u.toLowerCase() === ME.toLowerCase()) continue;
+      const prevSeen = _notifLastSeen[friend] || 0;
+      if (last.t <= prevSeen) continue;
+      // É uma mensagem nova! Atualiza o visto e notifica
+      _notifLastSeen[friend] = last.t;
+      try { localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen)); } catch(e) {}
+      // Se a conversa com esse amigo está aberta e o documento está visível, não notifica
+      if (document.visibilityState === 'visible' && cur && cur.toLowerCase() === friend.toLowerCase()) continue;
+      await sendDMNotification(friend, last.m);
+    }
+  } catch(e) {}
+}
+
 /* ---- início ---- */
 renderList();
 Auth.init().then(async () => {
-  await refreshSummary(); Auth.pres.watch(() => Auth.friends(ME), () => { renderList(); if (cur) setStatus(lastSt, cur); });
+  await refreshSummary();
+  Auth.pres.watch(() => Auth.friends(ME), () => { renderList(); if (cur) setStatus(lastSt, cur); });
   const u = new URLSearchParams(location.search).get('u'); if (u) openConv(u);
-  setInterval(refreshSummary, 3000); setInterval(() => loadMsgs(false), 1200);
+  setInterval(refreshSummary, 3000);
+  setInterval(() => loadMsgs(false), 1200);
   if (Auth.server) setInterval(async () => { if (await Auth.sync()) renderList(); }, 2500);
+
+  // Inicia notificações e checa a cada 5s
+  if (!sessionStorage.getItem('rbxNotifDenied')) await initNotifications();
+  setInterval(checkDMNotifications, 5000);
+
+  // Preenche o _notifLastSeen com os timestamps já vistos para não notificar msgs antigas
+  try {
+    const s = await Auth.chat.dmSummary(ME);
+    if (s) Object.keys(s).forEach(f => {
+      if (s[f] && !_notifLastSeen[f]) _notifLastSeen[f] = s[f].t;
+    });
+    localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen));
+  } catch(e) {}
 });
 addEventListener('storage', () => { refreshSummary(); loadMsgs(false); });
+
+// Quando volta a focar na aba, atualiza o seen para não mostrar notif do que já viu
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && cur) {
+    _notifLastSeen[cur] = Date.now();
+    try { localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen)); } catch(e) {}
+  }
+});
 </script>
 
 <style>

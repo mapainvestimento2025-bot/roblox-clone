@@ -18,6 +18,75 @@
 </style>
 <nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
 <script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
+
+<script id="dmNotifScript">
+// ── Notificações de DM em background (todas as páginas) ──
+(async function(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator)) return;
+  if(sessionStorage.getItem('rbxNotifDenied')) return;
+  if(typeof Auth==='undefined'||!Auth.chat) return;
+
+  const ME_N = (typeof Auth!=='undefined' && Auth.tabKey && Auth.users) ? (Auth.users()[Auth.tabKey()] || {}).name : null;
+  if(!ME_N) return;
+
+  let sw = null;
+  try { const r = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; sw = r; } catch(e){}
+
+  let lastSeen = {};
+  try { lastSeen = JSON.parse(localStorage.getItem('rbxNotifSeen')||'{}'); } catch(e){}
+
+  async function sendNotif(from, msg){
+    let preview = msg||'';
+    if(preview.startsWith('e2e:')) preview='🔒 Mensagem criptografada';
+    if(preview.length>80) preview=preview.slice(0,80)+'…';
+    try{
+      const active = sw && (sw.active || (await navigator.serviceWorker.ready).active);
+      if(active){ active.postMessage({type:'DM_NOTIFY',from,msg:preview,icon:'/icon-192.png',url:'/batepapo.html?u='+encodeURIComponent(from)}); }
+      else{ new Notification(from,{body:preview,icon:'/icon-192.png',tag:'dm-'+from,renotify:true}); }
+    }catch(e){}
+  }
+
+  // Carrega baseline de timestamps para não notificar msgs antigas
+  let baselineDone = false;
+  async function baseline(){
+    if(baselineDone) return; baselineDone=true;
+    try{
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(s) Object.keys(s).forEach(f=>{ if(s[f]&&!lastSeen[f]) lastSeen[f]=s[f].t; });
+      localStorage.setItem('rbxNotifSeen', JSON.stringify(lastSeen));
+    }catch(e){}
+  }
+
+  async function check(){
+    if(Notification.permission!=='granted') return;
+    if(document.visibilityState==='visible') return; // só notifica quando em background
+    try{
+      await baseline();
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(!s) return;
+      for(const f of Object.keys(s)){
+        const m=s[f]; if(!m) continue;
+        if(m.u&&m.u.toLowerCase()===ME_N.toLowerCase()) continue;
+        const prev=lastSeen[f]||0;
+        if(m.t<=prev) continue;
+        lastSeen[f]=m.t;
+        try{localStorage.setItem('rbxNotifSeen',JSON.stringify(lastSeen));}catch(e){}
+        await sendNotif(f, m.m);
+      }
+    }catch(e){}
+  }
+
+  Auth.init().then(async()=>{
+    await baseline();
+    setInterval(check, 8000);
+  });
+})();
+</script>
 </body>');window.stop();throw new Error('auth.js antigo')}</script>
 <style>
 body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
@@ -37,6 +106,13 @@ input[type=color]{width:42px;height:30px;border:0;background:none;cursor:pointer
 textarea{background:#15171a;border:1px solid #3a3d41;border-radius:8px;color:#fff;width:100%;padding:10px;resize:vertical;min-height:110px;outline:none}textarea:focus{border-color:#335fff}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00b06f;padding:8px 20px;border-radius:8px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
 </style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roblox Clone">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
 <header class="h-12 border-b border-[#2e3033] bg-[#1a1c1e] flex items-center justify-between px-4 sticky top-0 z-40">

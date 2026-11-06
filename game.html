@@ -3,523 +3,1387 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Roblox Clone - Jogo</title>
+<title>Roblox Clone</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="auth.js?v=4"></script>
 <script>
-// Garante que auth.js carregou corretamente - sem bloquear o jogo
-if(typeof Auth==='undefined'||!Auth.avatar){
-  // tenta recarregar sem cache uma vez
-  if(!sessionStorage.getItem('authRetried')){
-    sessionStorage.setItem('authRetried','1');
-    location.reload(true);
+(function(){
+  if(typeof Auth==='undefined'||!Auth.avatar){
+    if(!sessionStorage.getItem('_rbxRetry')){sessionStorage.setItem('_rbxRetry','1');location.reload(true);}
+    else{document.write('<body style="background:#0d0f1a;color:#fff;font:16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2>Erro ao carregar</h2><p style="color:#888;margin:12px 0">Recarregue ou volte ao <a href="index.html" style="color:#3794ff">início</a>.</p></div>  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
+
+<script id="dmNotifScript">
+// ── Notificações de DM em background (todas as páginas) ──
+(async function(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator)) return;
+  if(sessionStorage.getItem('rbxNotifDenied')) return;
+  if(typeof Auth==='undefined'||!Auth.chat) return;
+
+  const ME_N = (typeof Auth!=='undefined' && Auth.tabKey && Auth.users) ? (Auth.users()[Auth.tabKey()] || {}).name : null;
+  if(!ME_N) return;
+
+  let sw = null;
+  try { const r = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; sw = r; } catch(e){}
+
+  let lastSeen = {};
+  try { lastSeen = JSON.parse(localStorage.getItem('rbxNotifSeen')||'{}'); } catch(e){}
+
+  async function sendNotif(from, msg){
+    let preview = msg||'';
+    if(preview.startsWith('e2e:')) preview='🔒 Mensagem criptografada';
+    if(preview.length>80) preview=preview.slice(0,80)+'…';
+    try{
+      const active = sw && (sw.active || (await navigator.serviceWorker.ready).active);
+      if(active){ active.postMessage({type:'DM_NOTIFY',from,msg:preview,icon:'/icon-192.png',url:'/batepapo.html?u='+encodeURIComponent(from)}); }
+      else{ new Notification(from,{body:preview,icon:'/icon-192.png',tag:'dm-'+from,renotify:true}); }
+    }catch(e){}
   }
-}
+
+  // Carrega baseline de timestamps para não notificar msgs antigas
+  let baselineDone = false;
+  async function baseline(){
+    if(baselineDone) return; baselineDone=true;
+    try{
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(s) Object.keys(s).forEach(f=>{ if(s[f]&&!lastSeen[f]) lastSeen[f]=s[f].t; });
+      localStorage.setItem('rbxNotifSeen', JSON.stringify(lastSeen));
+    }catch(e){}
+  }
+
+  async function check(){
+    if(Notification.permission!=='granted') return;
+    if(document.visibilityState==='visible') return; // só notifica quando em background
+    try{
+      await baseline();
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(!s) return;
+      for(const f of Object.keys(s)){
+        const m=s[f]; if(!m) continue;
+        if(m.u&&m.u.toLowerCase()===ME_N.toLowerCase()) continue;
+        const prev=lastSeen[f]||0;
+        if(m.t<=prev) continue;
+        lastSeen[f]=m.t;
+        try{localStorage.setItem('rbxNotifSeen',JSON.stringify(lastSeen));}catch(e){}
+        await sendNotif(f, m.m);
+      }
+    }catch(e){}
+  }
+
+  Auth.init().then(async()=>{
+    await baseline();
+    setInterval(check, 8000);
+  });
+})();
+</script>
+</body>');window.stop();}
+  }
+})();
 </script>
 <style>
-/* ===== ROBLOX-LIKE UI ===== */
-:root{
-  --rbx-blue:#0066FF;
-  --rbx-blue2:#1a75ff;
-  --rbx-dark:#1a1a2e;
-  --rbx-panel:rgba(30,30,46,.97);
-  --rbx-line:rgba(255,255,255,.1);
-}
+/* ═══ RESET ═══ */
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden}
-body{font-family:'GothamSSm','Nunito','Segoe UI',Arial,sans-serif;background:#87b4e8;color:#fff;-webkit-font-smoothing:antialiased}
-canvas{display:block;outline:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#0d0f1a}
+body{font-family:'GothamSSm','Nunito','Segoe UI',system-ui,sans-serif;color:#fff;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+canvas{display:block;position:fixed;inset:0;z-index:0;outline:none}
 button,input{font:inherit;border:none;outline:none}
-button{-webkit-tap-highlight-color:transparent;cursor:pointer}
-@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 
-/* ===== TOPBAR estilo Roblox ===== */
+/* ═══ LOADING ═══ */
+#ld{
+  position:fixed;inset:0;z-index:9999;background:#0d0f1a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+  transition:opacity .5s;
+}
+#ld-logo{
+  width:72px;height:72px;border-radius:18px;background:#0066ff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 40px rgba(0,102,255,.5);margin-bottom:20px;
+}
+#ld-title{font-size:22px;font-weight:900;letter-spacing:-.3px;margin-bottom:6px}
+#ld-sub{font-size:13px;color:rgba(255,255,255,.45);font-weight:600;margin-bottom:22px}
+#ld-bar{width:280px;height:5px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden}
+#ld-fill{height:100%;background:linear-gradient(90deg,#0066ff,#4dabff);border-radius:5px;width:0;transition:width .4s ease}
+
+/* ═══ TOPBAR ═══ */
 #topbar{
-  position:absolute;top:0;left:0;right:0;height:52px;z-index:50;
-  background:linear-gradient(180deg,rgba(10,12,20,.92) 0%,rgba(10,12,20,.0) 100%);
-  display:flex;align-items:center;gap:8px;padding:0 12px;
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  height:52px;display:flex;align-items:center;gap:6px;
+  padding:0 10px 0 8px;
+  background:linear-gradient(180deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,0) 100%);
   pointer-events:none;
 }
-#topbar > *{pointer-events:all}
+#topbar>*{pointer-events:all}
 
-/* Logo / nome do jogo */
-#gameTitle{
-  display:flex;align-items:center;gap:10px;
-  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;padding:7px 14px;
-  backdrop-filter:blur(12px);
-  min-width:0;max-width:280px;
-}
-#gameTitle .icon{width:28px;height:28px;border-radius:6px;background:var(--rbx-blue);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#gameTitle .icon svg{width:16px;height:16px}
-#gameTitle .info{min-width:0}
-#gameTitle .info h2{font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
-#gameTitle .info span{font-size:10px;color:rgba(255,255,255,.6);font-weight:600;white-space:nowrap}
-
-/* Botões da topbar */
+/* ── botões quadrados estilo Roblox ── */
 .tbtn{
-  width:40px;height:40px;border-radius:10px;
-  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
-  display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(12px);color:#fff;
-  transition:background .15s,transform .12s,border-color .15s;
-  flex-shrink:0;
+  width:44px;height:44px;border-radius:9px;flex-shrink:0;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.13);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  transition:background .14s,transform .1s;position:relative;
 }
-.tbtn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.25);transform:translateY(-1px)}
-.tbtn:active{transform:scale(.93)}
-.tbtn svg{width:18px;height:18px}
+.tbtn:hover{background:rgba(255,255,255,.18);transform:translateY(-1px)}
+.tbtn:active{transform:scale(.91)}
+.tbtn svg,.tbtn i{pointer-events:none}
 
-/* Spacer */
-#topbar .sp{flex:1}
+/* badge vermelho no chat */
+#chatBadge{
+  display:none;position:absolute;top:7px;right:7px;
+  width:9px;height:9px;border-radius:50%;
+  background:#ff3b3b;border:1.5px solid #000;
+}
+#chatBadge.on{display:block}
 
-/* Badge online */
+/* ── título do jogo (centro) ── */
+#gameTitle{
+  display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:1;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.13);
+  border-radius:9px;padding:8px 14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  max-width:280px;
+}
+#gameTitle .gt-icon{
+  width:30px;height:30px;border-radius:7px;background:#0066ff;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.gt-info{min-width:0;overflow:hidden}
+.gt-info h2{font-size:13px;font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.1px}
+.gt-info span{font-size:10px;color:rgba(255,255,255,.52);font-weight:600;white-space:nowrap}
+
+#sp{flex:1}
+
+/* ── badge de jogadores online ── */
 #onlineBadge{
-  display:flex;align-items:center;gap:6px;
-  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;padding:7px 12px;
-  font-size:12px;font-weight:700;
-  backdrop-filter:blur(12px);
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+  background:rgba(0,0,0,.62);border:1px solid rgba(255,255,255,.13);
+  border-radius:9px;padding:8px 13px;font-size:12px;font-weight:700;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
-#onlineBadge .dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e}
+.ob-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;flex-shrink:0}
 
-/* ===== MENU LATERAL (estilo Roblox ESC menu) ===== */
-#menuOverlay{
-  display:none;position:fixed;inset:0;z-index:80;
-  background:rgba(0,0,0,.65);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;
+/* ═══ LISTA DE JOGADORES (direita) ═══ */
+#plist{position:fixed;top:62px;right:10px;width:170px;z-index:30;pointer-events:none}
+.prow{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 11px;margin-bottom:3px;border-radius:8px;
+  background:rgba(0,0,0,.60);border:1px solid rgba(255,255,255,.08);
+  font-size:12px;font-weight:700;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-#menuOverlay.open{display:flex;animation:fadeIn .18s ease-out}
-#menuBox{
-  width:360px;max-width:calc(100vw - 32px);
-  background:linear-gradient(160deg,#1e2030,#161824);
-  border:1px solid rgba(255,255,255,.12);border-radius:20px;
-  padding:28px;box-shadow:0 32px 80px rgba(0,0,0,.6);
-}
-#menuBox .logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-#menuBox .logo .rbx{width:36px;height:36px;border-radius:9px;background:var(--rbx-blue);display:flex;align-items:center;justify-content:center}
-#menuBox .logo h2{font-size:20px;font-weight:900;letter-spacing:-.4px}
-#menuBox .sub{font-size:11px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px}
-#menuBox .hint{
-  padding:13px 15px;border-radius:12px;
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
-  font-size:11px;line-height:2;color:rgba(255,255,255,.75);margin-bottom:16px
-}
-#menuBox .hint b{color:#fff}
-#menuBox .mbtn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;padding:13px;border-radius:12px;
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
-  color:#fff;font-size:14px;font-weight:700;margin-bottom:8px;
-  transition:background .15s,transform .12s
-}
-#menuBox .mbtn:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
-#menuBox .mbtn:active{transform:scale(.985)}
-#menuBox .mbtn.red{background:linear-gradient(135deg,#c0392b,#962d23);border-color:rgba(255,100,100,.2)}
-#menuBox .mbtn.red:hover{background:linear-gradient(135deg,#e74c3c,#c0392b)}
+.prow .pdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);flex-shrink:0}
+.prow.me{background:rgba(0,102,255,.75);border-color:rgba(80,160,255,.4)}
+.prow.me .pdot{background:#90cfff;box-shadow:0 0 5px #90cfff}
 
-/* ===== CHAT estilo Roblox ===== */
-#chat{
-  position:absolute;bottom:72px;left:14px;width:340px;
-  max-width:calc(100vw - 28px);z-index:30;
+/* ═══ CHAT ═══ */
+#chatWrap{
+  position:fixed;bottom:16px;left:12px;width:320px;
+  max-width:calc(100vw - 24px);z-index:30;
+  opacity:0;pointer-events:none;transform:translateY(8px);
   transition:opacity .18s,transform .18s;
 }
-#chat.hid{opacity:0;pointer-events:none;transform:translateY(8px)}
+#chatWrap.vis{opacity:1;pointer-events:all;transform:none}
 #clog{
-  height:160px;overflow-y:auto;padding:10px 12px;
-  border-radius:12px 12px 0 0;
-  background:rgba(0,0,0,.55);
-  font-size:12px;line-height:1.6;
-  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.2) transparent;
-  backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-bottom:none;
+  height:160px;overflow-y:auto;padding:9px 12px 7px;
+  background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.1);
+  border-bottom:none;border-radius:10px 10px 0 0;
+  font-size:12.5px;line-height:1.65;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent;
 }
 #clog::-webkit-scrollbar{width:4px}
 #clog::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px}
-#clog .m{margin-bottom:4px;word-break:break-word}
-#clog .n{font-weight:800}
-#clog .sys{color:rgba(255,255,255,.5);font-style:italic}
-#clog .fail{color:#ff7c7c}
+.cmsg{margin-bottom:3px;word-break:break-word}
+.cname{font-weight:800}
+.csys{color:rgba(255,255,255,.42);font-style:italic}
+.cfail{color:#ff7a7a}
 #cform{
-  display:flex;gap:6px;padding:8px;
-  background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.08);border-top:none;
-  border-radius:0 0 12px 12px;backdrop-filter:blur(10px);
+  display:flex;gap:6px;padding:7px;
+  background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.1);
+  border-top:none;border-radius:0 0 10px 10px;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
 #cin{
-  flex:1;height:36px;padding:0 12px;border-radius:8px;
-  background:rgba(255,255,255,.1);color:#fff;font-size:12px;
-  border:1px solid rgba(255,255,255,.12);transition:border-color .15s,background .15s;
+  flex:1;height:34px;padding:0 11px;border-radius:7px;
+  background:rgba(255,255,255,.12);color:#fff;font-size:12px;
+  border:1px solid rgba(255,255,255,.14);transition:border-color .15s,background .15s;
 }
-#cin:focus{border-color:var(--rbx-blue);background:rgba(255,255,255,.14);box-shadow:0 0 0 2px rgba(0,102,255,.25)}
-#cin::placeholder{color:rgba(255,255,255,.4)}
+#cin:focus{border-color:#0066ff;background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(0,102,255,.28)}
+#cin::placeholder{color:rgba(255,255,255,.36)}
 #csend{
-  width:36px;height:36px;border-radius:8px;flex-shrink:0;
-  background:var(--rbx-blue);display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border-radius:7px;flex-shrink:0;
+  background:#0066ff;display:flex;align-items:center;justify-content:center;
   transition:filter .15s,transform .12s;
 }
-#csend:hover{filter:brightness(1.15);transform:translateY(-1px)}
-#csend:active{transform:scale(.93)}
-body.touch #clog{height:90px}
+#csend:hover{filter:brightness(1.2);transform:translateY(-1px)}
+#csend:active{transform:scale(.9)}
 
-/* ===== LISTA DE JOGADORES (direita) ===== */
-#plist{
-  position:absolute;top:60px;right:12px;width:175px;z-index:20;
-  pointer-events:none;font-size:12px;
+/* Notificação de chat quando fechado */
+#chatNotif{
+  position:fixed;bottom:16px;left:12px;max-width:300px;
+  background:rgba(0,0,0,.85);border:1px solid rgba(255,255,255,.14);
+  border-radius:10px;padding:9px 14px;font-size:12px;line-height:1.4;
+  backdrop-filter:blur(10px);opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:28;
 }
-.prow{
-  padding:9px 12px;margin-bottom:2px;
-  border-radius:8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.08);
-  font-weight:700;backdrop-filter:blur(8px);
-  display:flex;align-items:center;gap:6px;
-}
-.prow::before{content:'';width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);flex-shrink:0}
-.prow.me{background:rgba(0,102,255,.7);border-color:rgba(0,153,255,.4)}
-.prow.me::before{background:#7cf;box-shadow:0 0 5px #7cf}
+#chatNotif.on{opacity:1}
+#chatNotif strong{color:#fff;font-weight:800}
 
-/* ===== CONTROLES MOBILE ===== */
-#joy,#jump{display:none;position:absolute;z-index:10;touch-action:none;-webkit-user-select:none;user-select:none}
+/* ═══ MENU ESC — idêntico ao Roblox ═══ */
+#menuOverlay{
+  display:none;position:fixed;inset:0;z-index:80;
+  align-items:center;justify-content:center;padding:16px;
+  background:rgba(0,0,0,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+#menuOverlay.open{display:flex}
+#menuBox{
+  width:400px;max-width:100%;
+  background:#1a1d2a;border:1px solid rgba(255,255,255,.12);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,.7);
+  animation:menuIn .18s ease-out;
+}
+@keyframes menuIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+
+/* Banner do jogo no topo do menu */
+#menuBanner{
+  height:116px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#0d1546 0%,#1a3080 60%,#0d1546 100%);
+  display:flex;align-items:flex-end;padding:16px 20px;
+}
+#menuBanner::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 70% 50%,rgba(0,102,255,.22) 0%,transparent 70%);
+}
+/* Grid decorativo de cubos Roblox */
+#menuBanner::after{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.mb-info{position:relative;z-index:1;flex:1;min-width:0}
+.mb-info h2{font-size:17px;font-weight:900;line-height:1.1;letter-spacing:-.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mb-info p{font-size:11px;color:rgba(255,255,255,.52);margin-top:4px;font-weight:600}
+.mb-icon{
+  position:absolute;top:16px;right:16px;z-index:1;
+  width:50px;height:50px;border-radius:11px;background:#0066ff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 16px rgba(0,102,255,.5);
+}
+
+/* Corpo do menu */
+#menuBody{padding:14px 18px 18px}
+
+/* Atalhos em grid */
+#menuHint{
+  display:grid;grid-template-columns:1fr 1fr;gap:3px 10px;
+  padding:11px 14px;border-radius:10px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  font-size:11px;line-height:2.1;color:rgba(255,255,255,.6);margin-bottom:12px;
+}
+#menuHint b{color:#fff;font-weight:800;margin-right:2px}
+
+/* Botões do menu */
+.mbtn{
+  display:flex;align-items:center;gap:11px;
+  width:100%;padding:12px 14px;border-radius:10px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);
+  color:#fff;font-size:13.5px;font-weight:700;margin-bottom:7px;
+  transition:background .14s,transform .1s;text-align:left;
+}
+.mbtn:last-child{margin-bottom:0}
+.mbtn:hover{background:rgba(255,255,255,.13);transform:translateX(3px)}
+.mbtn:active{transform:scale(.985);background:rgba(255,255,255,.1)}
+.mbtn .mic{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;
+}
+.mbtn.mc-blue .mic{background:rgba(0,102,255,.22);color:#60a5fa}
+.mbtn.mc-green .mic{background:rgba(0,176,111,.2);color:#4ade80}
+.mbtn.mc-red{border-color:rgba(220,80,80,.18)}
+.mbtn.mc-red:hover{background:rgba(192,57,43,.25)}
+.mbtn.mc-red .mic{background:rgba(192,57,43,.28);color:#f87171}
+.msep{height:1px;background:rgba(255,255,255,.07);margin:10px 0}
+
+/* ═══ JOYSTICK MOBILE ═══ */
+#joy,#jumpBtn{display:none;position:fixed;z-index:20;touch-action:none;-webkit-user-select:none}
 #joy{
-  left:20px;bottom:80px;width:130px;height:130px;border-radius:50%;
-  background:rgba(0,0,0,.3);border:2px solid rgba(255,255,255,.4);
-  box-shadow:0 0 20px rgba(0,0,0,.2),inset 0 0 20px rgba(255,255,255,.05);
-  backdrop-filter:blur(4px);
+  left:16px;bottom:calc(22px + env(safe-area-inset-bottom,0px));
+  width:130px;height:130px;border-radius:50%;
+  background:rgba(255,255,255,.1);
+  border:2px solid rgba(255,255,255,.32);
 }
-#knob{
-  position:absolute;left:33px;top:33px;width:60px;height:60px;border-radius:50%;
-  background:rgba(255,255,255,.95);border:2px solid rgba(255,255,255,.8);
-  box-shadow:0 4px 12px rgba(0,0,0,.3);
+#joyK{
+  position:absolute;width:52px;height:52px;border-radius:50%;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  background:rgba(255,255,255,.88);
+  box-shadow:0 3px 10px rgba(0,0,0,.35);
 }
-#jump{
-  right:22px;bottom:88px;width:82px;height:82px;border-radius:50%;
+/* Setas indicativas do joystick */
+#joy::before,#joy::after{
+  content:'';position:absolute;border:2px solid rgba(255,255,255,.25);
+  width:12px;height:12px;
+}
+#jumpBtn{
+  right:18px;bottom:calc(30px + env(safe-area-inset-bottom,0px));
+  width:80px;height:80px;border-radius:50%;
   align-items:center;justify-content:center;
-  background:rgba(0,102,255,.75);border:2px solid rgba(100,170,255,.5);
-  box-shadow:0 6px 20px rgba(0,0,0,.3),inset 0 1px 10px rgba(255,255,255,.12);
-  backdrop-filter:blur(6px);transition:transform .1s,background .1s;
+  background:rgba(0,102,255,.78);
+  border:2px solid rgba(100,180,255,.4);
+  box-shadow:0 6px 24px rgba(0,102,255,.4),inset 0 1px 8px rgba(255,255,255,.1);
+  font-size:30px;color:#fff;
 }
-#jump:active{background:rgba(0,130,255,.9);transform:scale(.92)}
-body.touch #joy{display:block}
-body.touch #jump{display:flex}
-body.touch .hint{display:none}
+#jumpBtn:active{transform:scale(.89);background:rgba(0,130,255,.95)}
+body.touch #joy,body.touch #jumpBtn{display:flex}
 
-/* Nome do jogador (centro-baixo) — oculto com navbar */
-#name{display:none}
-
-/* ===== NAVBAR MOBILE INFERIOR ===== */
-#mobileNav{
-  display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;
-  background:rgba(10,12,20,.95);border-top:1px solid rgba(255,255,255,.1);
-  padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(16px);
+/* ═══ CROSSHAIR ═══ */
+#crosshair{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:14px;height:14px;pointer-events:none;z-index:10;
 }
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+#crosshair::before,#crosshair::after{
+  content:'';position:absolute;
+  background:rgba(255,255,255,.75);border-radius:1px;
+  box-shadow:0 0 3px rgba(0,0,0,.8);
+}
+#crosshair::before{width:2px;height:100%;left:50%;transform:translateX(-50%)}
+#crosshair::after{width:100%;height:2px;top:50%;transform:translateY(-50%)}
 
-/* Mobile adjustments */
+/* ═══ TELA DE SESSÃO DUPLICADA ═══ */
+#blockScreen{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(0,0,0,.94);
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;text-align:center;padding:28px;
+}
+#blockScreen.on{display:flex}
+#blockScreen .bs-icon{
+  width:56px;height:56px;border-radius:12px;background:rgba(220,38,38,.8);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+}
+#blockScreen h2{font-size:20px;font-weight:900}
+#blockScreen p{color:rgba(255,255,255,.58);font-size:13px;max-width:380px;line-height:1.6}
+#blockScreen button{
+  background:#0066ff;color:#fff;padding:12px 32px;
+  border-radius:10px;font-weight:800;font-size:14px;margin-top:4px;
+  transition:filter .15s;
+}
+#blockScreen button:hover{filter:brightness(1.15)}
+
+/* ═══ RESPONSIVO MOBILE ═══ */
 @media(max-width:700px){
-  #gameTitle .info h2{font-size:11px}
-  #plist{width:140px;font-size:11px}
-  #chat{width:min(300px,calc(100vw - 28px));bottom:68px}
+  #gameTitle{max-width:160px}
+  .gt-info h2{font-size:11.5px}
+  #plist{width:140px;right:8px}
+  #chatWrap{width:calc(100vw - 24px)}
+  #clog{height:100px}
+  #menuBox{border-radius:14px}
+  #menuHint{grid-template-columns:1fr;gap:0}
 }
-@keyframes panelIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roblox Clone">
+  <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
 <body>
-<!-- TOPBAR estilo Roblox -->
-<div id="topbar">
-  <!-- Menu burger -->
-  <button class="tbtn" onclick="toggleMenu()" title="Menu (Esc)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
-  </button>
-  <!-- Chat -->
-  <button class="tbtn" onclick="toggleChat()" title="Chat (/)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  </button>
-  <!-- Nome do jogo -->
-  <div id="gameTitle">
-    <div class="icon"><svg viewBox="0 0 24 24" fill="#fff"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div>
-    <div class="info">
-      <h2 id="title">Carregando...</h2>
-      <span id="srvInfo">Servidor 1</span>
-    </div>
+
+<!-- ═══ LOADING ═══ -->
+<div id="ld">
+  <div id="ld-logo">
+    <svg viewBox="0 0 24 24" fill="#fff" width="38" height="38">
+      <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+      <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+      <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+      <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+    </svg>
   </div>
-  <div class="sp"></div>
-  <!-- Badge online -->
-  <div id="onlineBadge"><div class="dot"></div><span id="onlineCnt">1 jogador</span></div>
+  <div id="ld-title">Carregando...</div>
+  <div id="ld-sub">Preparando o mapa</div>
+  <div id="ld-bar"><div id="ld-fill"></div></div>
 </div>
 
-<!-- Lista de jogadores (direita) -->
+<!-- ═══ TOPBAR ═══ -->
+<div id="topbar">
+  <button class="tbtn" id="menuBtn" onclick="toggleMenu()" title="Menu (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" width="20" height="20">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+  <button class="tbtn" id="chatBtn" onclick="toggleChat()" title="Chat (/)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <span id="chatBadge"></span>
+  </button>
+  <div id="gameTitle">
+    <div class="gt-icon">
+      <svg viewBox="0 0 24 24" fill="#fff" width="18" height="18">
+        <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+        <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+        <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+      </svg>
+    </div>
+    <div class="gt-info">
+      <h2 id="gtName">Carregando...</h2>
+      <span id="gtServer">Servidor 1</span>
+    </div>
+  </div>
+  <div id="sp"></div>
+  <div id="onlineBadge">
+    <div class="ob-dot"></div>
+    <span id="onlineCnt">1 jogador</span>
+  </div>
+</div>
+
+<!-- ═══ LISTA DE JOGADORES ═══ -->
 <div id="plist"></div>
 
-<!-- Menu (overlay central estilo Roblox) -->
-<div id="menuOverlay" onclick="if(event.target===this)toggleMenu()">
-  <div id="menuBox">
-    <div class="logo">
-      <div class="rbx"><svg viewBox="0 0 24 24" fill="#fff" width="20" height="20"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></div>
-      <h2 id="mnTitle">Menu</h2>
-    </div>
-    <div class="sub" id="mnSub">Roblox Clone</div>
-    <div class="hint"><b>WASD</b> mover &nbsp;·&nbsp; <b>Espaço</b> pular &nbsp;·&nbsp; <b>Shift</b> correr<br><b>Botão direito</b> girar câmera &nbsp;·&nbsp; <b>Scroll</b> zoom<br><b>/</b> abrir chat &nbsp;·&nbsp; <b>R</b> reaparecer &nbsp;·&nbsp; <b>Esc</b> menu</div>
-    <button class="mbtn" onclick="toggleMenu()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      Continuar jogando
-    </button>
-    <button class="mbtn" onclick="respawnMe()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-      Reaparecer personagem
-    </button>
-    <button class="mbtn red" onclick="leaveGame()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      Sair do jogo
-    </button>
-  </div>
-</div>
+<!-- ═══ CROSSHAIR ═══ -->
+<div id="crosshair"></div>
 
-<!-- Chat -->
-<div id="chat" class="hid">
+<!-- ═══ CHAT ═══ -->
+<div id="chatWrap">
   <div id="clog"></div>
   <form id="cform" autocomplete="off">
-    <input id="cin" maxlength="200" autocomplete="off" enterkeyhint="send" placeholder="Escreva uma mensagem...">
+    <input id="cin" maxlength="200" autocomplete="off" enterkeyhint="send" placeholder="Diga algo...">
     <button id="csend" type="submit" title="Enviar">
-      <svg viewBox="0 0 24 24" width="16" height="16"><path d="M3 20l18-8L3 4v6l11 2-11 2z" fill="#fff"/></svg>
+      <svg viewBox="0 0 24 24" width="15" height="15"><path d="M3 20l18-8L3 4v6l11 2-11 2z" fill="#fff"/></svg>
     </button>
   </form>
 </div>
+<div id="chatNotif"></div>
 
-<!-- Joystick mobile -->
-<div id="joy"><div id="knob"></div></div>
-<div id="jump"><svg viewBox="0 0 24 24" width="36" height="36"><path d="M12 4l8 9h-5v7H9v-7H4z" fill="#fff" opacity=".95"/></svg></div>
-<div id="name"></div>
+<!-- ═══ MENU ESC ═══ -->
+<div id="menuOverlay" onclick="if(event.target===this)toggleMenu()">
+  <div id="menuBox">
+    <div id="menuBanner">
+      <div class="mb-icon">
+        <svg viewBox="0 0 24 24" fill="#fff" width="28" height="28">
+          <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+          <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+          <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+          <rect x="13" y="13" width="8" height="8" rx="1.5"/>
+        </svg>
+      </div>
+      <div class="mb-info">
+        <h2 id="mnTitle">Menu</h2>
+        <p id="mnSub">Roblox Clone</p>
+      </div>
+    </div>
+    <div id="menuBody">
+      <div id="menuHint">
+        <span><b>WASD</b> mover</span><span><b>Espaço</b> pular</span>
+        <span><b>Shift</b> correr</span><span><b>Scroll</b> zoom</span>
+        <span><b>Btn direito</b> câmera</span><span><b>/</b> chat</span>
+        <span><b>R</b> reaparecer</span><span><b>Esc</b> menu</span>
+      </div>
+      <button class="mbtn mc-blue" onclick="toggleMenu()">
+        <span class="mic"><i class="fa-solid fa-play"></i></span>
+        Continuar jogando
+      </button>
+      <button class="mbtn mc-green" onclick="respawnMe()">
+        <span class="mic"><i class="fa-solid fa-rotate-right"></i></span>
+        Reaparecer
+      </button>
+      <div class="msep"></div>
+      <button class="mbtn mc-red" onclick="leaveGame()">
+        <span class="mic"><i class="fa-solid fa-right-from-bracket"></i></span>
+        Sair do jogo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ JOYSTICK MOBILE ═══ -->
+<div id="joy"><div id="joyK"></div></div>
+<button id="jumpBtn">
+  <svg viewBox="0 0 24 24" width="34" height="34"><path d="M12 4l8 9h-5v7H9v-7H4z" fill="#fff"/></svg>
+</button>
+
+<!-- ═══ TELA DE SESSÃO DUPLICADA ═══ -->
+<div id="blockScreen">
+  <div class="bs-icon">🚫</div>
+  <h2>Sessão duplicada</h2>
+  <p>Você já está jogando este mapa em outro dispositivo ou aba. Feche o outro e tente novamente.</p>
+  <button onclick="location.href='index.html'">Voltar ao início</button>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-/* ---------- celular: joystick + botão de pulo (no PC não aparecem) ---------- */
-const TOUCH=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||'ontouchstart' in window||/[?&]touch=1/.test(location.search);
-if(TOUCH)document.body.classList.add('touch');
-/* ---------- carregar mapa ---------- */
-const ME=Auth.require();document.getElementById('name').textContent=ME;
-const want=localStorage.getItem('robloxPlay'),cre=localStorage.getItem('robloxPlayCreator')||'';
-let data=null,title=want,GCRE='Roblox',GSIZE=20;
-if(want==='__draft__'){data=JSON.parse(localStorage.getItem('robloxDraft')||'null');title='Teste do Studio'}
-else{const g=JSON.parse(localStorage.getItem('robloxGames')||'[]').find(x=>x.name===want&&(!cre||x.creator===cre));if(g){data=g.parts;GCRE=g.creator;GSIZE=g.serverSize||20}}
-if(!data&&want!=='Mapa Padrão'&&sessionStorage.getItem('robloxReloaded')!==want){Auth.init().then(()=>{if(Auth.games().some(g=>g.name===want)){sessionStorage.setItem('robloxReloaded',want);location.reload()}})}
-if(!data)data=[{n:'Baseplate',s:'box',p:[0,-.5,0],z:[200,1,200],c:'#5a8f4f'},{n:'SpawnLocation',s:'box',p:[0,.5,0],z:[8,1,8],c:'#f1c40f',sp:true}];
-document.getElementById('title').textContent=title||'Mapa Padrão';
-{const p=document.createElement('p');p.style.cssText='opacity:.9;margin:0 0 6px';p.textContent='Criador: '+(want==='__draft__'?ME:GCRE);document.getElementById('title').after(p)}
+'use strict';
 
-/* ---------- cena ---------- */
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x87b4e8);scene.fog=new THREE.Fog(0x87b4e8,150,500);
-const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,1500);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;document.body.appendChild(renderer.domElement);
-const hemi=new THREE.HemisphereLight(0xffffff,0x555566,.75);scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffffff,.8);sun.position.set(60,120,40);sun.castShadow=true;
-Object.assign(sun.shadow.camera,{left:-80,right:80,top:80,bottom:-80,far:400});sun.shadow.mapSize.set(2048,2048);scene.add(sun);scene.add(sun.target);
-const GEO={box:new THREE.BoxGeometry(1,1,1),sphere:new THREE.SphereGeometry(.5,24,16),cylinder:new THREE.CylinderGeometry(.5,.5,1,24)};
-const solids=[],triggers=[];let spawn=new THREE.Vector3(0,3,0);
-const MATS={Plastic:[.7,.05,0],SmoothPlastic:[.3,.05,0],Metal:[.25,.95,0],Wood:[.95,0,0],Concrete:[1,0,0],Neon:[.4,0,1],Glass:[.05,.2,0]};
-let LT=14,LB=1;
-data.forEach(d=>{if(d.lt!==undefined){LT=d.lt;LB=d.lb||1;return}
-  const m=new THREE.Mesh(GEO[d.s||'box'],new THREE.MeshStandardMaterial({color:d.c,roughness:(MATS[d.m]||MATS.Plastic)[0],metalness:(MATS[d.m]||MATS.Plastic)[1],emissive:(MATS[d.m]||MATS.Plastic)[2]?d.c:'#000000',emissiveIntensity:.8,transparent:(d.t||0)>0,opacity:1-(d.t||0)}));
-  m.position.set(...d.p);m.scale.set(...d.z);m.rotation.set(...d.r||[0,0,0]);m.castShadow=m.receiveShadow=true;scene.add(m);
-  if(d.cc!==false){m.updateMatrixWorld();solids.push(new THREE.Box3().setFromObject(m))}
-  if(d.sp)spawn.set(d.p[0],d.p[1]+d.z[1]/2+.1,d.p[2]);
-  if(d.bh){m.updateMatrixWorld();triggers.push({b:new THREE.Box3().setFromObject(m),k:d.bh,y:d.p[1]+d.z[1]/2+.1,x:d.p[0],z:d.p[2]})}   /* comportamento do Studio: kill / bounce / checkpoint */
+/* ════════════════════════════════════════════════
+   HELPERS DE LOADING
+════════════════════════════════════════════════ */
+const ldFill  = document.getElementById('ld-fill');
+const ldTitle = document.getElementById('ld-title');
+const ldSub   = document.getElementById('ld-sub');
+function setLoad(pct, sub) {
+  ldFill.style.width = pct + '%';
+  if (sub) ldSub.textContent = sub;
+}
+function hideLoad() {
+  const el = document.getElementById('ld');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(() => el.remove(), 520);
+}
+
+/* ════════════════════════════════════════════════
+   DETECÇÃO TOUCH / MOBILE
+════════════════════════════════════════════════ */
+const TOUCH = (window.matchMedia && matchMedia('(pointer:coarse)').matches)
+            || 'ontouchstart' in window
+            || /[?&]touch=1/.test(location.search);
+if (TOUCH) document.body.classList.add('touch');
+
+/* ════════════════════════════════════════════════
+   AUTENTICAÇÃO
+════════════════════════════════════════════════ */
+const ME = Auth.require();
+
+/* ════════════════════════════════════════════════
+   CARREGAR MAPA
+════════════════════════════════════════════════ */
+const want = localStorage.getItem('robloxPlay') || 'Mapa Padrão';
+const cre  = localStorage.getItem('robloxPlayCreator') || '';
+let mapData = null, mapTitle = want, GCRE = 'Roblox', GSIZE = 20;
+
+ldTitle.textContent = want === '__draft__' ? 'Testando mapa' : (want || 'Mapa Padrão');
+setLoad(10, 'Localizando mapa...');
+
+if (want === '__draft__') {
+  mapData  = JSON.parse(localStorage.getItem('robloxDraft') || 'null');
+  mapTitle = 'Teste do Studio';
+  GCRE     = ME;
+} else {
+  const saved = JSON.parse(localStorage.getItem('robloxGames') || '[]');
+  const g     = saved.find(x => x.name === want && (!cre || x.creator === cre));
+  if (g) { mapData = g.parts; GCRE = g.creator; GSIZE = g.serverSize || 20; }
+}
+
+// Reload do servidor uma vez se não achou o mapa local
+if (!mapData && want !== 'Mapa Padrão' && !sessionStorage.getItem('robloxReloaded')) {
+  Auth.init().then(() => {
+    if (Auth.games().some(g => g.name === want)) {
+      sessionStorage.setItem('robloxReloaded', want);
+      location.reload();
+    }
+  });
+}
+
+// Mapa padrão
+if (!mapData) {
+  mapData = [
+    { n:'Baseplate',    s:'box', p:[0,-.5,0], z:[200,1,200], c:'#5a8f4f' },
+    { n:'SpawnLocation',s:'box', p:[0,.5,0],  z:[8,1,8],     c:'#f1c40f', sp:true }
+  ];
+}
+
+setLoad(25, 'Construindo o mapa...');
+document.getElementById('gtName').textContent  = mapTitle;
+document.getElementById('mnTitle').textContent = mapTitle;
+document.getElementById('mnSub').textContent   = want === '__draft__'
+  ? 'Teste do Studio · Só você'
+  : 'Criador: ' + GCRE;
+
+/* ════════════════════════════════════════════════
+   THREE.JS — CENA
+════════════════════════════════════════════════ */
+const scene    = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+scene.background = new THREE.Color(0x87b4e8);
+scene.fog        = new THREE.Fog(0x87b4e8, 160, 520);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .1, 1500);
+
+// Iluminação
+const hemi = new THREE.HemisphereLight(0xddeeff, 0x445566, .8);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, .9);
+sun.position.set(60, 120, 40);
+sun.castShadow = true;
+Object.assign(sun.shadow.camera, { left:-80, right:80, top:80, bottom:-80, far:400 });
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -.001;
+scene.add(sun);
+scene.add(sun.target);
+
+// Geometrias compartilhadas
+const GEO = {
+  box:      new THREE.BoxGeometry(1,1,1),
+  sphere:   new THREE.SphereGeometry(.5, 24, 16),
+  cylinder: new THREE.CylinderGeometry(.5,.5,1,24)
+};
+const MATS = {
+  Plastic:       [.72,.04,0], SmoothPlastic:[.32,.05,0],
+  Metal:         [.22,.92,0], Wood:         [.92,.01,0],
+  Concrete:      [.98,.0, 0], Neon:         [.38,.0, 1],
+  Glass:         [.06,.18,0]
+};
+
+const solids = [], triggers = [];
+let spawn = new THREE.Vector3(0, 3, 0);
+let LT = 14, LB = 1;
+
+setLoad(40, 'Posicionando peças...');
+
+mapData.forEach(d => {
+  if (d.lt !== undefined) { LT = d.lt; LB = d.lb || 1; return; }
+  const mp   = MATS[d.m] || MATS.Plastic;
+  const mesh = new THREE.Mesh(
+    GEO[d.s || 'box'],
+    new THREE.MeshStandardMaterial({
+      color:            d.c,
+      roughness:        mp[0],
+      metalness:        mp[1],
+      emissive:         mp[2] ? d.c : '#000',
+      emissiveIntensity:.8,
+      transparent:      (d.t||0) > 0,
+      opacity:          1 - (d.t||0)
+    })
+  );
+  mesh.position.set(...d.p);
+  mesh.scale.set(...d.z);
+  mesh.rotation.set(...(d.r||[0,0,0]));
+  mesh.castShadow = mesh.receiveShadow = true;
+  scene.add(mesh);
+  if (d.cc !== false) { mesh.updateMatrixWorld(); solids.push(new THREE.Box3().setFromObject(mesh)); }
+  if (d.sp) spawn.set(d.p[0], d.p[1]+d.z[1]/2+.1, d.p[2]);
+  if (d.bh) { mesh.updateMatrixWorld(); triggers.push({ b:new THREE.Box3().setFromObject(mesh), k:d.bh, y:d.p[1]+d.z[1]/2+.1, x:d.p[0], z:d.p[2] }); }
 });
 
-{const d=Math.max(0,Math.sin((LT-6)/12*Math.PI)),c=new THREE.Color(0x0b1026).lerp(new THREE.Color(0x87b4e8),Math.min(1,d*1.6));
- scene.background=c;scene.fog.color=c;hemi.intensity=(.25+.5*d)*LB;sun.intensity=(.05+.9*d)*LB}
-/* ---------- personagem (usado para você e para os outros jogadores) ---------- */
-const mat=c=>new THREE.MeshStandardMaterial({color:c});
-function makeChar(av,name){
-  const g=new THREE.Group();
-  const part=(w,h,d,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=true;g.add(m);return m};
-  const head=part(1.6,1.6,1.6,av.head,0,4.2,0);part(2,2,1,av.torso,0,2.5,0);
-  {const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle=av.head;x.fillRect(0,0,64,64);x.fillStyle='#222';x.fillRect(18,22,6,10);x.fillRect(40,22,6,10);
-   x.lineWidth=4;x.strokeStyle='#222';x.beginPath();x.arc(32,36,13,.15*Math.PI,.85*Math.PI);x.stroke();const b=head.material;head.material=[b,b,b,b,new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c)}),b]}
-  const armL=part(1,2,1,av.arms,-1.5,2.5,0),armR=part(1,2,1,av.arms,1.5,2.5,0);
-  const legL=part(1,2,1,av.legs,-.5,.5,0),legR=part(1,2,1,av.legs,.5,.5,0);
-  {const c=document.createElement('canvas');c.width=512;c.height=96;const x=c.getContext('2d');x.font='bold 46px Segoe UI,sans-serif';x.textAlign='center';
-   const w=Math.min(500,x.measureText(name).width+40);x.fillStyle='rgba(0,0,0,.55)';x.fillRect(256-w/2,14,w,68);x.fillStyle='#fff';x.fillText(name,256,66);
-   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(8,1.5,1);sp.position.y=6.8;sp.renderOrder=9;g.add(sp)}
-  return {g,armL,armR,legL,legR};
+// Iluminação dinâmica pelo horário do mapa
+{
+  const br = Math.max(0, Math.sin((LT-6)/12*Math.PI));
+  const sk = new THREE.Color(0x0b1026).lerp(new THREE.Color(0x87b4e8), Math.min(1, br*1.6));
+  scene.background = sk; scene.fog.color = sk;
+  hemi.intensity = (.22+.55*br)*LB; sun.intensity = (.04+.92*br)*LB;
 }
-const AV=Auth.avatar(ME),me=makeChar(AV,ME),player=me.g,{armL,armR,legL,legR}=me;scene.add(player);
-const pos=spawn.clone(),vel=new THREE.Vector3();let moveSpeed=0,grounded=false,yaw=0,pitch=.35,dist=18,face=0,walkT=0;
-const HW=.9,H=5;pos.x+=(Math.random()-.5)*5;pos.z+=(Math.random()-.5)*5; /* não nascer em cima de outro jogador */
 
-/* ---------- input ---------- */
-const keys={};addEventListener('keydown',e=>{if(e.target&&e.target.tagName==='INPUT')return;if(e.key==='/'){e.preventDefault();showChat();document.getElementById('cin').focus();return}keys[e.code]=1;if(e.code==='KeyR'){pos.copy(spawn);vel.set(0,0,0)}if(e.code==='Space')e.preventDefault()});
-addEventListener('keyup',e=>keys[e.code]=0);
-let drag=false;renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
-renderer.domElement.addEventListener('mousedown',e=>{if(e.button===2)drag=true});addEventListener('mouseup',()=>drag=false);
-addEventListener('mousemove',e=>{if(drag){yaw-=e.movementX*.005;pitch=Math.min(1.4,Math.max(-.2,pitch+e.movementY*.005))}});
-addEventListener('wheel',e=>{dist=Math.min(60,Math.max(4,dist+e.deltaY*.02))});
-/* joystick virtual (esquerda), pulo (direita) e câmera por arrasto/pinça */
-let joyF=0,joyS=0;
-{const joy=document.getElementById('joy'),knob=document.getElementById('knob'),jump=document.getElementById('jump'),R=45;let id=null,cx=0,cy=0;
- const upd=t=>{let dx=t.clientX-cx,dy=t.clientY-cy;const l=Math.hypot(dx,dy);if(l>R){dx=dx/l*R;dy=dy/l*R}knob.style.transform=`translate(${dx}px,${dy}px)`;const m=l>R*.18?1:0;joyS=m*dx/R;joyF=m*-dy/R};
- joy.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];id=t.identifier;const r=joy.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;upd(t)},{passive:false});
- joy.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier===id)upd(t)},{passive:false});
- const end=e=>{for(const t of e.changedTouches)if(t.identifier===id){id=null;joyF=joyS=0;knob.style.transform=''}};
- joy.addEventListener('touchend',end);joy.addEventListener('touchcancel',end);
- jump.addEventListener('touchstart',e=>{e.preventDefault();keys.Space=1},{passive:false});
- const je=e=>{e.preventDefault();keys.Space=0};jump.addEventListener('touchend',je);jump.addEventListener('touchcancel',je);
- const cv=renderer.domElement,T={};let pd=0;const D=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
- cv.style.touchAction='none';
- cv.addEventListener('touchstart',e=>{e.preventDefault();for(const t of e.changedTouches)T[t.identifier]=[t.clientX,t.clientY];if(e.touches.length===2)pd=D(e)},{passive:false});
- cv.addEventListener('touchmove',e=>{e.preventDefault();
-  if(e.touches.length>=2){const d=D(e);dist=Math.min(60,Math.max(4,dist-(d-pd)*.06));pd=d;for(const t of e.changedTouches)T[t.identifier]=[t.clientX,t.clientY];return}
-  for(const t of e.changedTouches){const o=T[t.identifier];if(!o)continue;yaw-=(t.clientX-o[0])*.006;pitch=Math.min(1.4,Math.max(-.2,pitch+(t.clientY-o[1])*.006));T[t.identifier]=[t.clientX,t.clientY]}},{passive:false});
- const ce=e=>{for(const t of e.changedTouches)delete T[t.identifier]};cv.addEventListener('touchend',ce);cv.addEventListener('touchcancel',ce)}
-/* menu estilo Roblox */
-function showChat(){document.getElementById('chat').classList.remove('hid')}
-function toggleChat(){document.getElementById('chat').classList.toggle('hid')}
-function toggleMenu(){document.getElementById('menuOverlay').classList.toggle('open')}
-function respawnMe(){pos.copy(spawn);vel.set(0,0,0);document.getElementById('menuOverlay').classList.remove('open')}
-function leaveGame(){location.href=(localStorage.getItem('robloxPlay')==='__draft__'?'studio.html':'index.html')}
-addEventListener('keydown',e=>{if(e.key==='Escape'){toggleMenu()}});
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+setLoad(60, 'Criando personagem...');
 
-/* ---------- física ---------- */
-const pb=new THREE.Box3();
-function collide(){
-  grounded=false;
-  for(let it=0;it<3;it++)for(const b of solids){
-    pb.min.set(pos.x-HW,pos.y,pos.z-HW);pb.max.set(pos.x+HW,pos.y+H,pos.z+HW);
-    if(!pb.intersectsBox(b))continue;
-    const ox=Math.min(pb.max.x-b.min.x,b.max.x-pb.min.x),oy=Math.min(pb.max.y-b.min.y,b.max.y-pb.min.y),oz=Math.min(pb.max.z-b.min.z,b.max.z-pb.min.z);
-    const stepUp=b.max.y-pos.y;
-    if(stepUp>0&&stepUp<=1.2&&vel.y<=0){pos.y=b.max.y;vel.y=0;grounded=true;continue}
-    if(oy<=ox&&oy<=oz){
-      if(pos.y+H/2>(b.min.y+b.max.y)/2){pos.y=b.max.y;if(vel.y<0)vel.y=0;grounded=true}else{pos.y=b.min.y-H;if(vel.y>0)vel.y=0}
-    }else if(ox<oz){pos.x+=(pos.x>(b.min.x+b.max.x)/2)?ox:-ox}else{pos.z+=(pos.z>(b.min.z+b.max.z)/2)?oz:-oz}
+/* ════════════════════════════════════════════════
+   PERSONAGEM — fábrica reutilizável
+════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   PERSONAGEM — Biker Robot (capacete amarelo,
+   jaqueta de couro, calça cargo, tênis)
+════════════════════════════════════════════════ */
+function makeChar(av, name) {
+  const g = new THREE.Group();
+
+  // Helper: cria mesh Box e adiciona ao grupo
+  const box = (w,h,d, color, x,y,z, rough=.7, metal=.05, parent=g) => {
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(w,h,d),
+      new THREE.MeshStandardMaterial({ color, roughness:rough, metalness:metal })
+    );
+    m.position.set(x,y,z); m.castShadow = true; parent.add(m); return m;
+  };
+  // Helper: cilindro
+  const cyl = (rt,rb,h, color, x,y,z, rough=.6, metal=.1, parent=g) => {
+    const m = new THREE.Mesh(
+      new THREE.CylinderGeometry(rt,rb,h,16),
+      new THREE.MeshStandardMaterial({ color, roughness:rough, metalness:metal })
+    );
+    m.position.set(x,y,z); m.castShadow=true; parent.add(m); return m;
+  };
+  // Helper: esfera
+  const sph = (r, color, x,y,z, rough=.5, metal=.3, parent=g) => {
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(r,16,12),
+      new THREE.MeshStandardMaterial({ color, roughness:rough, metalness:metal })
+    );
+    m.position.set(x,y,z); m.castShadow=true; parent.add(m); return m;
+  };
+
+  /* ── PALETA DE CORES (imagem) ── */
+  const C_YELLOW  = '#e8b800';   // capacete, braços, mãos
+  const C_YELLOW2 = '#d4a900';   // partes escuras do amarelo
+  const C_BLACK   = '#1a1a1a';   // jaqueta couro
+  const C_LEATHER = '#252525';   // jaqueta couro detalhe
+  const C_BLUE    = '#4a9fd4';   // camiseta azul
+  const C_GREEN   = '#4a6741';   // calça cargo
+  const C_BELT    = '#3a5230';   // cinto
+  const C_SHOE    = '#1c1c1c';   // tênis preto
+  const C_SOLE    = '#e0e0e0';   // solado branco
+  const C_GREY    = '#888888';   // metal/parafusos
+  const C_LENS    = '#1a2a3a';   // lentes escuras
+
+  /* ══════════════════════════
+     PESCOÇO
+  ══════════════════════════ */
+  cyl(.35,.4,.5, C_YELLOW, 0, 3.55, 0, .6, .2);
+
+  /* ══════════════════════════
+     CAPACETE (cabeça)
+  ══════════════════════════ */
+  // Grupo do capacete para rotacionar junto
+  const headG = new THREE.Group();
+  headG.position.set(0, 4.2, 0);
+  g.add(headG);
+
+  // Corpo principal do capacete — amarelo arredondado (aproximado por box)
+  const helmetMain = box(1.7, 1.75, 1.7, C_YELLOW, 0, 0, 0, .5, .05, headG);
+  // Topo levemente maior
+  box(1.65, .5, 1.65, C_YELLOW, 0, .75, 0, .4, .05, headG);
+  // Queixo / guard inferior
+  box(1.5, .4, 1.0, C_YELLOW2, 0, -.6, .18, .6, .04, headG);
+  // Grade de ventilação (queixo) — série de caixinhas escuras
+  for (let i=-2; i<=2; i++) {
+    box(.12, .22, .08, '#111', i*.22, -.58, .68, .9, 0, headG);
   }
-}
-let last=performance.now();
-function loop(now){
-  requestAnimationFrame(loop);if(window.__blocked)return;const dt=Math.min(.05,(now-last)/1000);last=now;
-  let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);f+=joyF;s+=joyS;
-  const sp=keys.ShiftLeft?32:16;
-  const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
-  let mx=fx*f+rx*s,mz=fz*f+rz*s;const len=Math.hypot(mx,mz);
-  if(len>0){mx/=len;mz/=len;face=Math.atan2(mx,mz)}
-  pos.x+=mx*sp*dt;pos.z+=mz*sp*dt;
-  vel.y-=130*dt;if(keys.Space&&grounded){vel.y=50;grounded=false}
-  pos.y+=vel.y*dt;collide();
-  if(triggers.length){pb.min.set(pos.x-HW,pos.y-.2,pos.z-HW);pb.max.set(pos.x+HW,pos.y+H,pos.z+HW);
-    for(const t of triggers){if(!pb.intersectsBox(t.b))continue;
-      if(t.k==='kill'){pos.copy(spawn);vel.set(0,0,0);break}
-      if(t.k==='bounce'){vel.y=95;grounded=false}
-      if(t.k==='checkpoint'&&(spawn.x!==t.x||spawn.z!==t.z)){spawn.set(t.x,t.y,t.z)}}}
-  if(pos.y<-120){pos.copy(spawn);vel.set(0,0,0)}
-  player.position.copy(pos);
-  let d=face-player.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));player.rotation.y+=d*Math.min(1,dt*14);
-  moveSpeed=len>0?sp/16:0;walkT+=len>0?dt*(sp/16)*10:0;const sw=len>0?Math.sin(walkT)*.8:0;
-  armL.rotation.x=sw;armR.rotation.x=-sw;legL.rotation.x=-sw;legR.rotation.x=sw;
-  const tgt=pos.clone().add(new THREE.Vector3(0,3.5,0));
-  camera.position.set(tgt.x+Math.sin(yaw)*Math.cos(pitch)*dist,tgt.y+Math.sin(pitch)*dist,tgt.z+Math.cos(yaw)*Math.cos(pitch)*dist);
-  camera.lookAt(tgt);sun.position.set(pos.x+60,120,pos.z+40);sun.target.position.copy(pos);
-  updateOthers(dt);renderer.render(scene,camera);
-}
-requestAnimationFrame(loop);
-
-/* ---------- outros jogadores ---------- */
-const others={};
-function applyState(u,s){
-  if(u===ME||!s||!s.p)return;
-  let o=others[u];
-  if(!o){const c=makeChar(s.av||Auth.avatar(u),u);c.g.position.set(s.p[0],s.p[1],s.p[2]);c.g.rotation.y=s.r||0;scene.add(c.g);o=others[u]={c,wt:0}}
-  o.t=s.p;o.r=s.r||0;o.w=s.w||0;o.seen=performance.now()-(s.a||0);
-}
-function removeOther(u){if(others[u]){scene.remove(others[u].c.g);delete others[u]}}
-function updateOthers(dt){
-  const k=Math.min(1,dt*12);
-  for(const u in others){const o=others[u],g=o.c.g;
-    g.position.x+=(o.t[0]-g.position.x)*k;g.position.y+=(o.t[1]-g.position.y)*k;g.position.z+=(o.t[2]-g.position.z)*k;
-    let d=o.r-g.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));g.rotation.y+=d*k;
-    o.wt+=o.w?dt*10*o.w:0;const sw=o.w?Math.sin(o.wt)*.8:0;
-    o.c.armL.rotation.x=sw;o.c.armR.rotation.x=-sw;o.c.legL.rotation.x=-sw;o.c.legR.rotation.x=sw;
-  }
-}
-const myState=()=>({p:[+pos.x.toFixed(2),+pos.y.toFixed(2),+pos.z.toFixed(2)],r:+player.rotation.y.toFixed(3),w:moveSpeed,av:AV});
-
-/* ---- jogadores online (tempo real) ---- */
-{const BASE=want+'|'+GCRE,tracked=want!=='__draft__',pl=document.getElementById('plist');
- let KEY=BASE,srvIdx=0;   // KEY só vira "BASE#N" depois de escolher o servidor (ver startNet abaixo)
- const draw=()=>{const w=tracked?Auth.presence.who(KEY):[ME];pl.innerHTML='';
-  w.slice().sort((x,y)=>x===ME?-1:y===ME?1:x.localeCompare(y)).forEach(n=>{const r=document.createElement('div');r.className='prow'+(n===ME?' me':'');r.textContent=n;pl.appendChild(r)});
-  const si=document.getElementById('srvInfo');if(si)si.textContent=tracked?'Servidor '+(srvIdx+1):tracked?'Online':'Studio';
-  const oc=document.getElementById('onlineCnt');if(oc)oc.textContent=w.length+' jogador'+(w.length===1?'':'es');
-  const mn=document.getElementById('mnTitle');if(mn)mn.textContent=title||'Mapa Padrão';
-  const ms=document.getElementById('mnSub');if(ms)ms.textContent=tracked?'Servidor '+(srvIdx+1)+' · '+w.length+' jogador'+(w.length===1?'':'es'):'Teste do Studio';
-  if(tracked){const now=performance.now();for(const u in others)if(!w.includes(u)&&now-others[u].seen>4000)removeOther(u)}};
- draw();
- function startNet(){   /* envia a SUA posição e recebe a dos outros, 10x por segundo */
-  if(Auth.presence.server){let busy=false;
-   setInterval(async()=>{if(busy)return;busy=true;
-    try{const r=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({map:KEY,user:ME,...myState()})});
-     const st=await r.json();for(const u in st)applyState(u,st[u])}catch(e){}busy=false},100);
-  }else if(window.BroadcastChannel){
-   const ch=new BroadcastChannel('roblox-pos|'+KEY);ch.onmessage=e=>applyState(e.data.u,e.data.s);
-   setInterval(()=>ch.postMessage({u:ME,s:myState()}),100);
-  }
- }
- function blocked(){window.__blocked=true;const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.9);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px';
-  d.innerHTML='<h2 style="margin:0 0 10px">Não foi possível entrar</h2><p style="max-width:420px;margin:0 0 18px">Já existe um dispositivo logado nesta conta e jogando este mapa. Saia do jogo no outro lugar e tente de novo.</p><button style="background:#0078d7;color:#fff;border:0;padding:10px 22px;border-radius:6px;font-weight:700;cursor:pointer" onclick="location.href=\'index.html\'">Voltar ao início</button>';document.body.appendChild(d)}
- /* ---- chat do mapa: cada servidor tem o seu; balão em cima do personagem ---- */
-const clog=document.getElementById('clog'),cin=document.getElementById('cin');let chatLast=0;
- const nameColor=n=>'hsl('+([...n].reduce((a,c)=>a+c.charCodeAt(0),0)*37%360)+',75%,72%)';
- function bubble(u,text){
-  const g=u===ME?player:(others[u]&&others[u].c.g);if(!g)return;
-  if(g.userData.bub){g.remove(g.userData.bub);g.userData.bub.material.map.dispose()}
-  const c=document.createElement('canvas');c.width=512;c.height=160;const x=c.getContext('2d');x.font='600 32px Segoe UI,sans-serif';
-  let lines=[],l='';for(const w of text.slice(0,120).split(' ')){const t=l?l+' '+w:w;if(x.measureText(t).width>440&&l){lines.push(l);l=w}else l=t}lines.push(l);lines=lines.slice(0,3);
-  const h=lines.length*40+24,w=Math.min(480,Math.max(...lines.map(s=>x.measureText(s).width))+36),X=(512-w)/2,Y=150-h;
-  x.fillStyle='rgba(255,255,255,.96)';x.beginPath();x.roundRect?x.roundRect(X,Y,w,h,18):x.rect(X,Y,w,h);x.fill();
-  x.beginPath();x.moveTo(256-10,Y+h-1);x.lineTo(256+10,Y+h-1);x.lineTo(256,Y+h+10);x.fill();
-  x.fillStyle='#222';x.textAlign='center';lines.forEach((s,i)=>x.fillText(s,256,Y+12+34+i*40-6));
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(8,2.5,1);sp.position.y=8.9;sp.renderOrder=10;g.add(sp);g.userData.bub=sp;
-  setTimeout(()=>{if(g.userData.bub===sp){g.remove(sp);sp.material.map.dispose();g.userData.bub=null}},7000)}
- function addMsg(m){
-  const d=document.createElement('div');d.className='m';const n=document.createElement('span');n.className='n';n.style.color=nameColor(m.u);n.textContent='['+m.u+']: ';
-  const t=document.createElement('span');t.textContent=m.m;d.append(n,t);clog.appendChild(d);while(clog.children.length>80)clog.firstChild.remove();clog.scrollTop=1e9;
-  if(Date.now()-m.t<8000)bubble(m.u,m.m);return d}
- function sysLine(t,cls){const d=document.createElement('div');d.className='m sys '+(cls||'');d.textContent=t;clog.appendChild(d);clog.scrollTop=1e9;return d}
- const pending=[];let polling=false,warnedOld=false;const seenIds=new Set();
- async function chatPoll(){if(!tracked||window.__blocked||KEY===BASE||polling)return;polling=true;try{const r=await Auth.chat.mapGet(KEY,chatLast);if(Auth.chat.old&&!warnedOld){warnedOld=true;sysLine('⚠ '+Auth.chat.oldMsg)}if(r&&r.msgs){r.msgs.forEach(m=>{if(seenIds.has(m.id))return;seenIds.add(m.id);
-     if(m.u===ME){const i=pending.findIndex(p=>p.m===m.m);if(i>=0){pending.splice(i,1);return}}
-     addMsg(m)});chatLast=r.last||chatLast}}finally{polling=false}}
- cin.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')cin.blur()});
- function sendChat(){
-  const v=cin.value.replace(/\s+/g,' ').trim().slice(0,200);if(!v)return;
-  if(!tracked){cin.value='';addMsg({u:ME,m:v,t:Date.now()});return}
-  if(KEY===BASE){sysLine('Conectando ao servidor... tente de novo em instantes.');return}
-  cin.value='';const el=addMsg({u:ME,m:v,t:Date.now()}),p={m:v};pending.push(p);
-  Auth.chat.mapSend(KEY,ME,v).then(r=>{if(!r||!r.ok){const i=pending.indexOf(p);if(i>=0)pending.splice(i,1);el.classList.add('fail');el.append(' ⚠ '+(r&&r.slow?'muito rápido, espere um instante':(r&&r.err)||'não enviada'))}}).then(chatPoll);
-  if(TOUCH)cin.blur()}
- document.getElementById('cform').addEventListener('submit',e=>{e.preventDefault();sendChat()});
- cin.addEventListener('keyup',e=>e.stopPropagation());
- if(!tracked){const d=document.createElement('div');d.className='m sys';d.textContent='Teste do Studio: só você vê o chat.';clog.appendChild(d)}
- if(tracked){const tick=async()=>{if(window.__blocked)return;Auth.presence.beat(KEY,ME);Auth.presence.refresh(BASE,ME);await Auth.presence.sync();draw()};
-  Auth.presence.init().then(async()=>{
-   const r=await Auth.presence.join(BASE,ME,GSIZE);       // escolha atômica do servidor + trava de conta
-   if(r.busy)return blocked();
-   await Auth.presence.sync();
-   srvIdx=r.idx!==undefined?r.idx:Auth.presence.pickServer(BASE,GSIZE,Auth.friends(ME));   // 1º servidor com vaga; todos cheios -> abre um novo
-   KEY=BASE+'#'+srvIdx;
-   Auth.registerVisit(want,GCRE);
-   tick();setInterval(tick,2000);startNet();chatPoll();setInterval(chatPoll,900);
+  // Viseira / painel frontal escuro
+  box(1.3, .55, .15, '#111827', 0, .05, .82, .9, .1, headG);
+  // Três lentes circulares (óculos)
+  const lensPositions = [[-0.42,0.08,0.9],[0,0.08,0.9],[0.42,0.08,0.9]];
+  lensPositions.forEach(([lx,ly,lz]) => {
+    // Aro externo cinza
+    const lensRim = new THREE.Mesh(
+      new THREE.CylinderGeometry(.17,.17,.06,20),
+      new THREE.MeshStandardMaterial({ color:'#555', roughness:.4, metalness:.6 })
+    );
+    lensRim.rotation.x = Math.PI/2;
+    lensRim.position.set(lx,ly,lz);
+    lensRim.castShadow=true; headG.add(lensRim);
+    // Lente escura
+    const lens = new THREE.Mesh(
+      new THREE.CylinderGeometry(.13,.13,.05,20),
+      new THREE.MeshStandardMaterial({ color:C_LENS, roughness:.1, metalness:.8 })
+    );
+    lens.rotation.x = Math.PI/2;
+    lens.position.set(lx,ly,lz+.02);
+    headG.add(lens);
+    // Brilho da lente
+    const glint = new THREE.Mesh(
+      new THREE.CylinderGeometry(.04,.04,.03,10),
+      new THREE.MeshStandardMaterial({ color:'#9db8d4', roughness:0, metalness:1, emissive:'#9db8d4', emissiveIntensity:.4 })
+    );
+    glint.rotation.x = Math.PI/2;
+    glint.position.set(lx-.04,ly+.04,lz+.04);
+    headG.add(glint);
   });
-  const bye=()=>{if(window.__blocked)return;Auth.presence.leave(KEY,ME);Auth.presence.release(BASE,ME)};addEventListener('pagehide',bye);addEventListener('beforeunload',bye);addEventListener('storage',draw);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()})}}
-</script>
+  // Detalhe lateral (ventilações)
+  box(.08, .9, .3, C_YELLOW2, -.82, 0, 0, .5, .05, headG);
+  box(.08, .9, .3, C_YELLOW2,  .82, 0, 0, .5, .05, headG);
+  // Parafusos decorativos
+  [-0.65,0.65].forEach(sx => {
+    sph(.06, C_GREY, sx, .3, .82, .3, .8, headG);
+    sph(.06, C_GREY, sx,-.3, .82, .3, .8, headG);
+  });
 
-<!-- Navbar mobile -->
-<nav id="mobileNav">
-  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
-  <a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a>
-  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
-  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
-  <a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a>
-</nav>
-<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+  /* ══════════════════════════
+     TORSO
+  ══════════════════════════ */
+  // Camiseta azul (camada interna)
+  box(1.75, 2.1, .95, C_BLUE,   0, 2.5, 0, .8, .02);
+  // Jaqueta couro — frente esquerda (aberta)
+  box(.82, 2.1, 1.0, C_BLACK,  -.48, 2.5, 0, .3, .05);
+  // Jaqueta couro — frente direita
+  box(.82, 2.1, 1.0, C_BLACK,   .48, 2.5, 0, .3, .05);
+  // Jaqueta — costas
+  box(1.9, 2.15, 1.0, C_BLACK,  0, 2.5,-.02, .4, .05);
+  // Gola da jaqueta (lapelas)
+  box(.4, .5, .2, C_BLACK, -.45, 3.3, .4, .3, .05);
+  box(.4, .5, .2, C_BLACK,  .45, 3.3, .4, .3, .05);
+  // Detalhe: patch/emblema camiseta (moto)
+  box(.7, .5, .05, '#3a7baa', 0, 2.6, .5, .9, .0);
+  // Zíper da jaqueta (linha central)
+  box(.06, 1.8, .06, C_GREY, 0, 2.5, .51, .8, .6);
+  // Bolso lateral jaqueta
+  box(.35, .25, .12, C_LEATHER, -.7, 2.1, .45, .4, .05);
+  box(.35, .25, .12, C_LEATHER,  .7, 2.1, .45, .4, .05);
+  // Ombros reforçados
+  box(.25, .2, 1.05, C_BLACK, -.88, 3.3, 0, .5, .1);
+  box(.25, .2, 1.05, C_BLACK,  .88, 3.3, 0, .5, .1);
+  // Rebites nos ombros
+  [-1.0,-.75].forEach(sx => {
+    sph(.055, C_GREY, sx, 3.42, 0, .3, .8);
+  });
+  [1.0,.75].forEach(sx => {
+    sph(.055, C_GREY, sx, 3.42, 0, .3, .8);
+  });
+
+  /* ══════════════════════════
+     CINTO
+  ══════════════════════════ */
+  box(2.0, .22, 1.05, C_BELT, 0, 1.52, 0, .9, .05);
+  // Fivela metálica
+  box(.28, .22, .12, C_GREY, 0, 1.52, .54, .4, .7);
+  box(.18, .14, .08, '#333', 0, 1.52, .58, .8, .4);
+
+  /* ══════════════════════════
+     BRAÇOS
+  ══════════════════════════ */
+  // Grupos pivô nos ombros (animação)
+  const armPivotL = new THREE.Group(); armPivotL.position.set(-1.5,2.5,0); g.add(armPivotL);
+  const armPivotR = new THREE.Group(); armPivotR.position.set( 1.5,2.5,0); g.add(armPivotR);
+
+  // Braço superior — couro (manga da jaqueta)
+  box(1.0, 1.5, 1.0, C_BLACK,   0, 0, 0, .4, .05, armPivotL);
+  box(1.0, 1.5, 1.0, C_BLACK,   0, 0, 0, .4, .05, armPivotR);
+  // Cotovelo — amarelo robótico
+  sph(.52, C_YELLOW, 0,-1.0,0, .5,.2, armPivotL);
+  sph(.52, C_YELLOW, 0,-1.0,0, .5,.2, armPivotR);
+  // Antebraço — amarelo
+  box(.9, 1.1, .9, C_YELLOW,    0,-1.9,0, .5,.1, armPivotL);
+  box(.9, 1.1, .9, C_YELLOW,    0,-1.9,0, .5,.1, armPivotR);
+  // Detalhe antebraço — juntas
+  box(.92,.15,.92, C_YELLOW2,   0,-1.4,0, .6,.15, armPivotL);
+  box(.92,.15,.92, C_YELLOW2,   0,-1.4,0, .6,.15, armPivotR);
+  box(.92,.15,.92, C_YELLOW2,   0,-2.3,0, .6,.15, armPivotL);
+  box(.92,.15,.92, C_YELLOW2,   0,-2.3,0, .6,.15, armPivotR);
+
+  /* ══════════════════════════
+     MÃOS robóticas (dedos)
+  ══════════════════════════ */
+  [armPivotL, armPivotR].forEach((arm, side) => {
+    const sx = side===0 ? -1 : 1;
+    // Palma
+    box(.85,.55,.7, C_YELLOW, 0,-2.85,0, .5,.15, arm);
+    // 4 dedos
+    for(let d=0;d<4;d++){
+      const dx = (d-1.5)*.17;
+      // Falange base
+      box(.14,.35,.2, C_YELLOW,  dx,-3.08,-0.1, .5,.1, arm);
+      // Falange media
+      box(.12,.28,.18, C_YELLOW2, dx,-3.42,-0.1, .5,.1, arm);
+      // Falange distal (ponta)
+      box(.1,.2,.14, C_YELLOW,   dx,-3.68,-0.08, .5,.1, arm);
+    }
+    // Polegar
+    box(.14,.28,.2, C_YELLOW, sx*.3,-3.0,.24, .5,.1, arm);
+  });
+
+  /* ══════════════════════════
+     PERNAS — calça cargo verde
+  ══════════════════════════ */
+  const legPivotL = new THREE.Group(); legPivotL.position.set(-.55,.5,0); g.add(legPivotL);
+  const legPivotR = new THREE.Group(); legPivotR.position.set( .55,.5,0); g.add(legPivotR);
+
+  [legPivotL, legPivotR].forEach(leg => {
+    // Coxa
+    box(.95, 1.3, .95, C_GREEN, 0, 0, 0, .8, .02, leg);
+    // Joelho
+    box(.9, .3, .9, '#3d5636', 0,-0.8,0, .7,.02, leg);
+    // Canela
+    box(.9, 1.1, .9, C_GREEN, 0,-1.5,0, .8,.02, leg);
+    // Bolso cargo (lateral)
+    box(.15,.45,.55, '#3d5636', .48,-0.5,0, .85,.02, leg);
+    box(.15,.45,.55, '#3d5636',-.48,-0.5,0, .85,.02, leg);
+    // Zíper bolso
+    box(.02,.35,.04, C_GREY, .56,-0.5,.28, .8,.5, leg);
+  });
+
+  /* ══════════════════════════
+     TÊNIS — preto + solado branco
+  ══════════════════════════ */
+  [legPivotL, legPivotR].forEach(leg => {
+    // Bota/tênis principal
+    box(1.0, .45, 1.3, C_SHOE, 0,-2.22,.15, .9,.02, leg);
+    // Solado (branco/cinza)
+    box(1.05, .2, 1.35, C_SOLE, 0,-2.52,.15, .6,.02, leg);
+    // Lingueta
+    box(.55, .4, .15, '#2a2a2a', 0,-2.0,.65, .9,.02, leg);
+    // Cadarços (linhas brancas horizontais)
+    for(let i=0;i<3;i++){
+      box(.55,.05,.12, '#e0e0e0', 0,-1.9+i*.14,.62, .7,.0, leg);
+    }
+    // Biqueira mais escura
+    box(.3,.35,.35, '#111', 0,-2.22,.72, .95,.05, leg);
+  });
+
+  /* ══════════════════════════
+     LABEL DO NOME
+  ══════════════════════════ */
+  const lc = document.createElement('canvas'); lc.width=512; lc.height=96;
+  const lx = lc.getContext('2d');
+  lx.font='bold 42px Segoe UI,sans-serif'; lx.textAlign='center';
+  const tw = Math.min(500, lx.measureText(name).width+44);
+  lx.fillStyle='rgba(0,0,0,.65)';
+  if(lx.roundRect) lx.roundRect(256-tw/2,12,tw,70,14); else lx.rect(256-tw/2,12,tw,70);
+  lx.fill();
+  lx.fillStyle='#fff'; lx.fillText(name,256,62);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(lc), depthTest:false, transparent:true }));
+  sp.scale.set(8,1.5,1); sp.position.y=8.2; sp.renderOrder=9;
+  g.add(sp);
+
+  /* ══════════════════════════
+     RETORNA REFERÊNCIAS para animação
+  ══════════════════════════ */
+  // armL/armR/legL/legR são os grupos pivô para animação de caminhada
+  return { g, head:headG, armL:armPivotL, armR:armPivotR, legL:legPivotL, legR:legPivotR };
+}
+
+/* ════════════════════════════════════════════════
+   MEU PERSONAGEM
+════════════════════════════════════════════════ */
+const AV     = Auth.avatar(ME);
+const myChar = makeChar(AV, ME);
+const player = myChar.g;
+const { armL, armR, legL, legR } = myChar;
+scene.add(player);
+
+const pos = spawn.clone();
+pos.x += (Math.random()-.5)*4; pos.z += (Math.random()-.5)*4;
+const vel = new THREE.Vector3();
+let grounded=false, moveSpeed=0, yaw=0, pitch=.38, camDist=18, face=0, walkT=0;
+const HW=.9, PH=5;
+
+/* ════════════════════════════════════════════════
+   INPUT — TECLADO
+════════════════════════════════════════════════ */
+const keys = {};
+let chatOpen = false;
+
+function onKeyDown(e) {
+  if (chatOpen) {
+    if (e.key === 'Escape') closeChatInput();
+    return;
+  }
+  keys[e.code] = 1;
+  if (e.key === '/') { e.preventDefault(); openChatInput(); return; }
+  if (e.key === 'Escape') { toggleMenu(); return; }
+  if (e.code === 'KeyR') { pos.copy(spawn); vel.set(0,0,0); }
+  if (e.code === 'Space') e.preventDefault();
+}
+function onKeyUp(e) { keys[e.code] = 0; }
+addEventListener('keydown', onKeyDown);
+addEventListener('keyup',   onKeyUp);
+
+/* ════════════════════════════════════════════════
+   INPUT — MOUSE (câmera desktop)
+════════════════════════════════════════════════ */
+let camDrag=false, lastMX=0, lastMY=0;
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+renderer.domElement.addEventListener('mousedown', e => { if (e.button===2) { camDrag=true; lastMX=e.clientX; lastMY=e.clientY; } });
+addEventListener('mouseup', () => camDrag=false);
+addEventListener('mousemove', e => {
+  if (!camDrag) return;
+  yaw   -= (e.clientX-lastMX)*.005;
+  pitch  = Math.min(1.4, Math.max(-.2, pitch+(e.clientY-lastMY)*.005));
+  lastMX = e.clientX; lastMY = e.clientY;
+});
+addEventListener('wheel', e => { camDist = Math.min(60, Math.max(4, camDist+e.deltaY*.02)); }, { passive:true });
+
+/* ════════════════════════════════════════════════
+   JOYSTICK VIRTUAL (mobile)
+════════════════════════════════════════════════ */
+let joyF=0, joyS=0;
+{
+  const joy=document.getElementById('joy'), knob=document.getElementById('joyK'), R=42;
+  let jid=null, jcx=0, jcy=0;
+  const jMove = t => {
+    let dx=t.clientX-jcx, dy=t.clientY-jcy;
+    const l=Math.hypot(dx,dy);
+    if (l>R) { dx=dx/l*R; dy=dy/l*R; }
+    knob.style.transform = `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    const dead = l>R*.15 ? 1 : 0;
+    joyS = dead*dx/R; joyF = dead*-dy/R;
+  };
+  const jEnd = e => {
+    for (const t of e.changedTouches) if (t.identifier===jid) {
+      jid=null; joyF=joyS=0; knob.style.transform='translate(-50%,-50%)';
+    }
+  };
+  joy.addEventListener('touchstart', e => {
+    e.preventDefault(); const t=e.changedTouches[0]; jid=t.identifier;
+    const r=joy.getBoundingClientRect(); jcx=r.left+r.width/2; jcy=r.top+r.height/2; jMove(t);
+  }, {passive:false});
+  joy.addEventListener('touchmove', e => { e.preventDefault(); for(const t of e.changedTouches) if(t.identifier===jid) jMove(t); }, {passive:false});
+  joy.addEventListener('touchend', jEnd); joy.addEventListener('touchcancel', jEnd);
+
+  // Botão de pulo
+  const jb=document.getElementById('jumpBtn');
+  jb.addEventListener('touchstart', e => { e.preventDefault(); keys.Space=1; }, {passive:false});
+  const jbEnd = e => { e.preventDefault(); keys.Space=0; };
+  jb.addEventListener('touchend', jbEnd); jb.addEventListener('touchcancel', jbEnd);
+
+  // Câmera touch no canvas
+  const cv=renderer.domElement, T={};
+  let pd=0;
+  const pinchD = e => Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+  cv.style.touchAction='none';
+  cv.addEventListener('touchstart', e => {
+    e.preventDefault();
+    for(const t of e.changedTouches) T[t.identifier]=[t.clientX,t.clientY];
+    if(e.touches.length===2) pd=pinchD(e);
+  }, {passive:false});
+  cv.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if(e.touches.length>=2) {
+      const nd=pinchD(e); camDist=Math.min(60,Math.max(4,camDist-(nd-pd)*.06)); pd=nd;
+      for(const t of e.changedTouches) T[t.identifier]=[t.clientX,t.clientY]; return;
+    }
+    for(const t of e.changedTouches) {
+      const o=T[t.identifier]; if(!o) continue;
+      yaw  -=(t.clientX-o[0])*.006;
+      pitch = Math.min(1.4,Math.max(-.2,pitch+(t.clientY-o[1])*.006));
+      T[t.identifier]=[t.clientX,t.clientY];
+    }
+  }, {passive:false});
+  const tcEnd = e => { for(const t of e.changedTouches) delete T[t.identifier]; };
+  cv.addEventListener('touchend',   tcEnd);
+  cv.addEventListener('touchcancel',tcEnd);
+}
+
+/* ════════════════════════════════════════════════
+   RESIZE
+════════════════════════════════════════════════ */
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ════════════════════════════════════════════════
+   FÍSICA & COLISÃO AABB
+════════════════════════════════════════════════ */
+const pb = new THREE.Box3();
+function collide() {
+  grounded = false;
+  for (let it=0; it<3; it++) {
+    for (const b of solids) {
+      pb.min.set(pos.x-HW, pos.y,    pos.z-HW);
+      pb.max.set(pos.x+HW, pos.y+PH, pos.z+HW);
+      if (!pb.intersectsBox(b)) continue;
+      const ox=Math.min(pb.max.x-b.min.x, b.max.x-pb.min.x);
+      const oy=Math.min(pb.max.y-b.min.y, b.max.y-pb.min.y);
+      const oz=Math.min(pb.max.z-b.min.z, b.max.z-pb.min.z);
+      const stepUp=b.max.y-pos.y;
+      if (stepUp>0&&stepUp<=1.2&&vel.y<=0) { pos.y=b.max.y; vel.y=0; grounded=true; continue; }
+      if (oy<=ox&&oy<=oz) {
+        if (pos.y+PH/2>(b.min.y+b.max.y)/2) { pos.y=b.max.y; if(vel.y<0) vel.y=0; grounded=true; }
+        else { pos.y=b.min.y-PH; if(vel.y>0) vel.y=0; }
+      } else if (ox<oz) {
+        pos.x += (pos.x>(b.min.x+b.max.x)/2)?ox:-ox;
+      } else {
+        pos.z += (pos.z>(b.min.z+b.max.z)/2)?oz:-oz;
+      }
+    }
+  }
+}
+
+/* ════════════════════════════════════════════════
+   LOOP PRINCIPAL
+════════════════════════════════════════════════ */
+let lastT=performance.now(), gameBlocked=false;
+
+function gameLoop(now) {
+  requestAnimationFrame(gameLoop);
+  if (gameBlocked) return;
+  const dt = Math.min(.05, (now-lastT)/1000); lastT=now;
+
+  // Movimento
+  let f = (keys.KeyW||keys.ArrowUp   ?1:0)-(keys.KeyS||keys.ArrowDown ?1:0);
+  let s = (keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft ?1:0);
+  f+=joyF; s+=joyS;
+  const sp = keys.ShiftLeft ? 30 : 15;
+  const fx=-Math.sin(yaw), fz=-Math.cos(yaw), rx=Math.cos(yaw), rz=-Math.sin(yaw);
+  let mx=fx*f+rx*s, mz=fz*f+rz*s;
+  const len=Math.hypot(mx,mz);
+  if (len>0) { mx/=len; mz/=len; face=Math.atan2(mx,mz); }
+
+  pos.x += mx*sp*dt; pos.z += mz*sp*dt;
+  vel.y -= 130*dt;
+  if (keys.Space&&grounded) { vel.y=50; grounded=false; }
+  pos.y += vel.y*dt;
+  collide();
+
+  // Triggers (kill/bounce/checkpoint)
+  if (triggers.length) {
+    pb.min.set(pos.x-HW,pos.y-.2,pos.z-HW); pb.max.set(pos.x+HW,pos.y+PH,pos.z+HW);
+    for (const t of triggers) {
+      if (!pb.intersectsBox(t.b)) continue;
+      if (t.k==='kill')  { pos.copy(spawn); vel.set(0,0,0); break; }
+      if (t.k==='bounce') { vel.y=95; grounded=false; }
+      if (t.k==='checkpoint'&&(spawn.x!==t.x||spawn.z!==t.z)) spawn.set(t.x,t.y,t.z);
+    }
+  }
+  if (pos.y<-120) { pos.copy(spawn); vel.set(0,0,0); }
+
+  // Personagem
+  player.position.copy(pos);
+  let dy=face-player.rotation.y; dy=Math.atan2(Math.sin(dy),Math.cos(dy));
+  player.rotation.y += dy*Math.min(1,dt*14);
+
+  // Animação de caminhada
+  moveSpeed = len>0 ? sp/15 : 0;
+  walkT += len>0 ? dt*(sp/15)*10 : 0;
+  const sw = len>0 ? Math.sin(walkT)*.85 : 0;
+  armL.rotation.x= sw; armR.rotation.x=-sw; legL.rotation.x=-sw; legR.rotation.x= sw;
+
+  // Câmera terceira pessoa
+  const tgt = pos.clone().add(new THREE.Vector3(0,3.5,0));
+  camera.position.set(
+    tgt.x + Math.sin(yaw)*Math.cos(pitch)*camDist,
+    tgt.y + Math.sin(pitch)*camDist,
+    tgt.z + Math.cos(yaw)*Math.cos(pitch)*camDist
+  );
+  camera.lookAt(tgt);
+  sun.position.set(pos.x+60,120,pos.z+40); sun.target.position.copy(pos);
+
+  updateOthers(dt);
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(gameLoop);
+
+/* ════════════════════════════════════════════════
+   OUTROS JOGADORES (interpolação suave)
+════════════════════════════════════════════════ */
+const others = {};
+
+function applyState(u, s) {
+  if (u===ME||!s||!s.p) return;
+  let o = others[u];
+  if (!o) {
+    const c = makeChar(s.av||Auth.avatar(u), u);
+    c.g.position.set(s.p[0],s.p[1],s.p[2]); c.g.rotation.y=s.r||0;
+    scene.add(c.g);
+    o = others[u] = { c, wt:0, t:s.p, r:s.r||0, w:s.w||0, seen:performance.now() };
+  } else {
+    o.t=s.p; o.r=s.r||0; o.w=s.w||0; o.seen=performance.now()-(s.a||0);
+  }
+}
+function removeOther(u) { if(others[u]){scene.remove(others[u].c.g);delete others[u];} }
+function updateOthers(dt) {
+  const k=Math.min(1,dt*12);
+  for (const u in others) {
+    const o=others[u], g=o.c.g;
+    g.position.x+=(o.t[0]-g.position.x)*k; g.position.y+=(o.t[1]-g.position.y)*k; g.position.z+=(o.t[2]-g.position.z)*k;
+    let rd=o.r-g.rotation.y; rd=Math.atan2(Math.sin(rd),Math.cos(rd)); g.rotation.y+=rd*k;
+    o.wt+=o.w?dt*10*o.w:0;
+    const sw=o.w?Math.sin(o.wt)*.85:0;
+    o.c.armL.rotation.x= sw; o.c.armR.rotation.x=-sw; o.c.legL.rotation.x=-sw; o.c.legR.rotation.x= sw;
+  }
+}
+const myState = () => ({
+  p:[+pos.x.toFixed(2),+pos.y.toFixed(2),+pos.z.toFixed(2)],
+  r:+player.rotation.y.toFixed(3), w:moveSpeed, av:AV
+});
+
+/* ════════════════════════════════════════════════
+   CHAT
+════════════════════════════════════════════════ */
+const chatWrap  = document.getElementById('chatWrap');
+const clog      = document.getElementById('clog');
+const cin       = document.getElementById('cin');
+const chatBadge = document.getElementById('chatBadge');
+const chatNotif = document.getElementById('chatNotif');
+let chatUnread=0, chatPending=[], chatPolling=false, chatLast=0, warnedOld=false;
+const seenIds = new Set();
+
+function openChatInput() {
+  chatOpen=true; chatWrap.classList.add('vis');
+  chatBadge.classList.remove('on'); chatUnread=0;
+  chatNotif.classList.remove('on');
+  setTimeout(()=>cin.focus(), 50);
+}
+function closeChatInput() { chatOpen=false; cin.blur(); chatWrap.classList.remove('vis'); }
+function toggleChat() { chatWrap.classList.contains('vis')?closeChatInput():openChatInput(); }
+
+const nameHue = n => 'hsl(' + ([...n].reduce((a,c)=>a+c.charCodeAt(0),0)*37%360) + ',78%,70%)';
+
+function addMsg(m, noNotif) {
+  const d=document.createElement('div'); d.className='cmsg';
+  const nm=document.createElement('span'); nm.className='cname'; nm.style.color=nameHue(m.u); nm.textContent=m.u+': ';
+  const tx=document.createElement('span'); tx.textContent=m.m;
+  d.append(nm,tx); clog.appendChild(d);
+  while(clog.children.length>100) clog.firstChild.remove();
+  clog.scrollTop=1e9;
+  if (!noNotif&&!chatWrap.classList.contains('vis')) {
+    chatUnread++; chatBadge.classList.add('on');
+    chatNotif.innerHTML='<strong>'+m.u+'</strong>: '+m.m.slice(0,60);
+    chatNotif.classList.add('on');
+    clearTimeout(chatNotif._t);
+    chatNotif._t=setTimeout(()=>chatNotif.classList.remove('on'),5000);
+  }
+  if (Date.now()-m.t<8000) showBubble(m.u,m.m);
+  return d;
+}
+function sysMsg(txt) {
+  const d=document.createElement('div'); d.className='cmsg csys'; d.textContent=txt;
+  clog.appendChild(d); clog.scrollTop=1e9;
+}
+
+// Balão de fala 3D sobre o personagem
+function showBubble(u, text) {
+  const g=u===ME?player:(others[u]&&others[u].c.g); if(!g) return;
+  if (g.userData.bub) { g.remove(g.userData.bub); g.userData.bub.material.map.dispose(); }
+  const c=document.createElement('canvas'); c.width=512; c.height=160;
+  const x=c.getContext('2d');
+  x.font='600 29px Segoe UI,sans-serif';
+  let lines=[],cur='';
+  for (const w of text.slice(0,100).split(' ')) {
+    const t=cur?cur+' '+w:w;
+    if(x.measureText(t).width>440&&cur){lines.push(cur);cur=w;}else cur=t;
+  }
+  lines.push(cur); lines=lines.slice(0,3);
+  const bh=lines.length*37+22, bw=Math.min(490,Math.max(...lines.map(s=>x.measureText(s).width))+36);
+  const bx=(512-bw)/2, by=146-bh;
+  x.fillStyle='rgba(255,255,255,.95)';
+  if(x.roundRect) x.roundRect(bx,by,bw,bh,15); else x.rect(bx,by,bw,bh);
+  x.fill();
+  x.beginPath(); x.moveTo(252,by+bh); x.lineTo(272,by+bh); x.lineTo(262,by+bh+11); x.fill();
+  x.fillStyle='#1a1a1a'; x.textAlign='center';
+  lines.forEach((s,i)=>x.fillText(s,256,by+10+30+i*37));
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+  sp.scale.set(8,2.5,1); sp.position.y=9.2; sp.renderOrder=10;
+  g.add(sp); g.userData.bub=sp;
+  setTimeout(()=>{if(g.userData.bub===sp){g.remove(sp);sp.material.map.dispose();g.userData.bub=null;}},7000);
+}
+
+// Enviar mensagem
+document.getElementById('cform').addEventListener('submit', e => {
+  e.preventDefault();
+  const v=cin.value.replace(/\s+/g,' ').trim().slice(0,200); if(!v) return;
+  cin.value='';
+  if (!tracked) { addMsg({u:ME,m:v,t:Date.now()},true); return; }
+  if (NET_KEY===BASE_KEY) { sysMsg('Conectando... tente novamente.'); return; }
+  const el=addMsg({u:ME,m:v,t:Date.now()},true);
+  const p={m:v}; chatPending.push(p);
+  Auth.chat.mapSend(NET_KEY,ME,v).then(r=>{
+    if(!r||!r.ok){const i=chatPending.indexOf(p);if(i>=0)chatPending.splice(i,1);el.classList.add('cfail');el.append(' ⚠ '+(r&&r.slow?'muito rápido':(r&&r.err)||'falha'));}
+  }).then(()=>pollChat());
+  if(TOUCH) cin.blur();
+});
+cin.addEventListener('keydown', e=>e.stopPropagation());
+cin.addEventListener('keyup',   e=>{e.stopPropagation();if(e.key==='Escape')closeChatInput();});
+cin.addEventListener('focus',   ()=>{chatOpen=true;});
+cin.addEventListener('blur',    ()=>{chatOpen=false;});
+
+async function pollChat() {
+  if(!tracked||gameBlocked||NET_KEY===BASE_KEY||chatPolling) return;
+  chatPolling=true;
+  try {
+    const r=await Auth.chat.mapGet(NET_KEY,chatLast);
+    if(Auth.chat.old&&!warnedOld){warnedOld=true;sysMsg('⚠ Servidor antigo — chat em modo local.');}
+    if(r&&r.msgs){
+      r.msgs.forEach(m=>{
+        if(seenIds.has(m.id)) return; seenIds.add(m.id);
+        if(m.u===ME){const i=chatPending.findIndex(p=>p.m===m.m);if(i>=0){chatPending.splice(i,1);return;}}
+        addMsg(m);
+      });
+      chatLast=r.last||chatLast;
+    }
+  } catch(e){}
+  chatPolling=false;
+}
+
+/* ════════════════════════════════════════════════
+   MENU ESC
+════════════════════════════════════════════════ */
+function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); }
+function respawnMe() { pos.copy(spawn); vel.set(0,0,0); document.getElementById('menuOverlay').classList.remove('open'); }
+function leaveGame() { location.href = want==='__draft__'?'studio.html':'index.html'; }
+
+/* ════════════════════════════════════════════════
+   PRESENÇA / MULTIPLAYER
+════════════════════════════════════════════════ */
+const BASE_KEY = want+'|'+GCRE;
+const tracked  = want !== '__draft__';
+let NET_KEY=BASE_KEY, srvIdx=0;
+
+const plistEl   = document.getElementById('plist');
+const gtServer  = document.getElementById('gtServer');
+const onlineCnt = document.getElementById('onlineCnt');
+const mnSub2    = document.getElementById('mnSub');
+
+function drawPlayers() {
+  const who = tracked ? Auth.presence.who(NET_KEY) : [ME];
+  plistEl.innerHTML='';
+  [...who].sort((a,b)=>a===ME?-1:b===ME?1:a.localeCompare(b)).forEach(n=>{
+    const r=document.createElement('div'); r.className='prow'+(n===ME?' me':'');
+    r.innerHTML='<div class="pdot"></div>';
+    r.appendChild(Object.assign(document.createElement('span'),{textContent:n}));
+    plistEl.appendChild(r);
+  });
+  gtServer.textContent = tracked?'Servidor '+(srvIdx+1):'Studio';
+  onlineCnt.textContent = who.length+' jogador'+(who.length!==1?'es':'');
+  mnSub2.textContent = tracked
+    ?'Servidor '+(srvIdx+1)+' · '+who.length+' jogador'+(who.length!==1?'es':'')
+    :'Teste do Studio · Só você';
+  if(tracked){
+    const now=performance.now();
+    for(const u in others) if(!who.includes(u)&&now-(others[u].seen||0)>4000) removeOther(u);
+  }
+}
+drawPlayers();
+
+function showBlockScreen() {
+  gameBlocked=true;
+  document.getElementById('blockScreen').classList.add('on');
+}
+
+function startNet() {
+  if (Auth.presence.server) {
+    let busy=false;
+    setInterval(async()=>{
+      if(busy) return; busy=true;
+      try{
+        const r=await fetch('/api/move',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({map:NET_KEY,user:ME,...myState()})});
+        const st=await r.json();
+        for(const u in st) applyState(u,st[u]);
+      }catch(e){}
+      busy=false;
+    },100);
+  } else if (window.BroadcastChannel) {
+    const ch=new BroadcastChannel('roblox-pos|'+NET_KEY);
+    ch.onmessage=e=>applyState(e.data.u,e.data.s);
+    setInterval(()=>ch.postMessage({u:ME,s:myState()}),100);
+  }
+}
+
+if (tracked) {
+  const tick = async()=>{
+    if(gameBlocked) return;
+    Auth.presence.beat(NET_KEY,ME);
+    Auth.presence.refresh(BASE_KEY,ME);
+    await Auth.presence.sync();
+    drawPlayers();
+  };
+
+  Auth.presence.init().then(async()=>{
+    setLoad(80,'Entrando no servidor...');
+    const r=await Auth.presence.join(BASE_KEY,ME,GSIZE);
+    if(r.busy) return showBlockScreen();
+    await Auth.presence.sync();
+    srvIdx=r.idx!==undefined?r.idx:Auth.presence.pickServer(BASE_KEY,GSIZE,Auth.friends(ME));
+    NET_KEY=BASE_KEY+'#'+srvIdx;
+    Auth.registerVisit(want,GCRE);
+    tick(); setInterval(tick,2000);
+    startNet(); pollChat(); setInterval(pollChat,900);
+    drawPlayers();
+    setLoad(100,'Pronto!'); setTimeout(hideLoad,400);
+  });
+
+  const bye=()=>{
+    if(!gameBlocked){Auth.presence.leave(NET_KEY,ME);Auth.presence.release(BASE_KEY,ME);}
+  };
+  addEventListener('pagehide',bye); addEventListener('beforeunload',bye);
+  addEventListener('storage',drawPlayers);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick();});
+} else {
+  sysMsg('Studio: só você vê o chat.');
+  setLoad(100,'Pronto!'); setTimeout(hideLoad,400);
+}
+</script>
 </body>
 </html>

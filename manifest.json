@@ -1,0 +1,16 @@
+{
+  "name": "Roblox Clone",
+  "short_name": "RobloxClone",
+  "description": "Roblox Clone - Jogue e crie mapas 3D",
+  "start_url": "/login.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0d0f1a",
+  "theme_color": "#0066ff",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "pt-BR"
+}
