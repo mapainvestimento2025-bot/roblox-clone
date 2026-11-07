@@ -46,7 +46,14 @@ const Auth = {
     if (!/^\S+@\S+\.\S+$/.test(email)) return 'Digite um e-mail válido.';
     if (pass.length < 6) return 'A senha precisa ter pelo menos 6 caracteres.';
     await this.init();
-    if (this.server) { const d = await this.device(), j = await this.post('/api/register', { name, email, hash: await this.hash(pass), hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info }); if (j.err) return j.err; this.setSession(key, remember); return null; }
+    if (this.server) {
+      const h = await this.hash(pass);
+      const d = await this.device(), j = await this.post('/api/register', { name, email, hash: h, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info });
+      if (j.err) return j.err;
+      /* guarda o hash no cache local para garantir login mesmo sem servidor */
+      const ux = this.users(); if (ux[key]) { ux[key].hash = h; this.save(ux); }
+      this.setSession(key, remember); return null;
+    }
     if (users[key]) return 'Esse nome de usuário já está em uso.';
     if (Object.values(users).some(u => u.email === email.toLowerCase())) return 'Esse e-mail já está cadastrado.';
     users[key] = { name, email: email.toLowerCase(), hash: await this.hash(pass), created: Date.now() };
@@ -54,9 +61,17 @@ const Auth = {
   },
   async login(name, pass, remember) {
     const key = name.trim().toLowerCase(); await this.init();
-    if (this.server) { const d = await this.device(), j = await this.post('/api/login', { name, hash: await this.hash(pass), hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info }); if (j.err) return j.err; this.setSession(key, remember); return null; }
+    if (this.server) {
+      const h = await this.hash(pass);
+      const d = await this.device(), j = await this.post('/api/login', { name, hash: h, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info });
+      if (j.err) return j.err;
+      /* guarda o hash no cache local para que o login funcione mesmo se o servidor ficar fora */
+      const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
+      this.setSession(key, remember); return null;
+    }
     const u = this.users()[key];
-    if (!u || u.hash !== await this.hash(pass)) return 'Usuário ou senha incorretos.';
+    if (!u) return 'Usuário não encontrado. Abra o site com o servidor (node server.js) para recuperar sua conta.';
+    if (u.hash !== await this.hash(pass)) return 'Usuário ou senha incorretos.';
     this.setSession(key, remember); return null;
   },
   /* ---- identificação do dispositivo (HWID — nível hardware/mobile) ----
