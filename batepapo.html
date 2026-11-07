@@ -6,14 +6,36 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="auth.js?v=3"></script>
-<script>
-if (typeof Auth === 'undefined' || !Auth.chat) {
-  document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2 style="margin-bottom:12px">Erro ao carregar auth.js</h2><p style="color:#888">Pressione <b>Ctrl+F5</b> para recarregar.</p><button onclick=\"location.reload(true)\" style=\"margin-top:16px;background:#0066ff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px\">Recarregar</button></div></body>');
-  window.stop();
-  throw new Error('auth.js nao carregou');
+<script>if(typeof Auth==='undefined'||!Auth.chat){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p>
+<style>
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){
+  #mobileNav{display:flex}
+  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}
 }
+</style>
+<nav id="mobileNav">
+  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="batepapo.html" class="active"><i class="fa-solid fa-comments"></i>Bate-papo</a>
+  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
+  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
+  <a href="#" id="mobileProfileLink"><i class="fa-solid fa-user"></i>Perfil</a>
+</nav>
+<script>
+(function(){
+  var ml = document.getElementById('mobileProfileLink');
+  if(ml && typeof Auth !== 'undefined') ml.href = Auth.profileUrl(Auth.current && Auth.current() || '');
+})();
 </script>
   <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
+</body>');window.stop();throw new Error('auth.js antigo')}</script>
 <style>
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
 body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
@@ -191,13 +213,8 @@ function openConv(n) {
   $('cName').innerHTML = ''; $('cName').append(cur); $('cName').insertAdjacentHTML('beforeend', ' ' + Auth.badge(cur)); $('cName').onclick = () => location.href = Auth.profileUrl(cur);
   setStatus(null, cur);
   $('msgs').innerHTML = ''; renderList(); loadMsgs(true); $('inp').focus();
-  // Inicia o poll de "digitando" para esta conversa
-  if (typeof startTypingPoll === 'function') startTypingPoll(cur);
 }
 function closeConv() {
-  // Para de digitar e os polls ao fechar a conversa
-  if (typeof stopTyping       === 'function') stopTyping();
-  if (typeof startTypingPoll  === 'function') startTypingPoll(null);
   cur = null; history.replaceState(null, '', 'batepapo.html');
   $('conv').classList.add('hidden'); $('conv').classList.remove('flex'); $('empty').classList.remove('hidden');
   $('chatPane').classList.add('hidden'); $('listPane').classList.remove('hidden'); renderList();
@@ -246,8 +263,6 @@ async function loadMsgs(force) {
   if (l.length) { Auth.chat.markSeen(ME, who, l[l.length - 1].t); const lm = l[l.length - 1]; summary[who] = mineT(lm) ? Object.assign({}, lm, { ts: Auth.chat.tick(lm, st), m: lm._plain || lm.m }) : { ...lm, m: lm._plain || lm.m }; renderList(); }
 }
 function setStatus(st, who) {   // "online" · "Jogando: mapa" (só amigos) · "visto hoje/ontem/dd/mm/aaaa às hh:mm"
-  // Não sobrescreve se estiver mostrando "digitando..."
-  if (_theyTyping && who && who.toLowerCase() === (cur || '').toLowerCase()) return;
   const e = $('cSub'), P = Auth.pres.get(who), pi = P && (P.on || P.g || P.s || !(st && (st.online || st.s))) ? Auth.pres.info(who) : (st && st.online ? { k: 'on', t: 'Online' } : st && st.s ? { k: 'off', t: Auth.pres.last(st.s) } : { k: 'off', t: '@' + who.toLowerCase() });
   e.innerHTML = pi.k === 'off' ? '' : '<i class="fa-solid fa-circle text-[7px] align-middle mr-1"></i>'; e.append(pi.t);
   e.className = 'text-xs truncate'; e.style.color = pi.k === 'off' ? '#8a8f95' : Auth.pres.COLOR[pi.k];
@@ -278,162 +293,8 @@ function swipe(row, m) {   // celular: arrastar a mensagem para a direita = resp
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && replyTo) clearReply(); });
 
-/* ════════════════════════════════════════════════
-   INDICADOR "DIGITANDO..."
-   - Servidor online  → POST /api/typing a cada 2s
-   - Modo local/offline → localStorage broadcast
-   - Exibe bolinha animada + texto no cSub
-   - Some 4s após parar de digitar
-════════════════════════════════════════════════ */
-let _typingSendTimer   = null;   // debounce do POST
-let _typingStopTimer   = null;   // timer para parar de enviar
-let _typingPollTimer   = null;   // poll remoto
-let _typingLocalTimer  = null;   // monitor localStorage
-let _iAmTyping         = false;  // estado local
-let _theyTyping        = false;  // estado remoto
-let _typingDisplayTimer = null;  // timer para sumir o "digitando"
-
-// Chave localStorage para modo local
-const typingKey = (from, to) => `rbx_typing:${from.toLowerCase()}:${to.toLowerCase()}`;
-
-// Envia "estou digitando" para o servidor ou localStorage
-async function sendTyping() {
-  if (!cur) return;
-  const now = Date.now();
-  // Sempre atualiza localStorage (funciona em modo local e server)
-  try { localStorage.setItem(typingKey(ME, cur), String(now)); } catch(e) {}
-  // Se tem servidor, POST também
-  if (Auth.server) {
-    try {
-      await fetch('/api/typing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: ME, to: cur })
-      });
-    } catch(e) {}
-  }
-}
-
-// Para de enviar "digitando"
-function stopTyping() {
-  _iAmTyping = false;
-  clearTimeout(_typingStopTimer);
-  clearInterval(_typingSendTimer);
-  _typingSendTimer = null;
-  // Limpa o localStorage
-  if (cur) try { localStorage.removeItem(typingKey(ME, cur)); } catch(e) {}
-}
-
-// Chamado quando o usuário digita no input
-function onInputTyping() {
-  const val = $('inp').value;
-  if (!val || !cur) { stopTyping(); return; }
-  if (!_iAmTyping) {
-    _iAmTyping = true;
-    sendTyping(); // dispara imediatamente
-    // Depois a cada 2s enquanto continuar digitando
-    _typingSendTimer = setInterval(sendTyping, 2000);
-  }
-  // Reinicia timer de parar (para 3s após última tecla)
-  clearTimeout(_typingStopTimer);
-  _typingStopTimer = setTimeout(stopTyping, 3000);
-}
-
-// Mostra o indicador "digitando..." no cSub
-function showTypingIndicator(who) {
-  if (!who || who.toLowerCase() !== (cur || '').toLowerCase()) return;
-  _theyTyping = true;
-  const e = $('cSub');
-  e.innerHTML = `
-    <span class="inline-flex items-center gap-1.5" style="color:#3794ff">
-      <span class="typing-dots inline-flex gap-0.5">
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-        <span class="typing-dot"></span>
-      </span>
-      digitando...
-    </span>`;
-  // Some depois de 4s sem atualização
-  clearTimeout(_typingDisplayTimer);
-  _typingDisplayTimer = setTimeout(() => {
-    _theyTyping = false;
-    setStatus(lastSt, cur); // restaura status normal
-  }, 4000);
-}
-
-// Verifica se o outro está digitando
-async function checkTypingRemote() {
-  if (!cur) return;
-  try {
-    if (Auth.server) {
-      // Consulta o servidor
-      const r = await fetch(`/api/typing?me=${encodeURIComponent(ME)}&other=${encodeURIComponent(cur)}`);
-      const d = await r.json();
-      if (d.typing) showTypingIndicator(cur);
-    } else {
-      // Modo local: lê localStorage
-      const ts = parseInt(localStorage.getItem(typingKey(cur, ME)) || '0', 10);
-      if (Date.now() - ts < 4000) showTypingIndicator(cur);
-    }
-  } catch(e) {}
-}
-
-// Liga/desliga polls quando muda de conversa
-function startTypingPoll(who) {
-  clearInterval(_typingPollTimer);
-  clearInterval(_typingLocalTimer);
-  _theyTyping = false;
-  if (!who) return;
-  // Poll a cada 1.5s
-  _typingPollTimer = setInterval(checkTypingRemote, 1500);
-  // localStorage também (modo local - mais rápido)
-  _typingLocalTimer = setInterval(() => {
-    if (Auth.server) return; // se tem servidor, usa só o poll remoto
-    const ts = parseInt(localStorage.getItem(typingKey(cur, ME)) || '0', 10);
-    if (Date.now() - ts < 4000) showTypingIndicator(cur);
-  }, 800);
-}
-
-// Escuta storage de outras abas (modo local multi-aba)
-addEventListener('storage', e => {
-  if (!cur) return;
-  if (e.key === typingKey(cur, ME)) {
-    const ts = parseInt(e.newValue || '0', 10);
-    if (Date.now() - ts < 4000) showTypingIndicator(cur);
-  }
-});
-
-// Estilo CSS das bolinhas animadas
-(function injectTypingCSS() {
-  const style = document.createElement('style');
-  style.textContent = `
-    .typing-dot {
-      display: inline-block;
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #3794ff;
-      animation: typingBounce 1.2s infinite ease-in-out;
-    }
-    .typing-dot:nth-child(1) { animation-delay: 0s; }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typingBounce {
-      0%, 60%, 100% { transform: translateY(0); opacity: .4; }
-      30%            { transform: translateY(-4px); opacity: 1; }
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
-// Liga o evento no input
-$('inp').addEventListener('input', onInputTyping);
-// Para de digitar ao enviar ou sair
-$('inp').addEventListener('blur', () => { setTimeout(stopTyping, 200); });
-
 $('form').onsubmit = async e => {
-  e.preventDefault(); const v = $('inp').value.trim(); if (!v || !cur) return;
-  stopTyping(); // para o indicador ao enviar
-  $('inp').value = '';
+  e.preventDefault(); const v = $('inp').value.trim(); if (!v || !cur) return; $('inp').value = '';
   /* criptografar antes de enviar */
   const encrypted = await E2E.encrypt(v, ME, cur);
   const rp = replyTo ? { ...replyTo, m: await E2E.encrypt(replyTo.m, ME, cur) } : null;
@@ -444,194 +305,15 @@ $('form').onsubmit = async e => {
 function checkOld() { const o = $('oldBar'); o.textContent = '⚠ ' + Auth.chat.oldMsg; o.classList.toggle('hidden', !Auth.chat.old); }
 async function refreshSummary() { summary = await Auth.chat.dmSummary(ME) || {}; renderList(); }
 
-/* ════════════════════════════════════════════════
-   SISTEMA DE NOTIFICAÇÕES DE MENSAGEM
-   Mostra: nome do remetente + prévia da mensagem
-════════════════════════════════════════════════ */
-let _notifSW = null;        // referência ao SW registrado
-let _notifGranted = false;  // permissão concedida
-let _notifLastSeen = {};    // { amigo: último timestamp visto }
-let _notifAskDone = false;  // pediu permissão ao menos 1x
-
-// Inicializa o SW de notificação e pede permissão
-async function initNotifications() {
-  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
-
-  // Carrega timestamps já vistos do localStorage
-  try {
-    const saved = JSON.parse(localStorage.getItem('rbxNotifSeen') || '{}');
-    _notifLastSeen = saved;
-  } catch(e) { _notifLastSeen = {}; }
-
-  // Registra (ou reutiliza) o Service Worker
-  try {
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    await navigator.serviceWorker.ready;
-    _notifSW = reg;
-  } catch(e) {}
-
-  // Pede permissão de forma não-invasiva: aparece um banner explicativo primeiro
-  if (Notification.permission === 'granted') {
-    _notifGranted = true;
-  } else if (Notification.permission === 'default' && !_notifAskDone) {
-    _notifAskDone = true;
-    showNotifBanner();
-  }
-}
-
-// Banner explicativo antes de pedir permissão
-function showNotifBanner() {
-  if (document.getElementById('notifBanner')) return;
-  const b = document.createElement('div');
-  b.id = 'notifBanner';
-  b.style.cssText = `
-    position:fixed;top:0;left:0;right:0;z-index:999;
-    background:linear-gradient(135deg,#1a2a6e,#0066ff);
-    color:#fff;padding:14px 16px;
-    display:flex;align-items:center;gap:12px;
-    box-shadow:0 4px 20px rgba(0,102,255,.4);
-    animation:slideDown .3s ease-out;
-  `;
-  b.innerHTML = `
-    <style>@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}</style>
-    <span style="font-size:22px">🔔</span>
-    <div style="flex:1;min-width:0">
-      <div style="font-weight:800;font-size:14px">Ativar notificações de mensagem?</div>
-      <div style="font-size:12px;opacity:.8;margin-top:2px">Você será avisado quando receber mensagens de amigos</div>
-    </div>
-    <button id="notifYes" style="background:#fff;color:#0066ff;border:none;border-radius:8px;padding:8px 16px;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0">Ativar</button>
-    <button id="notifNo"  style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:8px 12px;font-weight:600;font-size:12px;cursor:pointer;flex-shrink:0">Agora não</button>
-  `;
-  document.body.appendChild(b);
-
-  document.getElementById('notifYes').onclick = async () => {
-    b.remove();
-    const perm = await Notification.requestPermission();
-    _notifGranted = perm === 'granted';
-    if (_notifGranted) showNotifToast('✅ Notificações ativadas!', '#00b06f');
-  };
-  document.getElementById('notifNo').onclick = () => {
-    b.remove();
-    // Guarda que o usuário recusou por esta sessão
-    sessionStorage.setItem('rbxNotifDenied', '1');
-  };
-
-  // Auto-fecha após 12s se não interagir
-  setTimeout(() => { if (document.getElementById('notifBanner')) b.remove(); }, 12000);
-}
-
-// Toast de feedback (sucesso/erro)
-function showNotifToast(msg, bg) {
-  const t = document.createElement('div');
-  t.style.cssText = `
-    position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));
-    left:50%;transform:translateX(-50%);
-    background:${bg||'#1a1a2e'};color:#fff;
-    padding:10px 22px;border-radius:10px;
-    font-weight:700;font-size:13px;
-    box-shadow:0 4px 20px rgba(0,0,0,.4);
-    z-index:9999;white-space:nowrap;
-    animation:fadeInUp .25s ease-out;
-    pointer-events:none;
-  `;
-  t.innerHTML = `<style>@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}</style>` + msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3200);
-}
-
-// Envia notificação via Service Worker
-async function sendDMNotification(from, msgText) {
-  if (!_notifGranted || !_notifSW) return;
-
-  // Decodifica se for E2E (mostra prévia simplificada)
-  let preview = msgText || '';
-  if (preview.startsWith('e2e:')) preview = '🔒 Mensagem criptografada';
-  if (preview.length > 80) preview = preview.slice(0, 80) + '…';
-
-  // Manda pro SW exibir a notificação
-  try {
-    const sw = _notifSW.active || await navigator.serviceWorker.ready.then(r => r.active);
-    if (sw) {
-      sw.postMessage({
-        type:  'DM_NOTIFY',
-        from:  from,
-        msg:   preview,
-        icon:  '/icon-192.png',
-        url:   '/batepapo.html?u=' + encodeURIComponent(from),
-      });
-    }
-  } catch(e) {
-    // Fallback: Notification API direta
-    try {
-      new Notification(from, {
-        body:  preview,
-        icon:  '/icon-192.png',
-        tag:   'dm-' + from,
-        renotify: true,
-        data:  { url: '/batepapo.html?u=' + encodeURIComponent(from) }
-      });
-    } catch(e2) {}
-  }
-}
-
-// Checa mensagens novas e dispara notificação se necessário
-async function checkDMNotifications() {
-  if (!_notifGranted) return;
-  if (document.visibilityState === 'visible' && cur) return; // se está vendo a conversa, não notifica
-
-  try {
-    const newSummary = await Auth.chat.dmSummary(ME);
-    if (!newSummary) return;
-
-    for (const friend of Object.keys(newSummary)) {
-      const last = newSummary[friend];
-      if (!last) continue;
-      // Só notifica se a mensagem é do amigo (não minha) e é nova
-      if (last.u && last.u.toLowerCase() === ME.toLowerCase()) continue;
-      const prevSeen = _notifLastSeen[friend] || 0;
-      if (last.t <= prevSeen) continue;
-      // É uma mensagem nova! Atualiza o visto e notifica
-      _notifLastSeen[friend] = last.t;
-      try { localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen)); } catch(e) {}
-      // Se a conversa com esse amigo está aberta e o documento está visível, não notifica
-      if (document.visibilityState === 'visible' && cur && cur.toLowerCase() === friend.toLowerCase()) continue;
-      await sendDMNotification(friend, last.m);
-    }
-  } catch(e) {}
-}
-
 /* ---- início ---- */
 renderList();
 Auth.init().then(async () => {
-  await refreshSummary();
-  Auth.pres.watch(() => Auth.friends(ME), () => { renderList(); if (cur) setStatus(lastSt, cur); });
+  await refreshSummary(); Auth.pres.watch(() => Auth.friends(ME), () => { renderList(); if (cur) setStatus(lastSt, cur); });
   const u = new URLSearchParams(location.search).get('u'); if (u) openConv(u);
-  setInterval(refreshSummary, 3000);
-  setInterval(() => loadMsgs(false), 1200);
+  setInterval(refreshSummary, 3000); setInterval(() => loadMsgs(false), 1200);
   if (Auth.server) setInterval(async () => { if (await Auth.sync()) renderList(); }, 2500);
-
-  // Inicia notificações e checa a cada 5s
-  if (!sessionStorage.getItem('rbxNotifDenied')) await initNotifications();
-  setInterval(checkDMNotifications, 5000);
-
-  // Preenche o _notifLastSeen com os timestamps já vistos para não notificar msgs antigas
-  try {
-    const s = await Auth.chat.dmSummary(ME);
-    if (s) Object.keys(s).forEach(f => {
-      if (s[f] && !_notifLastSeen[f]) _notifLastSeen[f] = s[f].t;
-    });
-    localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen));
-  } catch(e) {}
 });
 addEventListener('storage', () => { refreshSummary(); loadMsgs(false); });
-
-// Quando volta a focar na aba, atualiza o seen para não mostrar notif do que já viu
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && cur) {
-    _notifLastSeen[cur] = Date.now();
-    try { localStorage.setItem('rbxNotifSeen', JSON.stringify(_notifLastSeen)); } catch(e) {}
-  }
-});
 </script>
 
 <style>

@@ -328,23 +328,12 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(301, { 'Location': 'https://' + host + req.url });
     return res.end();
   }
-  // Headers de segurança (eliminam aviso "Site perigoso" do Chrome / Google Safe Browsing)
+  // Headers de segurança
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
-  res.setHeader('Content-Security-Policy',
-    "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; " +
-    "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " +
-    "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; " +
-    "img-src 'self' data: blob: https:; " +
-    "connect-src 'self'; " +
-    "frame-ancestors 'self';"
-  );
   if (proto === 'https') {
-    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
   }
 
   const url = new URL(req.url, 'http://x');
@@ -477,40 +466,6 @@ const server = http.createServer(async (req, res) => {
     }
     return json(res, snapshot());
   }
-  // Rota explícita para sw.js — service worker deve ser sempre a versão mais recente
-  if (url.pathname === '/sw.js') {
-    const swFile = path.join(__dirname, 'sw.js');
-    fs.readFile(swFile, (e, d) => {
-      if (e) { res.writeHead(404); return res.end('404'); }
-      res.writeHead(200, {
-        'Content-Type': 'text/javascript; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Service-Worker-Allowed': '/'
-      });
-      res.end(d);
-    });
-    return;
-  }
-
-  // Rota explícita para auth.js — garante que nunca seja cacheado (resolve erro "auth.js antigo")
-  if (url.pathname === '/auth.js' || url.pathname.startsWith('/auth.js?')) {
-    const authFile = path.join(__dirname, 'auth.js');
-    fs.readFile(authFile, (e, d) => {
-      if (e) { res.writeHead(404); return res.end('404'); }
-      res.writeHead(200, {
-        'Content-Type': 'text/javascript; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Surrogate-Control': 'no-store'
-      });
-      res.end(d);
-    });
-    return;
-  }
-
   let p = decodeURIComponent(url.pathname); if (p === '/') p = '/index.html';
   const file = path.join(__dirname, path.normalize(p));
   if (!file.startsWith(__dirname) || path.basename(file) === 'data.json' || path.basename(file) === 'dms.json' || path.basename(file) === 'seen.json' || ['config.json', 'store.js', 'database.sql', 'package.json', 'package-lock.json'].includes(path.basename(file)) || /(^|[\\/])(node_modules|\.vscode)([\\/]|$)/.test(p) || path.basename(file) === 'config.json' || path.basename(file) === 'store.js' || path.basename(file) === 'server.js') { res.writeHead(403); return res.end('403'); }
@@ -540,22 +495,5 @@ const server = http.createServer(async (req, res) => {
     console.log('  (Ctrl+C para parar)\n');
   });
 })();
-// ── Keep-alive 24/7: self-ping a cada 14 min para o Render não dormir ──────────
-// O Render (plano free) hiberna após 15 min sem requisições. Este ping garante uptime contínuo.
-(function keepAlive() {
-  const https = require('https');
-  const url = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || '';
-  if (!url) return; // local: não faz nada
-  const target = url.replace(/\/$/, '') + '/api/ping';
-  setInterval(() => {
-    try {
-      const req = https.get(target, res => { res.resume(); });
-      req.on('error', () => {}); // ignora falhas silenciosamente
-      req.setTimeout(10000, () => req.destroy());
-    } catch (e) {}
-  }, 14 * 60 * 1000); // 14 minutos
-  console.log('  Keep-alive ativo → ping a cada 14 min em', target);
-})();
-
 const bye = async () => { try { ['db', 'dms', 'seen'].forEach(w => store.mark(w)); await store.flush(); } catch (e) {} process.exit(0); };
 process.on('SIGINT', bye); process.on('SIGTERM', bye);
