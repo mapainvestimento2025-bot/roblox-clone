@@ -1,0 +1,15 @@
+# render.yaml — configuração do Render para o Roblox Clone
+services:
+  - type: web
+    name: roblox-clone
+    runtime: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: roblox-clone
+          property: host
