@@ -5,11 +5,14 @@
 <title>Roblox Clone - Bate-papo</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="auth.js?v=3"></script>
+<script src="auth.js?v=4"></script>
 <script>
-if (typeof Auth === 'undefined' || !Auth.chat) {
-    document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Erro</title></head><body style="background:#111214;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2 style="margin-bottom:12px">Erro ao carregar auth.js</h2><p style="color:#888">Pressione <b>Ctrl+F5</b> para recarregar a página.</p><button onclick="location.reload(true)" style="margin-top:16px;background:#0066ff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px">Recarregar</button></div></body>';
-}
+(function(){
+  if (typeof Auth === 'undefined' || typeof Auth.chat === 'undefined') {
+    document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Carregando...</title><style>body{margin:0;background:#111214;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh}.box{text-align:center;padding:24px}.box h2{margin-bottom:12px;font-size:20px}.box p{color:#888;margin-bottom:16px}.box button{background:#0066ff;color:#fff;border:none;border-radius:8px;padding:11px 28px;font-weight:700;font-size:14px;cursor:pointer}</style></head><body><div class="box"><h2>Carregando...</h2><p>Recarregue a página.</p><button onclick="location.reload(true)">Recarregar</button></div></body>';
+    throw new Error('auth.js pendente');
+  }
+})();
 </script>
   <script>
     if('serviceWorker' in navigator){

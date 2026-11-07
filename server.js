@@ -3,6 +3,8 @@
    - guarda contas, amigos, pedidos de amizade e mapas em data.json (compartilhado por todos os navegadores/PCs)
    - conta jogadores online e sincroniza a posição dos personagens no mapa */
 const http = require('http'), fs = require('fs'), path = require('path'), os = require('os'), store = require('./store');
+// Keep-alive: evita que o Render adormeça no plano gratuito
+try { require('./keepalive'); } catch(e) {}
 const PORT = process.env.PORT || 3000, TTL = 75000, presence = {}, world = {}, locks = {};
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
@@ -328,12 +330,16 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(301, { 'Location': 'https://' + host + req.url });
     return res.end();
   }
-  // Headers de segurança
+  // Headers de segurança — passam na verificação do Google Safe Browsing
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  if (proto === 'https') {
-    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  if (proto === 'https' || proto === '') {
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   }
 
   const url = new URL(req.url, 'http://x');
