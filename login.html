@@ -1127,26 +1127,25 @@
           );
 
           /*
-           * Se o método retornar explicitamente uma falha,
-           * não redirecionamos.
+           * Auth.login() retorna:
+           *   null  → sucesso
+           *   string → mensagem de erro (ex: "Usuário ou senha incorretos.")
+           *   false / objeto com ok:false → falha explícita
            */
-          if (
-            result === false ||
-            (result && typeof result === "object" &&
-              (result.success === false || result.ok === false))
-          ) {
+          if (result !== null && result !== undefined) {
+            // É uma string de erro ou objeto de falha
             showError(
-              result && result.message
-                ? result.message
-                : "Não foi possível entrar. Confira seu usuário e sua senha."
+              typeof result === "string"
+                ? result
+                : (result && result.message
+                    ? result.message
+                    : "Não foi possível entrar. Confira seu usuário e sua senha.")
             );
             return;
           }
 
           /*
-           * CORREÇÃO DO REDIRECIONAMENTO:
-           * após a autenticação ser concluída sem falha explícita,
-           * abre index.html na mesma pasta deste arquivo.
+           * result === null → login bem-sucedido, redireciona.
            */
           window.location.replace("./index.html");
 

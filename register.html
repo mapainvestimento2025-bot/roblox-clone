@@ -1486,16 +1486,21 @@
           );
 
           /*
-           * A implementação Auth.register pode redirecionar
-           * diretamente ou retornar um resultado.
-           *
-           * Se retornar false, mostramos uma mensagem de falha.
+           * Auth.register() retorna:
+           *   null   → sucesso (conta criada e sessão iniciada)
+           *   string → mensagem de erro (ex: "Nome de usuário já em uso.")
+           *   false  → falha genérica
            */
-          if (result === false) {
+          if (result !== null && result !== undefined) {
             showError(
-              "Não foi possível criar a conta. Verifique os dados ou tente outro nome de usuário."
+              typeof result === "string"
+                ? result
+                : "Não foi possível criar a conta. Verifique os dados ou tente outro nome de usuário."
             );
+            return;
           }
+          // Sucesso: vai para a página principal
+          window.location.replace("./index.html");
         } catch (error) {
           console.error("Erro durante o cadastro:", error);
 

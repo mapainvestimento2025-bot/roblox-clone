@@ -34,8 +34,18 @@ AddDefaultCharset UTF-8
   Deny from all
 </FilesMatch>
 
-# Redirecionar raiz para login
+# Redirecionar HTTP → HTTPS (elimina aviso "página não segura")
 RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Redirecionar raiz para login
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^$ /login.html [L,R=301]
+
+# HSTS: força HTTPS por 1 ano (após o primeiro acesso via HTTPS)
+<IfModule mod_headers.c>
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
