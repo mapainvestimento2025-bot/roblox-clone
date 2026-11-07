@@ -5,15 +5,81 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Roblox Clone</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="auth.js?v=5"></script>
+<script src="auth.js?v=4"></script>
 <script>
 (function(){
   if(typeof Auth==='undefined'||!Auth.avatar){
     if(!sessionStorage.getItem('_rbxRetry')){sessionStorage.setItem('_rbxRetry','1');location.reload(true);}
-    else{
-      document.write('<body style="background:#0d0f1a;color:#fff;font:16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2>Erro ao carregar</h2><p style="color:#888;margin:12px 0">Recarregue ou volte ao <a href=\"index.html\" style=\"color:#3794ff\">início</a>.</p><button onclick=\"location.reload(true)\" style=\"margin-top:16px;background:#3794ff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px\">Recarregar</button></div></body>');
-      window.stop();
+    else{document.write('<body style="background:#0d0f1a;color:#fff;font:16px system-ui;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2>Erro ao carregar</h2><p style="color:#888;margin:12px 0">Recarregue ou volte ao <a href="index.html" style="color:#3794ff">início</a>.</p></div>  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
     }
+  </script>
+
+<script id="dmNotifScript">
+// ── Notificações de DM em background (todas as páginas) ──
+(async function(){
+  if(!('Notification' in window)||!('serviceWorker' in navigator)) return;
+  if(sessionStorage.getItem('rbxNotifDenied')) return;
+  if(typeof Auth==='undefined'||!Auth.chat) return;
+
+  const ME_N = (typeof Auth!=='undefined' && Auth.tabKey && Auth.users) ? (Auth.users()[Auth.tabKey()] || {}).name : null;
+  if(!ME_N) return;
+
+  let sw = null;
+  try { const r = await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; sw = r; } catch(e){}
+
+  let lastSeen = {};
+  try { lastSeen = JSON.parse(localStorage.getItem('rbxNotifSeen')||'{}'); } catch(e){}
+
+  async function sendNotif(from, msg){
+    let preview = msg||'';
+    if(preview.startsWith('e2e:')) preview='🔒 Mensagem criptografada';
+    if(preview.length>80) preview=preview.slice(0,80)+'…';
+    try{
+      const active = sw && (sw.active || (await navigator.serviceWorker.ready).active);
+      if(active){ active.postMessage({type:'DM_NOTIFY',from,msg:preview,icon:'/icon-192.png',url:'/batepapo.html?u='+encodeURIComponent(from)}); }
+      else{ new Notification(from,{body:preview,icon:'/icon-192.png',tag:'dm-'+from,renotify:true}); }
+    }catch(e){}
+  }
+
+  // Carrega baseline de timestamps para não notificar msgs antigas
+  let baselineDone = false;
+  async function baseline(){
+    if(baselineDone) return; baselineDone=true;
+    try{
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(s) Object.keys(s).forEach(f=>{ if(s[f]&&!lastSeen[f]) lastSeen[f]=s[f].t; });
+      localStorage.setItem('rbxNotifSeen', JSON.stringify(lastSeen));
+    }catch(e){}
+  }
+
+  async function check(){
+    if(Notification.permission!=='granted') return;
+    if(document.visibilityState==='visible') return; // só notifica quando em background
+    try{
+      await baseline();
+      const s = await Auth.chat.dmSummary(ME_N);
+      if(!s) return;
+      for(const f of Object.keys(s)){
+        const m=s[f]; if(!m) continue;
+        if(m.u&&m.u.toLowerCase()===ME_N.toLowerCase()) continue;
+        const prev=lastSeen[f]||0;
+        if(m.t<=prev) continue;
+        lastSeen[f]=m.t;
+        try{localStorage.setItem('rbxNotifSeen',JSON.stringify(lastSeen));}catch(e){}
+        await sendNotif(f, m.m);
+      }
+    }catch(e){}
+  }
+
+  Auth.init().then(async()=>{
+    await baseline();
+    setInterval(check, 8000);
+  });
+})();
+</script>
+</body>');window.stop();}
   }
 })();
 </script>
