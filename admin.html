@@ -378,8 +378,8 @@ function renderUsers() {
       <td class="text-gray-400 font-mono">#${u.id}</td>
       <td>
         <a href="profile.html?u=${encodeURIComponent(u.name)}&id=${u.id}" class="font-bold hover:underline">${esc(u.name)}</a>
+        ${u.admin?' <i class="fa-solid fa-shield-halved text-xs admin-badge" title="Administrador" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6)"></i>':''}
         ${u.verified?' <i class="fa-solid fa-circle-check text-[#3794ff] text-xs" title="Verificado"></i>':''}
-        ${u.admin?' <span class="tag bg-[#4a1d1d] text-red-300 text-[10px]">ADMIN</span>':''}
       </td>
       <td class="text-gray-400 text-xs">${esc(u.email)}</td>
       <td class="text-gray-400 text-xs">${u.seen?dt(u.seen):'—'}</td>

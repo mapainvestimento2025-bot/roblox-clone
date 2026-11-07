@@ -1247,5 +1247,108 @@
       navigator.serviceWorker.register('/sw.js').catch(()=>{});
     }
   </script>
+<script>
+(function () {
+  /* Ano atual no footer */
+  var yrEl = document.getElementById('currentYear');
+  if (yrEl) yrEl.textContent = new Date().getFullYear();
+
+  /* Redireciona se já estiver logado */
+  Auth.init().then(function() {
+    if (Auth.current()) location.replace('index.html');
+  });
+
+  function $(id) { return document.getElementById(id); }
+  function showErr(msg) { $('errorText').textContent = msg; $('err').classList.add('show'); }
+  function hideErr() { $('err').classList.remove('show'); }
+
+  /* Força da senha */
+  function checkStrength(val) {
+    var rules = [
+      { id: 'ruleLength',  ok: val.length >= 8 },
+      { id: 'ruleUpper',   ok: /[A-Z]/.test(val) },
+      { id: 'ruleNumber',  ok: /[0-9]/.test(val) },
+      { id: 'ruleSpecial', ok: /[^A-Za-z0-9]/.test(val) }
+    ];
+    var score = rules.filter(function(r){return r.ok;}).length;
+    rules.forEach(function(r) {
+      var el = $(r.id); if (!el) return;
+      el.querySelector('i').className = r.ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+      el.style.color = r.ok ? '#00c27a' : '';
+    });
+    var segs = document.querySelectorAll('.strength-segment');
+    var colors = ['#e74c3c','#e67e22','#f1c40f','#00c27a'];
+    var labels = ['Muito fraca','Fraca','Razoável','Forte'];
+    segs.forEach(function(s,i){ s.style.background = i < score ? colors[score-1] : '#2e3135'; });
+    var st = $('strengthText'); if (st) st.textContent = score ? labels[score-1] : 'Não definida';
+  }
+
+  function checkMatch() {
+    var p2El = $('p2'), mm = $('matchMessage'), pEl = $('p');
+    if (!p2El || !mm) return;
+    if (!p2El.value) { mm.textContent = ''; mm.style.color = ''; return; }
+    var ok = pEl && pEl.value === p2El.value;
+    mm.textContent = ok ? '✓ Senhas coincidem' : '✗ As senhas não coincidem';
+    mm.style.color = ok ? '#00c27a' : '#e74c3c';
+  }
+
+  var pElG = $('p');
+  if (pElG) pElG.addEventListener('input', function(){ checkStrength(pElG.value); checkMatch(); });
+  var p2ElG = $('p2');
+  if (p2ElG) p2ElG.addEventListener('input', checkMatch);
+
+  /* Toggle mostrar/ocultar senha */
+  document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+      var show = target.type === 'password';
+      target.type = show ? 'text' : 'password';
+      btn.querySelector('i').className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    });
+  });
+
+  /* Submit */
+  var form = $('f');
+  if (form) form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideErr();
+    var name  = ($('u') || {value:''}).value.trim();
+    var email = ($('m') || {value:''}).value.trim();
+    var pass  = ($('p') || {value:''}).value;
+    var pass2 = ($('p2')|| {value:''}).value;
+    var remember = $('rm') ? $('rm').checked : true;
+
+    if (!name)  return showErr('Informe um nome de usuário.');
+    if (!email) return showErr('Informe um e-mail válido.');
+    if (!pass)  return showErr('Informe uma senha.');
+    if (pass.length < 6) return showErr('A senha precisa ter pelo menos 6 caracteres.');
+    if (pass !== pass2) return showErr('As senhas não coincidem.');
+
+    var btn = $('registerButton'), txt = $('buttonText');
+    if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+    if (txt) txt.textContent = 'Criando conta…';
+
+    try {
+      await Auth.init();
+      var err = await Auth.register(name, email, pass, remember);
+      if (err) {
+        showErr(err);
+        if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+        if (txt) txt.textContent = 'Criar minha conta';
+      } else {
+        if (txt) txt.textContent = 'Conta criada! Entrando…';
+        try { await Auth.deviceCheck(); } catch(_) {}
+        location.replace('index.html');
+      }
+    } catch(ex) {
+      showErr('Erro inesperado. Tente novamente.');
+      if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+      if (txt) txt.textContent = 'Criar minha conta';
+    }
+  });
+})();
+</script>
 </body>
 </html>

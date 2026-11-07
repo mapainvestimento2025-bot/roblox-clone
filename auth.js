@@ -325,7 +325,14 @@ const Auth = {
     })());
   },
   profileUrl(name) { const u = this.users()[(name || '').toLowerCase()]; return 'profile.html?u=' + encodeURIComponent(u ? u.name : name) + (u && u.id ? '&id=' + u.id : ''); },
-  badge(name) { const u = this.users()[(name || '').toLowerCase()]; return u && u.verified ? '<i class="fa-solid fa-circle-check text-[#3794ff] verified-badge" title="Conta verificada"></i>' : ''; },
+  badge(name) {
+    const u = this.users()[(name || '').toLowerCase()];
+    if (!u) return '';
+    let badges = '';
+    if (u.admin) badges += '<i class="fa-solid fa-shield-halved admin-badge" title="Administrador" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6);font-size:.9em;margin-left:3px"></i>';
+    if (u.verified) badges += '<i class="fa-solid fa-circle-check verified-badge" title="Conta verificada" style="color:#3794ff;font-size:.9em;margin-left:3px"></i>';
+    return badges;
+  },
   isAdmin(name) { const u = this.users()[(name || this.current() || '').toLowerCase()]; return !!(u && u.admin); },
   /* tela de banido (cobre a página inteira; some sozinha quando o ban acaba) */
   showBan(b) {
@@ -364,6 +371,11 @@ const Auth = {
     this.v = j.v; const d = j.db, old = this.users(), users = {};
     this._pendingImport = {};                        // registra quais keys o servidor já tem
     for (const k in d.users) { users[k] = Object.assign({}, old[k] && old[k].hash ? { hash: old[k].hash, email: old[k].email } : {}, d.users[k]); if (users[k].bio === undefined && old[k] && old[k].bio) users[k].bio = old[k].bio; this._pendingImport[k] = true; }
+    /* ── preserva contas locais que ainda não foram sincronizadas com o servidor ── */
+    for (const k in old) { if (!users[k] && old[k].hash) { users[k] = old[k]; /* mantém conta local até importLocal() enviá-la */ } }
+    /* ── garante que a sessão atual nunca seja perdida ── */
+    const curKey = this.tabKey() || localStorage.getItem('robloxSession');
+    if (curKey && old[curKey] && !users[curKey]) { users[curKey] = old[curKey]; }
     localStorage.setItem('robloxUsers', JSON.stringify(users)); localStorage.setItem('robloxGames', JSON.stringify(d.games));
     for (const [pre, tbl] of [['robloxFriends:', d.friends], ['robloxReq:', d.req]]) {
       for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(pre) && !(k.slice(pre.length) in tbl)) localStorage.removeItem(k); }

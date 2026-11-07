@@ -1018,5 +1018,69 @@
       navigator.serviceWorker.register('/sw.js').catch(()=>{});
     }
   </script>
+<script>
+(function () {
+  var yrEl = document.getElementById('currentYear');
+  if (yrEl) yrEl.textContent = new Date().getFullYear();
+
+  /* Redireciona se já estiver logado */
+  Auth.init().then(function() {
+    if (Auth.current()) location.replace('index.html');
+  });
+
+  function $(id) { return document.getElementById(id); }
+  function showErr(msg) { $('errorText').textContent = msg; $('err').classList.add('show'); }
+  function hideErr() { $('err').classList.remove('show'); }
+
+  /* Toggle mostrar/ocultar senha */
+  document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var target = document.getElementById(btn.dataset.target || 'p');
+      if (!target) return;
+      var show = target.type === 'password';
+      target.type = show ? 'text' : 'password';
+      var icon = btn.querySelector('i');
+      if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    });
+  });
+
+  /* Submit */
+  var form = $('f');
+  if (form) form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideErr();
+    var name = ($('u') || {value:''}).value.trim();
+    var pass = ($('p') || {value:''}).value;
+    var remember = $('rm') ? $('rm').checked : true;
+
+    if (!name) return showErr('Informe o nome de usuário.');
+    if (!pass) return showErr('Informe a senha.');
+
+    var btn = $('loginButton'), txt = $('buttonText');
+    if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+    if (txt) txt.textContent = 'Entrando…';
+
+    try {
+      await Auth.init();
+      var err = await Auth.login(name, pass, remember);
+      if (err) {
+        showErr(err);
+        if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+        if (txt) txt.textContent = 'Entrar na minha conta';
+      } else {
+        if (txt) txt.textContent = 'Bem-vindo! Redirecionando…';
+        try { await Auth.deviceCheck(); } catch(_) {}
+        var redirect = new URLSearchParams(location.search).get('next') || 'index.html';
+        location.replace(redirect);
+      }
+    } catch(ex) {
+      showErr('Erro inesperado. Tente novamente.');
+      if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+      if (txt) txt.textContent = 'Entrar na minha conta';
+    }
+  });
+})();
+</script>
 </body>
 </html>

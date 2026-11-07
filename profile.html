@@ -37,6 +37,9 @@ input[type=color]{width:42px;height:30px;border:0;background:none;cursor:pointer
 #bioTxt{white-space:pre-wrap;word-break:break-word}
 textarea{background:#15171a;border:1px solid #3a3d41;border-radius:8px;color:#fff;width:100%;padding:10px;resize:vertical;min-height:110px;outline:none}textarea:focus{border-color:#335fff}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#00b06f;padding:8px 20px;border-radius:8px;opacity:0;transition:.3s;pointer-events:none;z-index:50}
+.admin-badge{color:#ff4444;text-shadow:0 0 10px rgba(255,68,68,0.7);animation:adminPulse 2s ease-in-out infinite}
+@keyframes adminPulse{0%,100%{text-shadow:0 0 8px rgba(255,68,68,0.5)}50%{text-shadow:0 0 16px rgba(255,68,68,0.9),0 0 24px rgba(255,68,68,0.4)}}
+.verified-badge{color:#3794ff}
 </style>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#0066ff">
