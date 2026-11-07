@@ -6,36 +6,16 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="auth.js?v=3"></script>
-<script>if(typeof Auth==='undefined'||!Auth.chat){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p>
-<style>
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){
-  #mobileNav{display:flex}
-  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}
-}
-</style>
-<nav id="mobileNav">
-  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
-  <a href="batepapo.html" class="active"><i class="fa-solid fa-comments"></i>Bate-papo</a>
-  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
-  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
-  <a href="#" id="mobileProfileLink"><i class="fa-solid fa-user"></i>Perfil</a>
-</nav>
 <script>
-(function(){
-  var ml = document.getElementById('mobileProfileLink');
-  if(ml && typeof Auth !== 'undefined') ml.href = Auth.profileUrl(Auth.current && Auth.current() || '');
-})();
+if (typeof Auth === 'undefined' || !Auth.chat) {
+    document.documentElement.innerHTML = '<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Erro</title></head><body style="background:#111214;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2 style="margin-bottom:12px">Erro ao carregar auth.js</h2><p style="color:#888">Pressione <b>Ctrl+F5</b> para recarregar a página.</p><button onclick="location.reload(true)" style="margin-top:16px;background:#0066ff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px">Recarregar</button></div></body>';
+}
 </script>
   <script>
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('/sw.js').catch(()=>{});
     }
   </script>
-</body>');window.stop();throw new Error('auth.js antigo')}</script>
 <style>
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
 body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
