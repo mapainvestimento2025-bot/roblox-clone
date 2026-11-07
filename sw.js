@@ -1,8 +1,8 @@
 // ══════════════════════════════════════════════
-// Service Worker — Roblox Clone PWA v5
+// Service Worker — Roblox Clone PWA v3
 // Suporte a: cache offline + notificações push
 // ══════════════════════════════════════════════
-const CACHE = 'robloxclone-v5';
+const CACHE = 'robloxclone-v3';
 const PRECACHE = [
   '/login.html', '/register.html', '/index.html',
   '/profile.html', '/batepapo.html', '/studio.html',

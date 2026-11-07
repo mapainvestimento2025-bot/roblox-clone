@@ -5,37 +5,15 @@
 <title>Roblox Clone - Bate-papo</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="auth.js?v=5"></script>
-<script>if(typeof Auth==='undefined'||!Auth.chat){document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;padding:40px"><h2>auth.js desatualizado</h2><p>Substitua o arquivo <b>auth.js</b> pela versão nova (na mesma pasta dos outros) e aperte <b>Ctrl+F5</b>.</p>
-<style>
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){
-  #mobileNav{display:flex}
-  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}
-}
-</style>
-<nav id="mobileNav">
-  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
-  <a href="batepapo.html" class="active"><i class="fa-solid fa-comments"></i>Bate-papo</a>
-  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
-  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
-  <a href="#" id="mobileProfileLink"><i class="fa-solid fa-user"></i>Perfil</a>
-</nav>
+<script src="auth.js?v=3"></script>
 <script>
-(function(){
-  var ml = document.getElementById('mobileProfileLink');
-  if(ml && typeof Auth !== 'undefined') ml.href = Auth.profileUrl(Auth.current && Auth.current() || '');
-})();
+if (typeof Auth === 'undefined' || !Auth.chat) {
+  document.write('<body style="background:#111214;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center;padding:24px"><h2 style="margin-bottom:12px">Erro ao carregar auth.js</h2><p style="color:#888">Pressione <b>Ctrl+F5</b> para recarregar.</p><button onclick=\"location.reload(true)\" style=\"margin-top:16px;background:#0066ff;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-weight:700;cursor:pointer;font-size:14px\">Recarregar</button></div></body>');
+  window.stop();
+  throw new Error('auth.js nao carregou');
+}
 </script>
   <script>
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('/sw.js').catch(()=>{});
-    }
-  </script>
-</body>');window.stop();throw new Error('auth.js antigo')}</script>
 <style>
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
 body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
@@ -213,8 +191,13 @@ function openConv(n) {
   $('cName').innerHTML = ''; $('cName').append(cur); $('cName').insertAdjacentHTML('beforeend', ' ' + Auth.badge(cur)); $('cName').onclick = () => location.href = Auth.profileUrl(cur);
   setStatus(null, cur);
   $('msgs').innerHTML = ''; renderList(); loadMsgs(true); $('inp').focus();
+  // Inicia o poll de "digitando" para esta conversa
+  if (typeof startTypingPoll === 'function') startTypingPoll(cur);
 }
 function closeConv() {
+  // Para de digitar e os polls ao fechar a conversa
+  if (typeof stopTyping       === 'function') stopTyping();
+  if (typeof startTypingPoll  === 'function') startTypingPoll(null);
   cur = null; history.replaceState(null, '', 'batepapo.html');
   $('conv').classList.add('hidden'); $('conv').classList.remove('flex'); $('empty').classList.remove('hidden');
   $('chatPane').classList.add('hidden'); $('listPane').classList.remove('hidden'); renderList();
@@ -263,6 +246,8 @@ async function loadMsgs(force) {
   if (l.length) { Auth.chat.markSeen(ME, who, l[l.length - 1].t); const lm = l[l.length - 1]; summary[who] = mineT(lm) ? Object.assign({}, lm, { ts: Auth.chat.tick(lm, st), m: lm._plain || lm.m }) : { ...lm, m: lm._plain || lm.m }; renderList(); }
 }
 function setStatus(st, who) {   // "online" · "Jogando: mapa" (só amigos) · "visto hoje/ontem/dd/mm/aaaa às hh:mm"
+  // Não sobrescreve se estiver mostrando "digitando..."
+  if (_theyTyping && who && who.toLowerCase() === (cur || '').toLowerCase()) return;
   const e = $('cSub'), P = Auth.pres.get(who), pi = P && (P.on || P.g || P.s || !(st && (st.online || st.s))) ? Auth.pres.info(who) : (st && st.online ? { k: 'on', t: 'Online' } : st && st.s ? { k: 'off', t: Auth.pres.last(st.s) } : { k: 'off', t: '@' + who.toLowerCase() });
   e.innerHTML = pi.k === 'off' ? '' : '<i class="fa-solid fa-circle text-[7px] align-middle mr-1"></i>'; e.append(pi.t);
   e.className = 'text-xs truncate'; e.style.color = pi.k === 'off' ? '#8a8f95' : Auth.pres.COLOR[pi.k];
@@ -293,8 +278,162 @@ function swipe(row, m) {   // celular: arrastar a mensagem para a direita = resp
 }
 addEventListener('keydown', e => { if (e.key === 'Escape' && replyTo) clearReply(); });
 
+/* ════════════════════════════════════════════════
+   INDICADOR "DIGITANDO..."
+   - Servidor online  → POST /api/typing a cada 2s
+   - Modo local/offline → localStorage broadcast
+   - Exibe bolinha animada + texto no cSub
+   - Some 4s após parar de digitar
+════════════════════════════════════════════════ */
+let _typingSendTimer   = null;   // debounce do POST
+let _typingStopTimer   = null;   // timer para parar de enviar
+let _typingPollTimer   = null;   // poll remoto
+let _typingLocalTimer  = null;   // monitor localStorage
+let _iAmTyping         = false;  // estado local
+let _theyTyping        = false;  // estado remoto
+let _typingDisplayTimer = null;  // timer para sumir o "digitando"
+
+// Chave localStorage para modo local
+const typingKey = (from, to) => `rbx_typing:${from.toLowerCase()}:${to.toLowerCase()}`;
+
+// Envia "estou digitando" para o servidor ou localStorage
+async function sendTyping() {
+  if (!cur) return;
+  const now = Date.now();
+  // Sempre atualiza localStorage (funciona em modo local e server)
+  try { localStorage.setItem(typingKey(ME, cur), String(now)); } catch(e) {}
+  // Se tem servidor, POST também
+  if (Auth.server) {
+    try {
+      await fetch('/api/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: ME, to: cur })
+      });
+    } catch(e) {}
+  }
+}
+
+// Para de enviar "digitando"
+function stopTyping() {
+  _iAmTyping = false;
+  clearTimeout(_typingStopTimer);
+  clearInterval(_typingSendTimer);
+  _typingSendTimer = null;
+  // Limpa o localStorage
+  if (cur) try { localStorage.removeItem(typingKey(ME, cur)); } catch(e) {}
+}
+
+// Chamado quando o usuário digita no input
+function onInputTyping() {
+  const val = $('inp').value;
+  if (!val || !cur) { stopTyping(); return; }
+  if (!_iAmTyping) {
+    _iAmTyping = true;
+    sendTyping(); // dispara imediatamente
+    // Depois a cada 2s enquanto continuar digitando
+    _typingSendTimer = setInterval(sendTyping, 2000);
+  }
+  // Reinicia timer de parar (para 3s após última tecla)
+  clearTimeout(_typingStopTimer);
+  _typingStopTimer = setTimeout(stopTyping, 3000);
+}
+
+// Mostra o indicador "digitando..." no cSub
+function showTypingIndicator(who) {
+  if (!who || who.toLowerCase() !== (cur || '').toLowerCase()) return;
+  _theyTyping = true;
+  const e = $('cSub');
+  e.innerHTML = `
+    <span class="inline-flex items-center gap-1.5" style="color:#3794ff">
+      <span class="typing-dots inline-flex gap-0.5">
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+        <span class="typing-dot"></span>
+      </span>
+      digitando...
+    </span>`;
+  // Some depois de 4s sem atualização
+  clearTimeout(_typingDisplayTimer);
+  _typingDisplayTimer = setTimeout(() => {
+    _theyTyping = false;
+    setStatus(lastSt, cur); // restaura status normal
+  }, 4000);
+}
+
+// Verifica se o outro está digitando
+async function checkTypingRemote() {
+  if (!cur) return;
+  try {
+    if (Auth.server) {
+      // Consulta o servidor
+      const r = await fetch(`/api/typing?me=${encodeURIComponent(ME)}&other=${encodeURIComponent(cur)}`);
+      const d = await r.json();
+      if (d.typing) showTypingIndicator(cur);
+    } else {
+      // Modo local: lê localStorage
+      const ts = parseInt(localStorage.getItem(typingKey(cur, ME)) || '0', 10);
+      if (Date.now() - ts < 4000) showTypingIndicator(cur);
+    }
+  } catch(e) {}
+}
+
+// Liga/desliga polls quando muda de conversa
+function startTypingPoll(who) {
+  clearInterval(_typingPollTimer);
+  clearInterval(_typingLocalTimer);
+  _theyTyping = false;
+  if (!who) return;
+  // Poll a cada 1.5s
+  _typingPollTimer = setInterval(checkTypingRemote, 1500);
+  // localStorage também (modo local - mais rápido)
+  _typingLocalTimer = setInterval(() => {
+    if (Auth.server) return; // se tem servidor, usa só o poll remoto
+    const ts = parseInt(localStorage.getItem(typingKey(cur, ME)) || '0', 10);
+    if (Date.now() - ts < 4000) showTypingIndicator(cur);
+  }, 800);
+}
+
+// Escuta storage de outras abas (modo local multi-aba)
+addEventListener('storage', e => {
+  if (!cur) return;
+  if (e.key === typingKey(cur, ME)) {
+    const ts = parseInt(e.newValue || '0', 10);
+    if (Date.now() - ts < 4000) showTypingIndicator(cur);
+  }
+});
+
+// Estilo CSS das bolinhas animadas
+(function injectTypingCSS() {
+  const style = document.createElement('style');
+  style.textContent = `
+    .typing-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #3794ff;
+      animation: typingBounce 1.2s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+      30%            { transform: translateY(-4px); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
+// Liga o evento no input
+$('inp').addEventListener('input', onInputTyping);
+// Para de digitar ao enviar ou sair
+$('inp').addEventListener('blur', () => { setTimeout(stopTyping, 200); });
+
 $('form').onsubmit = async e => {
-  e.preventDefault(); const v = $('inp').value.trim(); if (!v || !cur) return; $('inp').value = '';
+  e.preventDefault(); const v = $('inp').value.trim(); if (!v || !cur) return;
+  stopTyping(); // para o indicador ao enviar
+  $('inp').value = '';
   /* criptografar antes de enviar */
   const encrypted = await E2E.encrypt(v, ME, cur);
   const rp = replyTo ? { ...replyTo, m: await E2E.encrypt(replyTo.m, ME, cur) } : null;
