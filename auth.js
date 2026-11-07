@@ -57,21 +57,37 @@ const Auth = {
     if (users[key]) return 'Esse nome de usuário já está em uso.';
     if (Object.values(users).some(u => u.email === email.toLowerCase())) return 'Esse e-mail já está cadastrado.';
     users[key] = { name, email: email.toLowerCase(), hash: await this.hash(pass), created: Date.now() };
+    /* marca este usuário como pendente de upload para o servidor */
+    if (!this._pendingImport) this._pendingImport = {};
+    delete this._pendingImport[key];   // força importLocal() a enviá-lo quando servidor ligar
+    this._init = null;                 // força init() a rodar de novo para tentar subir para o servidor
     this.save(users); this.setSession(key, remember); return null;
   },
   async login(name, pass, remember) {
     const key = name.trim().toLowerCase(); await this.init();
+    const h = await this.hash(pass);
     if (this.server) {
-      const h = await this.hash(pass);
       const d = await this.device(), j = await this.post('/api/login', { name, hash: h, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info });
-      if (j.err) return j.err;
-      /* guarda o hash no cache local para que o login funcione mesmo se o servidor ficar fora */
-      const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
-      this.setSession(key, remember); return null;
+      if (!j.err) {
+        /* login no servidor ok: guarda hash local para funcionar offline depois */
+        const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
+        this.setSession(key, remember); return null;
+      }
+      /* servidor rejeitou — tenta autenticação local como fallback
+         (cobre o caso de conta criada localmente antes do servidor subir) */
+      const uLocal = this.users()[key];
+      if (uLocal && uLocal.hash && uLocal.hash === h) {
+        /* conta existe localmente com senha correta: sobe para o servidor agora */
+        const d2 = await this.device();
+        await this.post('/api/register', { name: uLocal.name, email: uLocal.email || '', hash: h, hw: d2.hw, dv: d2.dv, mobile: d2.mobile, info: d2.info });
+        const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
+        this.setSession(key, remember); return null;
+      }
+      return j.err;
     }
     const u = this.users()[key];
-    if (!u) return 'Usuário não encontrado. Abra o site com o servidor (node server.js) para recuperar sua conta.';
-    if (u.hash !== await this.hash(pass)) return 'Usuário ou senha incorretos.';
+    if (!u) return 'Conta não encontrada neste dispositivo. Inicie o servidor (node server.js) para recuperar sua conta.';
+    if (u.hash !== h) return 'Usuário ou senha incorretos.';
     this.setSession(key, remember); return null;
   },
   /* ---- identificação do dispositivo (HWID — nível hardware/mobile) ----
@@ -337,7 +353,7 @@ const Auth = {
     return this._init || (this._init = (async () => {
       try {
         const r = await fetch('/api/db?v=0', { cache: 'no-store' });
-        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j.db) { this.server = true; await this.importLocal(); this.apply(j); } }
+        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j.db) { this.server = true; this.apply(j); await this.importLocal(); } }
       } catch (e) {}
       return this.server;
     })());
@@ -346,18 +362,23 @@ const Auth = {
   async post(path, body) { try { const j = await (await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json(); if (j.db) this.apply(j); return j; } catch (e) { return { err: 'Sem conexão com o servidor.' }; } },
   apply(j) {                                         // copia o banco do servidor para o cache local (localStorage)
     this.v = j.v; const d = j.db, old = this.users(), users = {};
-    for (const k in d.users) { users[k] = Object.assign({}, old[k] && old[k].hash ? { hash: old[k].hash, email: old[k].email } : {}, d.users[k]); if (users[k].bio === undefined && old[k] && old[k].bio) users[k].bio = old[k].bio; }
+    this._pendingImport = {};                        // registra quais keys o servidor já tem
+    for (const k in d.users) { users[k] = Object.assign({}, old[k] && old[k].hash ? { hash: old[k].hash, email: old[k].email } : {}, d.users[k]); if (users[k].bio === undefined && old[k] && old[k].bio) users[k].bio = old[k].bio; this._pendingImport[k] = true; }
     localStorage.setItem('robloxUsers', JSON.stringify(users)); localStorage.setItem('robloxGames', JSON.stringify(d.games));
     for (const [pre, tbl] of [['robloxFriends:', d.friends], ['robloxReq:', d.req]]) {
       for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(pre) && !(k.slice(pre.length) in tbl)) localStorage.removeItem(k); }
       for (const n in tbl) localStorage.setItem(pre + n, JSON.stringify(tbl[n]));
     }
   },
-  async importLocal() {                              // contas/mapas criados antes (só no navegador) sobem para o servidor, uma vez
-    if (localStorage.getItem('robloxImported') === '1') return;
+  async importLocal() {                              // envia para o servidor os usuários locais que ele ainda não conhece
+    const serverUsers = this._pendingImport || {};   // conjunto de keys que o servidor já tem (preenchido por apply())
+    const local = this.users();
+    const missing = Object.keys(local).filter(k => local[k].hash && !serverUsers[k]);
+    if (!missing.length) return;
+    const toSend = {}; missing.forEach(k => { toSend[k] = local[k]; });
     const f = {}, q = {};
     for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('robloxFriends:')) f[k.slice(14)] = this._get(k); if (k.startsWith('robloxReq:')) q[k.slice(10)] = this._get(k); }
-    try { await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ users: this.users(), games: this.games(), friends: f, req: q }) }); localStorage.setItem('robloxImported', '1'); } catch (e) {}
+    try { await fetch('/api/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ users: toSend, games: this.games(), friends: f, req: q }) }); } catch (e) {}
   },
   games() { try { return JSON.parse(localStorage.getItem('robloxGames')) || []; } catch (e) { return []; } },
   async publishGame(g) {                             // g = {name, creator, blocks, parts, thumb, desc, serverSize, genre, vip}
