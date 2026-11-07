@@ -5,13 +5,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0b0c0e">
+    <meta name="description" content="Conheça as regras da comunidade Roblox Clone. Consulte as diretrizes de convivência, segurança, comportamento e penalidades.">
 
     <title>Regras da Comunidade - Roblox Clone</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
+        :root {
+            --bg: #111214;
+            --header: #0b0c0e;
+            --card: #1d1f22;
+            --card-inner: #15171a;
+            --border: #2e3135;
+            --blue: #335fff;
+            --blue-light: #3794ff;
+            --text: #f4f4f5;
+            --muted: #92949d;
+            --green: #6ee7b7;
+            --purple: #b59aff;
+            --red: #fb7185;
+        }
+
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -24,27 +44,48 @@
 
         body {
             margin: 0;
-            background: #111214;
+            background: var(--bg);
             color: #e4e4e7;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
             overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 50% -15%, rgba(51,95,255,.11), transparent 48%),
+                radial-gradient(ellipse at 100% 50%, rgba(55,148,255,.035), transparent 35%);
         }
 
         ::selection {
-            background: #335fff;
+            background: var(--blue);
             color: white;
+        }
+
+        a, button {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+            font-family: inherit;
         }
 
         /* HEADER */
 
         .main-header {
             height: 66px;
-            background: rgba(11, 12, 14, .96);
-            border-bottom: 1px solid #2e3135;
+            background: rgba(11,12,14,.96);
+            border-bottom: 1px solid var(--border);
             position: sticky;
             top: 0;
             z-index: 100;
             backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
         }
 
         .logo {
@@ -54,25 +95,30 @@
             color: white;
             text-decoration: none;
             white-space: nowrap;
+            transition: .2s;
+        }
+
+        .logo:hover {
+            opacity: .8;
         }
 
         .nav-link {
             color: #a1a1aa;
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 650;
             text-decoration: none;
             transition: .2s;
             padding: 22px 0;
             border-bottom: 2px solid transparent;
         }
 
-        .nav-link:hover {
+        .nav-link:hover,
+        .nav-link.active {
             color: white;
         }
 
         .nav-link.active {
-            color: white;
-            border-color: #335fff;
+            border-color: var(--blue);
         }
 
         .mobile-menu-button {
@@ -87,17 +133,28 @@
             align-items: center;
             justify-content: center;
             font-size: 18px;
+            transition: .2s;
+        }
+
+        .mobile-menu-button:hover {
+            background: #292c32;
         }
 
         .mobile-menu {
             display: none;
             background: #101114;
-            border-bottom: 1px solid #2e3135;
+            border-bottom: 1px solid var(--border);
             padding: 12px 18px 18px;
         }
 
         .mobile-menu.open {
             display: block;
+            animation: menuOpen .2s ease;
+        }
+
+        @keyframes menuOpen {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .mobile-menu a {
@@ -129,7 +186,19 @@
 
         .hero {
             text-align: center;
-            margin-bottom: 55px;
+            margin-bottom: 45px;
+            animation: fadeUp .65s ease both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .hero-icon {
@@ -140,16 +209,25 @@
             align-items: center;
             justify-content: center;
             border-radius: 25px;
-            color: #3794ff;
+            color: var(--blue-light);
             background: linear-gradient(145deg, #1b2857, #151b36);
-            border: 1px solid rgba(55, 148, 255, .35);
-            box-shadow: 0 10px 45px rgba(51, 95, 255, .12);
+            border: 1px solid rgba(55,148,255,.35);
+            box-shadow: 0 10px 45px rgba(51,95,255,.12);
             font-size: 35px;
+            position: relative;
+        }
+
+        .hero-icon::after {
+            content: "";
+            position: absolute;
+            inset: -6px;
+            border: 1px solid rgba(55,148,255,.12);
+            border-radius: 29px;
         }
 
         .hero h1 {
             font-size: clamp(30px, 5vw, 46px);
-            font-weight: 950;
+            font-weight: 900;
             letter-spacing: -1.8px;
             color: white;
             line-height: 1.15;
@@ -157,11 +235,11 @@
         }
 
         .hero-description {
-            max-width: 650px;
+            max-width: 660px;
             margin: auto;
-            color: #92949d;
-            font-size: 15px;
-            line-height: 1.8;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.9;
         }
 
         .hero-badges {
@@ -178,8 +256,8 @@
             gap: 7px;
             padding: 8px 13px;
             border-radius: 30px;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 750;
         }
 
         .badge-blue {
@@ -190,8 +268,45 @@
 
         .badge-green {
             background: #103526;
-            color: #6ee7b7;
+            color: var(--green);
             border: 1px solid #20583f;
+        }
+
+        /* NAVEGAÇÃO RÁPIDA */
+
+        .quick-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin: 0 auto 30px;
+        }
+
+        .quick-navigation a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #1d1f22;
+            border: 1px solid var(--border);
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            transition: .2s;
+        }
+
+        .quick-navigation a:hover {
+            color: white;
+            background: #242a3d;
+            border-color: #40518c;
+            transform: translateY(-2px);
+        }
+
+        .quick-navigation i {
+            color: var(--blue-light);
         }
 
         /* AVISO */
@@ -204,6 +319,19 @@
             background: linear-gradient(120deg, #172247, #191b25);
             border: 1px solid #293d78;
             border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .intro-notice::after {
+            content: "";
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            right: -65px;
+            top: -75px;
+            background: rgba(55,148,255,.08);
         }
 
         .intro-notice > i {
@@ -216,14 +344,14 @@
         .intro-notice h2 {
             color: white;
             font-size: 15px;
-            font-weight: 800;
-            margin: 0 0 6px;
+            font-weight: 850;
+            margin: 0 0 7px;
         }
 
         .intro-notice p {
             color: #b8c5e2;
-            font-size: 13px;
-            line-height: 1.8;
+            font-size: 12px;
+            line-height: 1.9;
             margin: 0;
         }
 
@@ -232,19 +360,22 @@
         .rules-container {
             display: flex;
             flex-direction: column;
-            gap: 25px;
+            gap: 23px;
         }
 
         .rule-card {
-            background: #1d1f22;
-            border: 1px solid #2e3135;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 17px;
             overflow: hidden;
-            transition: border-color .25s, transform .25s;
+            transition: border-color .25s, transform .25s, box-shadow .25s;
+            animation: fadeUp .55s ease both;
+            scroll-margin-top: 90px;
         }
 
         .rule-card:hover {
             border-color: #424a60;
+            box-shadow: 0 12px 35px rgba(0,0,0,.12);
         }
 
         .card-header {
@@ -252,7 +383,8 @@
             align-items: center;
             gap: 17px;
             padding: 23px 25px;
-            border-bottom: 1px solid #2e3135;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(100deg, rgba(255,255,255,.018), transparent);
         }
 
         .section-icon {
@@ -268,30 +400,32 @@
 
         .icon-blue {
             background: #1a2040;
-            color: #3794ff;
+            color: var(--blue-light);
         }
 
         .icon-purple {
             background: #251d38;
-            color: #b59aff;
+            color: var(--purple);
         }
 
         .icon-red {
             background: #351c20;
-            color: #fb7185;
+            color: var(--red);
         }
 
         .card-header h2 {
             color: white;
-            font-size: 19px;
+            font-size: 18px;
             font-weight: 850;
-            margin: 0 0 5px;
+            margin: 0 0 6px;
+            letter-spacing: -.4px;
         }
 
         .card-header p {
-            color: #92949d;
-            font-size: 13px;
+            color: var(--muted);
+            font-size: 11px;
             margin: 0;
+            line-height: 1.6;
         }
 
         .rules-list {
@@ -304,7 +438,7 @@
             gap: 17px;
             align-items: flex-start;
             padding: 20px 24px;
-            border-bottom: 1px solid #2e3135;
+            border-bottom: 1px solid var(--border);
             transition: background .2s;
         }
 
@@ -324,7 +458,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 900;
         }
 
@@ -345,16 +479,22 @@
 
         .rule-content h3 {
             color: #f4f4f5;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             margin: 0 0 7px;
+            line-height: 1.6;
         }
 
         .rule-content p {
             color: #9b9da6;
-            font-size: 13px;
-            line-height: 1.8;
+            font-size: 12px;
+            line-height: 1.9;
             margin: 0;
+        }
+
+        .rule-content strong {
+            color: #d5d7df;
+            font-weight: 750;
         }
 
         /* PENALIDADES */
@@ -367,7 +507,7 @@
         }
 
         .penalty-card {
-            background: #15171a;
+            background: var(--card-inner);
             border: 1px solid #303238;
             border-radius: 13px;
             padding: 19px;
@@ -376,7 +516,7 @@
 
         .penalty-card:hover {
             border-color: #4a5060;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
         }
 
         .penalty-heading {
@@ -387,19 +527,80 @@
         }
 
         .penalty-heading i {
-            font-size: 20px;
+            font-size: 19px;
         }
 
         .penalty-heading h3 {
             color: white;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             margin: 0;
         }
 
         .penalty-card p {
             color: #999ba4;
-            font-size: 13px;
+            font-size: 11px;
+            line-height: 1.9;
+            margin: 0;
+        }
+
+        .penalty-level {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 5px 9px;
+            border-radius: 7px;
+            background: #20232a;
+            color: #b5bac7;
+            font-size: 10px;
+            font-weight: 750;
+        }
+
+        /* PROCESSO DE MODERAÇÃO */
+
+        .moderation-info {
+            padding: 22px;
+            margin-top: 23px;
+            background: #17191d;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+        }
+
+        .moderation-info h3 {
+            color: white;
+            font-size: 14px;
+            font-weight: 850;
+            margin: 0 0 17px;
+        }
+
+        .moderation-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 13px;
+        }
+
+        .moderation-step {
+            padding: 15px;
+            border: 1px solid #303238;
+            background: #1d1f22;
+            border-radius: 11px;
+        }
+
+        .moderation-step i {
+            color: var(--blue-light);
+            font-size: 17px;
+            margin-bottom: 10px;
+        }
+
+        .moderation-step h4 {
+            color: #eeeef2;
+            font-size: 11px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+
+        .moderation-step p {
+            color: #92949d;
+            font-size: 10px;
             line-height: 1.8;
             margin: 0;
         }
@@ -412,12 +613,27 @@
             border: 1px solid #293d78;
             border-radius: 17px;
             background: linear-gradient(120deg, #1a2040, #1d1f22);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .final-notice::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(51,95,255,.07);
+            right: -90px;
+            bottom: -120px;
         }
 
         .final-notice-content {
             display: flex;
             gap: 17px;
             align-items: flex-start;
+            position: relative;
+            z-index: 1;
         }
 
         .final-notice-icon {
@@ -436,8 +652,8 @@
 
         .final-notice p {
             color: #c2c8d8;
-            font-size: 13px;
-            line-height: 1.8;
+            font-size: 12px;
+            line-height: 1.9;
             margin: 0;
         }
 
@@ -456,7 +672,7 @@
             min-height: 43px;
             padding: 0 17px;
             border-radius: 10px;
-            font-size: 13px;
+            font-size: 11px;
             font-weight: 800;
             text-decoration: none;
             transition: .2s;
@@ -464,12 +680,12 @@
 
         .primary-button {
             color: white;
-            background: #335fff;
+            background: var(--blue);
         }
 
         .primary-button:hover {
             background: #4d74ff;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
         }
 
         .secondary-button {
@@ -480,15 +696,23 @@
 
         .secondary-button:hover {
             background: #383c42;
+            transform: translateY(-2px);
         }
 
         /* FOOTER */
 
         .main-footer {
-            border-top: 1px solid #2e3135;
-            background: #0b0c0e;
+            border-top: 1px solid var(--border);
+            background: var(--header);
             padding: 32px 20px;
             text-align: center;
+        }
+
+        .footer-brand {
+            color: white;
+            font-size: 15px;
+            font-weight: 900;
+            margin-bottom: 17px;
         }
 
         .footer-links {
@@ -502,8 +726,8 @@
         .footer-links a {
             color: #858791;
             text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 650;
             transition: .2s;
         }
 
@@ -513,8 +737,8 @@
 
         .footer-copy {
             color: #656771;
-            font-size: 12px;
-            line-height: 1.7;
+            font-size: 10px;
+            line-height: 1.8;
         }
 
         /* PROGRESSO */
@@ -525,9 +749,10 @@
             left: 0;
             height: 3px;
             width: 0%;
-            background: linear-gradient(90deg, #335fff, #3794ff);
+            background: linear-gradient(90deg, var(--blue), var(--blue-light));
             z-index: 200;
             transition: width .1s linear;
+            box-shadow: 0 0 12px rgba(51,95,255,.4);
         }
 
         .back-to-top {
@@ -537,7 +762,7 @@
             width: 45px;
             height: 45px;
             border-radius: 13px;
-            background: #335fff;
+            background: var(--blue);
             color: white;
             border: none;
             cursor: pointer;
@@ -558,9 +783,54 @@
 
         .back-to-top:hover {
             background: #4d74ff;
+            transform: translateY(-3px);
         }
 
-        /* RESPONSIVIDADE TABLET */
+        /* NAVEGAÇÃO INFERIOR MOBILE */
+
+        #mobileNav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 90;
+            background: rgba(17,18,20,.97);
+            border-top: 1px solid var(--border);
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        #mobileNav a {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 4px;
+            color: #8a8d91;
+            font-size: 9px;
+            font-weight: 650;
+            gap: 5px;
+            text-decoration: none;
+            transition: .2s;
+        }
+
+        #mobileNav a:hover,
+        #mobileNav a.active {
+            color: white;
+        }
+
+        #mobileNav a.active i {
+            color: var(--blue-light);
+        }
+
+        #mobileNav a i {
+            font-size: 17px;
+        }
+
+        /* RESPONSIVIDADE */
 
         @media (max-width: 768px) {
             .main-header {
@@ -582,7 +852,7 @@
             }
 
             .hero {
-                margin-bottom: 38px;
+                margin-bottom: 35px;
             }
 
             .hero-icon {
@@ -590,7 +860,6 @@
                 height: 76px;
                 font-size: 30px;
                 border-radius: 22px;
-                margin-bottom: 20px;
             }
 
             .hero h1 {
@@ -608,18 +877,29 @@
             .penalties-grid {
                 padding: 18px;
             }
-        }
 
-        /* RESPONSIVIDADE CELULAR */
+            #mobileNav {
+                display: flex;
+            }
+
+            body {
+                padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px));
+            }
+
+            .back-to-top {
+                bottom: 78px;
+            }
+        }
 
         @media (max-width: 520px) {
             .page-container {
                 width: calc(100% - 26px);
                 padding-top: 36px;
+                padding-bottom: 35px;
             }
 
             .hero {
-                margin-bottom: 30px;
+                margin-bottom: 28px;
             }
 
             .hero-icon {
@@ -627,16 +907,17 @@
                 height: 70px;
                 font-size: 27px;
                 border-radius: 19px;
+                margin-bottom: 20px;
             }
 
             .hero h1 {
-                font-size: 30px;
+                font-size: 29px;
                 margin-bottom: 12px;
             }
 
             .hero-description {
-                font-size: 13px;
-                line-height: 1.75;
+                font-size: 12px;
+                line-height: 1.85;
             }
 
             .hero-badges {
@@ -645,8 +926,25 @@
             }
 
             .badge {
-                font-size: 10px;
+                font-size: 9px;
                 padding: 7px 10px;
+            }
+
+            .quick-navigation {
+                justify-content: flex-start;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding: 3px 0 9px;
+                scrollbar-width: none;
+            }
+
+            .quick-navigation::-webkit-scrollbar {
+                display: none;
+            }
+
+            .quick-navigation a {
+                flex-shrink: 0;
+                font-size: 10px;
             }
 
             .intro-notice {
@@ -660,15 +958,15 @@
             }
 
             .intro-notice h2 {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             .intro-notice p {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .rules-container {
-                gap: 17px;
+                gap: 16px;
             }
 
             .rule-card {
@@ -688,11 +986,11 @@
             }
 
             .card-header h2 {
-                font-size: 15px;
+                font-size: 14px;
             }
 
             .card-header p {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .rule-item {
@@ -704,17 +1002,17 @@
                 width: 32px;
                 height: 32px;
                 border-radius: 10px;
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .rule-content h3 {
-                font-size: 13px;
-                line-height: 1.5;
+                font-size: 12px;
+                line-height: 1.6;
             }
 
             .rule-content p {
-                font-size: 12px;
-                line-height: 1.75;
+                font-size: 11px;
+                line-height: 1.85;
             }
 
             .penalties-grid {
@@ -728,7 +1026,27 @@
             }
 
             .penalty-card p {
-                font-size: 12px;
+                font-size: 11px;
+            }
+
+            .moderation-info {
+                padding: 16px;
+            }
+
+            .moderation-steps {
+                grid-template-columns: 1fr;
+                gap: 9px;
+            }
+
+            .moderation-step {
+                display: flex;
+                gap: 12px;
+                align-items: flex-start;
+                padding: 13px;
+            }
+
+            .moderation-step i {
+                margin: 2px 0 0;
             }
 
             .final-notice {
@@ -745,11 +1063,11 @@
             }
 
             .final-notice h2 {
-                font-size: 16px;
+                font-size: 15px;
             }
 
             .final-notice p {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .action-buttons {
@@ -766,28 +1084,28 @@
             }
 
             .footer-links a {
-                font-size: 12px;
+                font-size: 10px;
             }
 
             .main-footer {
-                padding: 27px 15px;
+                padding: 27px 15px 20px;
             }
 
             .back-to-top {
-                width: 42px;
-                height: 42px;
-                right: 14px;
-                bottom: 14px;
+                width: 40px;
+                height: 40px;
+                right: 13px;
+                bottom: 75px;
             }
         }
 
         @media (max-width: 350px) {
             .hero h1 {
-                font-size: 26px;
+                font-size: 25px;
             }
 
             .card-header h2 {
-                font-size: 14px;
+                font-size: 13px;
             }
 
             .rule-item {
@@ -797,11 +1115,15 @@
             }
 
             .rule-content p {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .badge {
-                font-size: 9px;
+                font-size: 8px;
+            }
+
+            #mobileNav a {
+                font-size: 8px;
             }
         }
 
@@ -830,9 +1152,9 @@
                 ROBLOX
             </a>
 
-            <nav class="desktop-nav flex items-center gap-7 h-full">
+            <nav class="desktop-nav flex items-center gap-7 h-full" aria-label="Navegação principal">
                 <a href="index.html" class="nav-link">Início</a>
-                <a href="regras.html" class="nav-link active">Regras</a>
+                <a href="regras.html" class="nav-link active" aria-current="page">Regras</a>
                 <a href="termos.html" class="nav-link">Termos</a>
                 <a href="privacidade.html" class="nav-link">Privacidade</a>
             </nav>
@@ -850,13 +1172,13 @@
 
         </div>
 
-        <nav class="mobile-menu" id="mobileMenu">
+        <nav class="mobile-menu" id="mobileMenu" aria-label="Menu mobile">
             <a href="index.html">
                 <i class="fa-solid fa-house w-5"></i>
                 Início
             </a>
 
-            <a href="regras.html" class="active">
+            <a href="regras.html" class="active" aria-current="page">
                 <i class="fa-solid fa-scale-balanced w-5"></i>
                 Regras da Comunidade
             </a>
@@ -886,15 +1208,16 @@
             <h1>Regras da Comunidade</h1>
 
             <p class="hero-description">
-                Nosso objetivo é manter um ambiente seguro, divertido e respeitoso
-                para todos os jogadores. Conheça as regras e ajude a construir
-                uma comunidade melhor para todos.
+                Este é o espaço onde todos os jogadores devem se sentir seguros,
+                respeitados e bem-vindos. As regras abaixo explicam como manter
+                uma comunidade saudável, proteger os usuários e garantir uma
+                experiência justa dentro da plataforma.
             </p>
 
             <div class="hero-badges">
                 <span class="badge badge-green">
                     <i class="fa-solid fa-calendar-check"></i>
-                    Atualizado em outubro de 2026
+                    Atualizado em novembro de 2026
                 </span>
 
                 <span class="badge badge-blue">
@@ -905,6 +1228,24 @@
 
         </section>
 
+        <!-- NAVEGAÇÃO RÁPIDA -->
+        <nav class="quick-navigation" aria-label="Acesso rápido às regras">
+            <a href="#chat">
+                <i class="fa-solid fa-comments"></i>
+                Chat do mapa
+            </a>
+
+            <a href="#gerais">
+                <i class="fa-solid fa-shield-halved"></i>
+                Regras gerais
+            </a>
+
+            <a href="#penalidades">
+                <i class="fa-solid fa-gavel"></i>
+                Penalidades
+            </a>
+        </nav>
+
         <!-- AVISO INICIAL -->
         <section class="intro-notice">
 
@@ -914,10 +1255,12 @@
                 <h2>Leia antes de jogar</h2>
 
                 <p>
-                    Estas regras se aplicam a todos os usuários da plataforma,
-                    independentemente do tempo de cadastro ou nível de experiência.
-                    Ao utilizar nossos serviços, você concorda em respeitar as
-                    diretrizes apresentadas nesta página.
+                    Estas regras são aplicáveis a todos os usuários da plataforma,
+                    independentemente do tempo de cadastro, nível de experiência
+                    ou modalidade de utilização. Ao criar uma conta ou utilizar
+                    nossos serviços, você concorda em respeitar estas diretrizes.
+                    O desconhecimento das regras não elimina a responsabilidade
+                    pelo seu cumprimento.
                 </p>
             </div>
 
@@ -925,8 +1268,8 @@
 
         <div class="rules-container">
 
-            <!-- REGRAS DO CHAT DO MAPA -->
-            <section class="rule-card">
+            <!-- REGRAS DO CHAT -->
+            <section class="rule-card" id="chat">
 
                 <div class="card-header">
 
@@ -936,7 +1279,7 @@
 
                     <div>
                         <h2>Regras do Chat do Mapa</h2>
-                        <p>Válidas durante partidas em qualquer mapa</p>
+                        <p>Diretrizes de comunicação durante as partidas</p>
                     </div>
 
                 </div>
@@ -950,9 +1293,11 @@
                             <h3>Respeite todos os jogadores</h3>
 
                             <p>
-                                Insultos, ofensas, xingamentos ou qualquer forma
-                                de desrespeito no chat são proibidos. Trate os
-                                outros como gostaria de ser tratado.
+                                Todos devem ser tratados com educação e respeito.
+                                São proibidos insultos, ofensas, xingamentos,
+                                provocações excessivas, ameaças e ataques pessoais.
+                                Discordar de alguém é permitido, desde que a conversa
+                                aconteça sem agressões ou humilhações.
                             </p>
                         </div>
                     </article>
@@ -964,10 +1309,11 @@
                             <h3>Proibido spam e flood</h3>
 
                             <p>
-                                Não envie mensagens repetidas, caracteres
-                                aleatórios ou mensagens em excesso em curto
-                                período de tempo. Utilize o chat de maneira
-                                responsável.
+                                Não envie mensagens repetidas, sequências excessivas
+                                de caracteres, letras aleatórias ou conteúdos sem
+                                propósito apenas para ocupar o chat. Evite também
+                                enviar muitas mensagens em um intervalo muito curto.
+                                O chat deve permanecer organizado e útil para todos.
                             </p>
                         </div>
                     </article>
@@ -979,9 +1325,12 @@
                             <h3>Sem divulgação de links externos</h3>
 
                             <p>
-                                Não é permitido compartilhar links de outros
-                                sites, Discord, grupos de WhatsApp ou qualquer
-                                endereço externo no chat do mapa.
+                                Não é permitido divulgar links de sites externos,
+                                servidores do Discord, grupos de WhatsApp, páginas
+                                promocionais ou outros endereços sem autorização
+                                da administração. Essa medida ajuda a evitar golpes,
+                                fraudes, publicidade indesejada e possíveis riscos
+                                de segurança para os jogadores.
                             </p>
                         </div>
                     </article>
@@ -990,12 +1339,14 @@
                         <div class="rule-number number-blue">4</div>
 
                         <div class="rule-content">
-                            <h3>Proibido conteúdo impróprio</h3>
+                            <h3>Proibido conteúdo impróprio ou discriminatório</h3>
 
                             <p>
-                                Qualquer conteúdo de natureza sexual, violenta
-                                de forma explícita, racista, homofóbica ou
-                                discriminatória é estritamente proibido.
+                                É proibido publicar ou enviar conteúdo sexual,
+                                explícito, racista, homofóbico, ameaçador ou que
+                                promova discriminação contra qualquer pessoa.
+                                Também não são permitidos conteúdos que incentivem
+                                violência real, perseguição ou assédio.
                             </p>
                         </div>
                     </article>
@@ -1004,12 +1355,15 @@
                         <div class="rule-number number-blue">5</div>
 
                         <div class="rule-content">
-                            <h3>Proibido trapacear e usar hacks</h3>
+                            <h3>Proibido trapacear e utilizar hacks</h3>
 
                             <p>
-                                O uso de hacks, exploits, scripts ou qualquer
-                                modificação que dê vantagem desleal no jogo
-                                resulta em ban imediato por HWID.
+                                Não utilize hacks, exploits, scripts não autorizados
+                                ou modificações que proporcionem vantagens injustas.
+                                Também não é permitido explorar falhas intencionalmente
+                                para prejudicar partidas ou outros jogadores.
+                                Violações comprovadas podem resultar em banimento,
+                                inclusive por HWID, conforme a política de moderação.
                             </p>
                         </div>
                     </article>
@@ -1021,10 +1375,11 @@
                             <h3>Jogue de forma colaborativa</h3>
 
                             <p>
-                                Sabotar propositalmente a experiência de outros
-                                jogadores (griefing) ou abandonar partidas
-                                repetidamente prejudica a comunidade e não é
-                                tolerado.
+                                Não prejudique intencionalmente a experiência dos
+                                demais jogadores. Sabotar partidas, praticar griefing,
+                                atrapalhar atividades coletivas ou abandonar partidas
+                                repetidamente de maneira abusiva são comportamentos
+                                que podem resultar em medidas disciplinares.
                             </p>
                         </div>
                     </article>
@@ -1033,7 +1388,7 @@
             </section>
 
             <!-- REGRAS GERAIS -->
-            <section class="rule-card">
+            <section class="rule-card" id="gerais">
 
                 <div class="card-header">
 
@@ -1043,7 +1398,7 @@
 
                     <div>
                         <h2>Regras Gerais da Plataforma</h2>
-                        <p>Aplicam-se em toda a plataforma</p>
+                        <p>Diretrizes de segurança, utilização e convivência</p>
                     </div>
 
                 </div>
@@ -1054,12 +1409,14 @@
                         <div class="rule-number number-purple">1</div>
 
                         <div class="rule-content">
-                            <h3>Uma conta por pessoa</h3>
+                            <h3>Utilize sua conta de maneira responsável</h3>
 
                             <p>
-                                Cada pessoa deve usar apenas uma conta. Criar
-                                múltiplas contas para burlar penalidades ou
-                                obter vantagens é proibido.
+                                Cada usuário deve utilizar sua própria conta e
+                                manter suas informações de acesso protegidas.
+                                A criação de contas adicionais para contornar
+                                punições, manipular sistemas ou obter vantagens
+                                indevidas é proibida.
                             </p>
                         </div>
                     </article>
@@ -1071,9 +1428,11 @@
                             <h3>Não se passe por outras pessoas</h3>
 
                             <p>
-                                Criar contas com nomes iguais ou similares a
-                                outros jogadores, moderadores ou administradores
-                                com intenção de enganar é proibido.
+                                É proibido criar perfis com a intenção de se passar
+                                por outros jogadores, moderadores, administradores
+                                ou representantes da plataforma. Não utilize nomes,
+                                imagens ou informações de terceiros para enganar,
+                                confundir ou prejudicar outros usuários.
                             </p>
                         </div>
                     </article>
@@ -1082,13 +1441,15 @@
                         <div class="rule-number number-purple">3</div>
 
                         <div class="rule-content">
-                            <h3>Conteúdo dos mapas</h3>
+                            <h3>Publique somente mapas apropriados</h3>
 
                             <p>
-                                Mapas publicados devem seguir as regras de
-                                conteúdo. Mapas com tema adulto, violência
-                                extrema, conteúdo racista ou ilegal serão
-                                removidos.
+                                Todos os mapas publicados devem respeitar as regras
+                                da comunidade. Não são permitidos mapas com conteúdo
+                                sexual, violência explícita, discriminação, atividades
+                                ilegais ou qualquer material que coloque outros
+                                usuários em situação de risco. A administração poderá
+                                remover conteúdos que violem essas diretrizes.
                             </p>
                         </div>
                     </article>
@@ -1097,12 +1458,14 @@
                         <div class="rule-number number-purple">4</div>
 
                         <div class="rule-content">
-                            <h3>Privacidade e segurança</h3>
+                            <h3>Proteja sua privacidade e segurança</h3>
 
                             <p>
-                                Não compartilhe dados pessoais (endereço,
-                                telefone, senha) no chat. Nunca solicite dados
-                                pessoais de outros jogadores.
+                                Nunca compartilhe informações confidenciais, como
+                                senhas, endereço residencial, telefone ou documentos.
+                                Também é proibido solicitar ou divulgar informações
+                                pessoais de outros usuários sem autorização.
+                                Nenhum administrador legítimo deve solicitar sua senha.
                             </p>
                         </div>
                     </article>
@@ -1111,13 +1474,15 @@
                         <div class="rule-number number-purple">5</div>
 
                         <div class="rule-content">
-                            <h3>Proibido tentar hackear a plataforma</h3>
+                            <h3>Não tente invadir ou prejudicar a plataforma</h3>
 
                             <p>
-                                Tentativas de acessar dados de outros usuários,
-                                explorar vulnerabilidades da plataforma ou
-                                realizar ataques resultam em ban permanente
-                                e possível ação legal.
+                                São proibidas tentativas de acessar contas alheias,
+                                obter dados sem autorização, explorar vulnerabilidades
+                                de forma maliciosa, manipular sistemas ou interromper
+                                o funcionamento dos serviços. Problemas de segurança
+                                devem ser comunicados à administração de maneira
+                                responsável.
                             </p>
                         </div>
                     </article>
@@ -1126,12 +1491,14 @@
                         <div class="rule-number number-purple">6</div>
 
                         <div class="rule-content">
-                            <h3>Respeite as decisões da moderação</h3>
+                            <h3>Respeite a equipe de moderação</h3>
 
                             <p>
-                                As decisões dos administradores são finais.
-                                Criar cenas públicas ou assediar a equipe de
-                                moderação não é tolerado.
+                                Moderadores e administradores são responsáveis por
+                                manter a organização da comunidade. É permitido
+                                solicitar esclarecimentos e apresentar recursos
+                                contra decisões, mas ameaças, perseguição, assédio
+                                ou tentativas de intimidar a equipe não serão aceitos.
                             </p>
                         </div>
                     </article>
@@ -1140,7 +1507,7 @@
             </section>
 
             <!-- PENALIDADES -->
-            <section class="rule-card">
+            <section class="rule-card" id="penalidades">
 
                 <div class="card-header">
 
@@ -1149,8 +1516,8 @@
                     </div>
 
                     <div>
-                        <h2>Penalidades</h2>
-                        <p>Como aplicamos as punições</p>
+                        <h2>Penalidades e Medidas Disciplinares</h2>
+                        <p>Consequências para violações das regras</p>
                     </div>
 
                 </div>
@@ -1165,10 +1532,12 @@
                         </div>
 
                         <p>
-                            De 1 hora a 365 dias, dependendo da gravidade.
-                            Primeira infração geralmente resulta em aviso
-                            ou ban curto.
+                            Suspensão de acesso por um período determinado,
+                            que pode variar de 1 hora a 365 dias, conforme
+                            a gravidade da infração e o histórico do usuário.
                         </p>
+
+                        <span class="penalty-level">Suspensão por período definido</span>
 
                     </article>
 
@@ -1180,10 +1549,13 @@
                         </div>
 
                         <p>
-                            Bloqueia o dispositivo, impossibilitando criar
-                            novas contas. Aplicado a cheaters e infratores
-                            reincidentes.
+                            Restrição associada ao dispositivo, quando tecnicamente
+                            aplicável e prevista na política da plataforma.
+                            Pode ser utilizada em casos graves de trapaça ou
+                            reincidência comprovada.
                         </p>
+
+                        <span class="penalty-level">Restrição de dispositivo</span>
 
                     </article>
 
@@ -1195,9 +1567,13 @@
                         </div>
 
                         <p>
-                            Bloqueia o e-mail, impedindo login e novo
-                            cadastro. Aplicado junto a outros tipos de ban.
+                            Bloqueio relacionado ao endereço de e-mail utilizado
+                            na conta, impedindo o acesso ou novos cadastros
+                            associados, conforme as medidas de segurança
+                            disponíveis na plataforma.
                         </p>
+
+                        <span class="penalty-level">Restrição de cadastro</span>
 
                     </article>
 
@@ -1209,16 +1585,67 @@
                         </div>
 
                         <p>
-                            Exclusão completa da conta. Reservado para
-                            violações gravíssimas. Irreversível.
+                            Encerramento definitivo do acesso à conta.
+                            Pode ser aplicado em violações extremamente graves,
+                            ameaças, fraudes, ataques ou reincidências graves.
                         </p>
+
+                        <span class="penalty-level">Bloqueio definitivo</span>
 
                     </article>
 
                 </div>
+
             </section>
 
         </div>
+
+        <!-- PROCESSO DE MODERAÇÃO -->
+        <section class="moderation-info">
+
+            <h3>
+                <i class="fa-solid fa-list-check text-[#3794ff] mr-2"></i>
+                Como funciona a moderação?
+            </h3>
+
+            <div class="moderation-steps">
+
+                <article class="moderation-step">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <div>
+                        <h4>1. Análise da ocorrência</h4>
+                        <p>
+                            A equipe verifica a denúncia, as evidências disponíveis
+                            e o contexto da situação.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="moderation-step">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    <div>
+                        <h4>2. Avaliação da infração</h4>
+                        <p>
+                            São considerados a gravidade, o impacto e o histórico
+                            de comportamento do usuário.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="moderation-step">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div>
+                        <h4>3. Aplicação da medida</h4>
+                        <p>
+                            Quando necessário, a equipe aplica uma medida
+                            proporcional à violação identificada.
+                        </p>
+                    </div>
+                </article>
+
+            </div>
+
+        </section>
 
         <!-- DENÚNCIAS -->
         <section class="final-notice">
@@ -1232,10 +1659,12 @@
                     <h2>Denúncias e suporte</h2>
 
                     <p>
-                        Viu alguém infringindo as regras? Entre em contato
-                        com um administrador. Sua ajuda é essencial para
-                        manter a comunidade saudável, segura e agradável
-                        para todos os jogadores.
+                        Encontrou alguém desrespeitando as regras? Ajude a manter
+                        nossa comunidade segura comunicando o ocorrido à equipe
+                        responsável. Sempre que possível, apresente informações
+                        claras sobre o que aconteceu, quando aconteceu e onde
+                        aconteceu. Não compartilhe dados pessoais publicamente.
+                        Todas as denúncias devem ser analisadas com responsabilidade.
                     </p>
 
                     <div class="action-buttons">
@@ -1263,21 +1692,54 @@
     <!-- FOOTER -->
     <footer class="main-footer">
 
-        <div class="footer-links">
+        <div class="footer-brand">
+            <i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>
+            ROBLOX CLONE
+        </div>
 
+        <div class="footer-links">
             <a href="regras.html">Regras</a>
             <a href="termos.html">Termos de Uso</a>
             <a href="privacidade.html">Política de Privacidade</a>
             <a href="index.html">Início</a>
-
         </div>
 
         <p class="footer-copy">
-            © 2026 Roblox Clone — Plataforma de jogos online.
+            © 2026 Roblox Clone — Plataforma de jogos online.<br>
             Todos os direitos reservados.
         </p>
 
     </footer>
+
+    <!-- NAVEGAÇÃO MOBILE -->
+    <nav id="mobileNav" aria-label="Navegação inferior">
+
+        <a href="index.html">
+            <i class="fa-solid fa-house"></i>
+            Início
+        </a>
+
+        <a href="batepapo.html">
+            <i class="fa-solid fa-comments"></i>
+            Chat
+        </a>
+
+        <a href="studio.html">
+            <i class="fa-solid fa-hammer"></i>
+            Studio
+        </a>
+
+        <a href="avatar.html">
+            <i class="fa-solid fa-shirt"></i>
+            Avatar
+        </a>
+
+        <a href="#" id="mobileProfileLink_nav">
+            <i class="fa-solid fa-user"></i>
+            Perfil
+        </a>
+
+    </nav>
 
     <!-- VOLTAR AO TOPO -->
     <button
@@ -1291,16 +1753,29 @@
     </button>
 
     <script>
+        // ==========================================
         // MENU MOBILE
+        // ==========================================
 
         const menuButton = document.getElementById('mobileMenuButton');
         const mobileMenu = document.getElementById('mobileMenu');
         const menuIcon = document.getElementById('menuIcon');
 
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            menuButton.setAttribute('aria-expanded', 'false');
+            menuButton.setAttribute('aria-label', 'Abrir menu');
+            menuIcon.className = 'fa-solid fa-bars';
+        }
+
         menuButton.addEventListener('click', function () {
             const isOpen = mobileMenu.classList.toggle('open');
 
             menuButton.setAttribute('aria-expanded', String(isOpen));
+            menuButton.setAttribute(
+                'aria-label',
+                isOpen ? 'Fechar menu' : 'Abrir menu'
+            );
 
             menuIcon.className = isOpen
                 ? 'fa-solid fa-xmark'
@@ -1310,29 +1785,33 @@
         // FECHAR MENU AO CLICAR EM UM LINK
 
         mobileMenu.querySelectorAll('a').forEach(function (link) {
-            link.addEventListener('click', function () {
-                mobileMenu.classList.remove('open');
-
-                menuButton.setAttribute('aria-expanded', 'false');
-                menuIcon.className = 'fa-solid fa-bars';
-            });
+            link.addEventListener('click', closeMobileMenu);
         });
 
         // FECHAR MENU COM ESC
 
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
-                mobileMenu.classList.remove('open');
-
-                menuButton.setAttribute('aria-expanded', 'false');
-                menuIcon.className = 'fa-solid fa-bars';
+                closeMobileMenu();
             }
         });
 
+        // FECHAR MENU AO VOLTAR PARA DESKTOP
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 768) {
+                closeMobileMenu();
+            }
+        });
+
+        // ==========================================
         // PROGRESSO DE LEITURA
+        // ==========================================
 
         const readingProgress = document.getElementById('readingProgress');
         const backToTop = document.getElementById('backToTop');
+
+        let ticking = false;
 
         function updatePageProgress() {
             const scrollTop = window.scrollY;
@@ -1344,24 +1823,32 @@
                 ? (scrollTop / documentHeight) * 100
                 : 0;
 
-            readingProgress.style.width = Math.min(progress, 100) + '%';
+            readingProgress.style.width =
+                Math.min(Math.max(progress, 0), 100) + '%';
 
             if (scrollTop > 350) {
                 backToTop.classList.add('visible');
             } else {
                 backToTop.classList.remove('visible');
             }
+
+            ticking = false;
         }
 
-        window.addEventListener('scroll', updatePageProgress, {
-            passive: true
-        });
+        window.addEventListener('scroll', function () {
+            if (!ticking) {
+                window.requestAnimationFrame(updatePageProgress);
+                ticking = true;
+            }
+        }, { passive: true });
 
         window.addEventListener('resize', updatePageProgress);
 
         updatePageProgress();
 
+        // ==========================================
         // VOLTAR AO TOPO
+        // ==========================================
 
         backToTop.addEventListener('click', function () {
             window.scrollTo({
@@ -1369,18 +1856,66 @@
                 behavior: 'smooth'
             });
         });
+
+        // ==========================================
+        // PERFIL DO USUÁRIO
+        // ==========================================
+
+        (function () {
+            const profileLink = document.getElementById(
+                'mobileProfileLink_nav'
+            );
+
+            if (
+                profileLink &&
+                typeof Auth !== 'undefined' &&
+                Auth.current &&
+                Auth.profileUrl
+            ) {
+                try {
+                    const currentUser = Auth.current();
+
+                    if (currentUser) {
+                        profileLink.href = Auth.profileUrl(currentUser);
+                    }
+                } catch (error) {
+                    console.warn(
+                        'Não foi possível carregar o perfil do usuário.',
+                        error
+                    );
+                }
+            }
+        })();
+
+        // ==========================================
+        // NAVEGAÇÃO POR ÂNCORAS
+        // ==========================================
+
+        document.querySelectorAll('.quick-navigation a').forEach(
+            function (link) {
+                link.addEventListener('click', function (event) {
+                    const targetId = this.getAttribute('href');
+
+                    if (!targetId || !targetId.startsWith('#')) {
+                        return;
+                    }
+
+                    const target = document.querySelector(targetId);
+
+                    if (target) {
+                        event.preventDefault();
+
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+
+                        history.replaceState(null, '', targetId);
+                    }
+                });
+            }
+        );
     </script>
 
-
-
-<style id="mobileNavStyle">
-#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
-#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
-#mobileNav a:hover,#mobileNav a.active{color:#fff}
-#mobileNav a i{font-size:18px}
-@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
-</style>
-<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
-<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
 </body>
 </html>
