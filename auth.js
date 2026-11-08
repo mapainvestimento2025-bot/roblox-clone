@@ -622,7 +622,7 @@ Auth.pres = {
   COLOR: { play: '#00b06f', on: '#3b82f6', off: '#6b7280' },
   async fetch(names) {
     const me = Auth.current(); if (!me || !Auth.server || !names.length) return false;
-    try { const r = await fetch(apiUrl('/api/status?me=' + encodeURIComponent(me) + '&users=' + encodeURIComponent(names.join(',')), { cache: 'no-store' }); if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return false;
+    try { const r = await fetch(apiUrl('/api/status?me=' + encodeURIComponent(me) + '&users=' + encodeURIComponent(names.join(','))), { cache: 'no-store' }); if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return false;
       const j = await r.json(); for (const k in j) this.cache[k.toLowerCase()] = j[k]; return true; } catch (e) { return false; }
   },
   watch(getNames, cb) {                         // atualiza a cada 4s e chama cb()
@@ -635,4 +635,3 @@ Auth.pres = {
 /* Expõe Auth globalmente para funcionar tanto como script externo quanto inline */
 window.Auth = Auth;
 (function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
-
