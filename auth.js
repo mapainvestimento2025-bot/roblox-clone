@@ -639,7 +639,7 @@ window.Auth = Auth;
 /* ════════════════════════════════════════════════
    HELPERS DE ADMIN (console do navegador F12)
      setAdmin('nome')    → vira admin
-     setOwner('nome')    → vira owner
+     setOwner('luizgustavo4828')    → vira owner
      removeAdmin('nome') → remove permissões
      listUsers()         → lista usuários
 ════════════════════════════════════════════════ */
