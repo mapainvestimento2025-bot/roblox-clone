@@ -1262,24 +1262,47 @@
     }
   </script>
 <script>
-(function () {
-  /* Ano atual no footer */
-  var yrEl = document.getElementById('currentYear');
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Utilitários ── */
+  function $(id) { return document.getElementById(id); }
+  function showErr(msg) {
+    var el = $('errorText'); if (el) el.textContent = msg;
+    var box = $('err'); if (box) box.classList.add('show');
+  }
+  function hideErr() {
+    var box = $('err'); if (box) box.classList.remove('show');
+  }
+
+  /* ── Ano no footer ── */
+  var yrEl = $('currentYear');
   if (yrEl) yrEl.textContent = new Date().getFullYear();
 
-  /* Redireciona se já estiver logado (verificação com servidor também) */
-  Auth.init().then(function() {
+  /* ── Redireciona se já estiver logado ── */
+  Auth.init().then(function () {
     if (Auth.current()) {
       var dest = new URLSearchParams(location.search).get('next') || 'index.html';
       location.replace(dest);
     }
   });
 
-  function $(id) { return document.getElementById(id); }
-  function showErr(msg) { $('errorText').textContent = msg; $('err').classList.add('show'); }
-  function hideErr() { $('err').classList.remove('show'); }
+  /* ── Olho: mostrar / ocultar senha ── */
+  document.querySelectorAll('.toggle-password').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var id  = btn.getAttribute('data-target');
+      var inp = document.getElementById(id);
+      if (!inp) return;
+      var show = (inp.type === 'password');
+      inp.type  = show ? 'text' : 'password';
+      var icon  = btn.querySelector('i');
+      if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+      btn.setAttribute('aria-pressed', String(show));
+    });
+  });
 
-  /* Força da senha */
+  /* ── Força da senha ── */
   function checkStrength(val) {
     var rules = [
       { id: 'ruleLength',  ok: val.length >= 8 },
@@ -1287,96 +1310,92 @@
       { id: 'ruleNumber',  ok: /[0-9]/.test(val) },
       { id: 'ruleSpecial', ok: /[^A-Za-z0-9]/.test(val) }
     ];
-    var score = rules.filter(function(r){return r.ok;}).length;
-    rules.forEach(function(r) {
+    var score = rules.filter(function (r) { return r.ok; }).length;
+    rules.forEach(function (r) {
       var el = $(r.id); if (!el) return;
-      el.querySelector('i').className = r.ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+      var ic = el.querySelector('i');
+      if (ic) ic.className = r.ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
       el.style.color = r.ok ? '#00c27a' : '';
     });
-    var segs = document.querySelectorAll('.strength-segment');
-    var colors = ['#e74c3c','#e67e22','#f1c40f','#00c27a'];
-    var labels = ['Muito fraca','Fraca','Razoável','Forte'];
-    segs.forEach(function(s,i){ s.style.background = i < score ? colors[score-1] : '#2e3135'; });
-    var st = $('strengthText'); if (st) st.textContent = score ? labels[score-1] : 'Não definida';
+    var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#00c27a'];
+    var labels = ['Muito fraca', 'Fraca', 'Razoável', 'Forte'];
+    document.querySelectorAll('.strength-segment').forEach(function (s, i) {
+      s.style.background = i < score ? colors[score - 1] : 'rgba(255,255,255,.09)';
+    });
+    var st = $('strengthText');
+    if (st) st.textContent = score > 0 ? labels[score - 1] : 'Não definida';
   }
 
+  /* ── Conferir se as senhas coincidem ── */
   function checkMatch() {
-    var p2El = $('p2'), mm = $('matchMessage'), pEl = $('p');
+    var pEl  = $('p');
+    var p2El = $('p2');
+    var mm   = $('matchMessage');
     if (!p2El || !mm) return;
     if (!p2El.value) { mm.textContent = ''; mm.style.color = ''; return; }
-    var ok = pEl && pEl.value === p2El.value;
+    var ok = pEl && (pEl.value === p2El.value);
     mm.textContent = ok ? '✓ Senhas coincidem' : '✗ As senhas não coincidem';
     mm.style.color = ok ? '#00c27a' : '#e74c3c';
   }
 
-  var pElG = $('p');
-  if (pElG) pElG.addEventListener('input', function(){ checkStrength(pElG.value); checkMatch(); });
-  var p2ElG = $('p2');
-  if (p2ElG) p2ElG.addEventListener('input', checkMatch);
-
-  /* Toggle mostrar/ocultar senha */
-  function bindToggles() {
-    document.querySelectorAll('.toggle-password').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        var targetId = btn.getAttribute('data-target');
-        var target = document.getElementById(targetId);
-        if (!target) return;
-        var show = target.type === 'password';
-        target.type = show ? 'text' : 'password';
-        var icon = btn.querySelector('i');
-        if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-        target.focus();
-      });
+  /* ── Listeners dos campos de senha ── */
+  var passEl  = $('p');
+  var pass2El = $('p2');
+  if (passEl) {
+    passEl.addEventListener('input', function () {
+      checkStrength(passEl.value);
+      checkMatch();
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindToggles);
-  } else {
-    bindToggles();
+  if (pass2El) {
+    pass2El.addEventListener('input', checkMatch);
   }
 
-  /* Submit */
+  /* ── Submit ── */
   var form = $('f');
-  if (form) form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    hideErr();
-    var name  = ($('u') || {value:''}).value.trim();
-    var email = ($('m') || {value:''}).value.trim();
-    var pass  = ($('p') || {value:''}).value;
-    var pass2 = ($('p2')|| {value:''}).value;
-    var remember = $('rm') ? $('rm').checked : true;
+  if (form) {
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      hideErr();
 
-    if (!name)  return showErr('Informe um nome de usuário.');
-    if (!email) return showErr('Informe um e-mail válido.');
-    if (!pass)  return showErr('Informe uma senha.');
-    if (pass.length < 6) return showErr('A senha precisa ter pelo menos 6 caracteres.');
-    if (pass !== pass2) return showErr('As senhas não coincidem.');
+      var name     = ($('u')  || { value: '' }).value.trim();
+      var email    = ($('m')  || { value: '' }).value.trim();
+      var pass     = ($('p')  || { value: '' }).value;
+      var pass2    = ($('p2') || { value: '' }).value;
+      var remember = $('rm') ? $('rm').checked : true;
 
-    var btn = $('registerButton'), txt = $('buttonText');
-    if (btn) { btn.disabled = true; btn.classList.add('loading'); }
-    if (txt) txt.textContent = 'Criando conta…';
+      if (!name)             return showErr('Informe um nome de usuário.');
+      if (!email)            return showErr('Informe um e-mail válido.');
+      if (!pass)             return showErr('Informe uma senha.');
+      if (pass.length < 6)   return showErr('A senha precisa ter pelo menos 6 caracteres.');
+      if (pass !== pass2)    return showErr('As senhas não coincidem.');
 
-    try {
-      await Auth.init();
-      var err = await Auth.register(name, email, pass, remember);
-      if (err) {
-        showErr(err);
+      var btn = $('registerButton');
+      var txt = $('buttonText');
+      if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+      if (txt) txt.textContent = 'Criando conta…';
+
+      try {
+        await Auth.init();
+        var err = await Auth.register(name, email, pass, remember);
+        if (err) {
+          showErr(err);
+          if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+          if (txt) txt.textContent = 'Criar minha conta';
+        } else {
+          if (txt) txt.textContent = 'Conta criada! Entrando…';
+          try { await Auth.deviceCheck(); } catch (_) {}
+          location.replace('index.html');
+        }
+      } catch (ex) {
+        showErr('Erro inesperado. Tente novamente.');
         if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
         if (txt) txt.textContent = 'Criar minha conta';
-      } else {
-        if (txt) txt.textContent = 'Conta criada! Entrando…';
-        try { await Auth.deviceCheck(); } catch(_) {}
-        location.replace('index.html');
       }
-    } catch(ex) {
-      showErr('Erro inesperado. Tente novamente.');
-      if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
-      if (txt) txt.textContent = 'Criar minha conta';
-    }
-  });
-})();
+    });
+  }
+
+}); /* fim DOMContentLoaded */
 </script>
 </body>
 </html>
