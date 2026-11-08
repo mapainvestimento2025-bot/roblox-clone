@@ -1315,16 +1315,27 @@
   if (p2ElG) p2ElG.addEventListener('input', checkMatch);
 
   /* Toggle mostrar/ocultar senha */
-  document.querySelectorAll('.toggle-password').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = document.getElementById(btn.dataset.target);
-      if (!target) return;
-      var show = target.type === 'password';
-      target.type = show ? 'text' : 'password';
-      btn.querySelector('i').className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  function bindToggles() {
+    document.querySelectorAll('.toggle-password').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var targetId = btn.getAttribute('data-target');
+        var target = document.getElementById(targetId);
+        if (!target) return;
+        var show = target.type === 'password';
+        target.type = show ? 'text' : 'password';
+        var icon = btn.querySelector('i');
+        if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+        btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+        target.focus();
+      });
     });
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindToggles);
+  } else {
+    bindToggles();
+  }
 
   /* Submit */
   var form = $('f');
