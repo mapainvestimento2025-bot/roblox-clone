@@ -362,6 +362,11 @@
       background: transparent;
       color: #8290a4;
       cursor: pointer;
+      z-index: 5;
+      pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     .toggle-password:hover {
@@ -1035,33 +1040,64 @@
   </script>
 <script>
 (function () {
-  var yrEl = document.getElementById('currentYear');
+  function $(id) { return document.getElementById(id); }
+
+  var yrEl = $('currentYear');
   if (yrEl) yrEl.textContent = new Date().getFullYear();
 
-  /* Redireciona se já estiver logado (verificação com servidor também) */
-  Auth.init().then(function() {
-    if (Auth.current()) {
-      var dest = new URLSearchParams(location.search).get('next') || 'index.html';
-      location.replace(dest);
+  /*
+   * Olho da senha: registrado primeiro e por delegação.
+   * Assim, continua funcionando mesmo se auth.js falhar ou carregar depois.
+   */
+  document.addEventListener('click', function (event) {
+    var btn = event.target.closest('.toggle-password');
+    if (!btn) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    var targetId = btn.getAttribute('data-target') || 'p';
+    var target = $(targetId);
+    if (!target) return;
+
+    var show = target.type === 'password';
+    target.type = show ? 'text' : 'password';
+
+    var icon = btn.querySelector('i');
+    if (icon) {
+      icon.className = show
+        ? 'fa-regular fa-eye-slash'
+        : 'fa-regular fa-eye';
     }
-  });
 
-  function $(id) { return document.getElementById(id); }
-  function showErr(msg) { $('errorText').textContent = msg; $('err').classList.add('show'); }
-  function hideErr() { $('err').classList.remove('show'); }
+    btn.setAttribute('aria-label', show ? 'Ocultar senha' : 'Mostrar senha');
+    btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+    target.focus();
+  }, true);
 
-  /* Toggle mostrar/ocultar senha */
-  document.querySelectorAll('.toggle-password').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var target = document.getElementById(btn.dataset.target || 'p');
-      if (!target) return;
-      var show = target.type === 'password';
-      target.type = show ? 'text' : 'password';
-      var icon = btn.querySelector('i');
-      if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+  function showErr(msg) {
+    var errorText = $('errorText');
+    var errorBox = $('err');
+    if (errorText) errorText.textContent = msg;
+    if (errorBox) errorBox.classList.add('show');
+  }
+
+  function hideErr() {
+    var errorBox = $('err');
+    if (errorBox) errorBox.classList.remove('show');
+  }
+
+  /* Redireciona se já estiver logado (sem impedir o olho caso auth.js falhe) */
+  if (window.Auth && typeof window.Auth.init === 'function') {
+    Promise.resolve(window.Auth.init()).then(function () {
+      if (window.Auth && typeof window.Auth.current === 'function' && window.Auth.current()) {
+        var dest = new URLSearchParams(location.search).get('next') || 'index.html';
+        location.replace(dest);
+      }
+    }).catch(function (error) {
+      console.warn('Não foi possível verificar a sessão:', error);
     });
-  });
+  }
 
   /* Submit */
   var form = $('f');
@@ -1080,6 +1116,9 @@
     if (txt) txt.textContent = 'Entrando…';
 
     try {
+      if (!window.Auth || typeof window.Auth.init !== 'function' || typeof window.Auth.login !== 'function') {
+        throw new Error('O arquivo auth.js não foi carregado corretamente.');
+      }
       await Auth.init();
       var err = await Auth.login(name, pass, remember);
       if (err) {
@@ -1093,7 +1132,7 @@
         location.replace(redirect);
       }
     } catch(ex) {
-      showErr('Erro inesperado. Tente novamente.');
+      showErr(ex && ex.message ? ex.message : 'Erro inesperado. Tente novamente.');
       if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
       if (txt) txt.textContent = 'Entrar na minha conta';
     }
