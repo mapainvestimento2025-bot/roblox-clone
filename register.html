@@ -1262,140 +1262,225 @@
     }
   </script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  'use strict';
 
-  /* ── Utilitários ── */
-  function $(id) { return document.getElementById(id); }
-  function showErr(msg) {
-    var el = $('errorText'); if (el) el.textContent = msg;
-    var box = $('err'); if (box) box.classList.add('show');
-  }
-  function hideErr() {
-    var box = $('err'); if (box) box.classList.remove('show');
-  }
+  function iniciarCadastro() {
+    function $(id) { return document.getElementById(id); }
 
-  /* ── Ano no footer ── */
-  var yrEl = $('currentYear');
-  if (yrEl) yrEl.textContent = new Date().getFullYear();
-
-  /* ── Redireciona se já estiver logado ── */
-  Auth.init().then(function () {
-    if (Auth.current()) {
-      var dest = new URLSearchParams(location.search).get('next') || 'index.html';
-      location.replace(dest);
+    function showErr(msg) {
+      var el = $('errorText');
+      var box = $('err');
+      if (el) el.textContent = msg;
+      if (box) box.classList.add('show');
     }
-  });
 
-  /* ── Olho: mostrar / ocultar senha ── */
-  document.querySelectorAll('.toggle-password').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      var id  = btn.getAttribute('data-target');
-      var inp = document.getElementById(id);
-      if (!inp) return;
-      var show = (inp.type === 'password');
-      inp.type  = show ? 'text' : 'password';
-      var icon  = btn.querySelector('i');
-      if (icon) icon.className = show ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
-      btn.setAttribute('aria-pressed', String(show));
-    });
-  });
+    function hideErr() {
+      var box = $('err');
+      if (box) box.classList.remove('show');
+    }
 
-  /* ── Força da senha ── */
-  function checkStrength(val) {
-    var rules = [
-      { id: 'ruleLength',  ok: val.length >= 8 },
-      { id: 'ruleUpper',   ok: /[A-Z]/.test(val) },
-      { id: 'ruleNumber',  ok: /[0-9]/.test(val) },
-      { id: 'ruleSpecial', ok: /[^A-Za-z0-9]/.test(val) }
-    ];
-    var score = rules.filter(function (r) { return r.ok; }).length;
-    rules.forEach(function (r) {
-      var el = $(r.id); if (!el) return;
-      var ic = el.querySelector('i');
-      if (ic) ic.className = r.ok ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
-      el.style.color = r.ok ? '#00c27a' : '';
-    });
-    var colors = ['#e74c3c', '#e67e22', '#f1c40f', '#00c27a'];
-    var labels = ['Muito fraca', 'Fraca', 'Razoável', 'Forte'];
-    document.querySelectorAll('.strength-segment').forEach(function (s, i) {
-      s.style.background = i < score ? colors[score - 1] : 'rgba(255,255,255,.09)';
-    });
-    var st = $('strengthText');
-    if (st) st.textContent = score > 0 ? labels[score - 1] : 'Não definida';
-  }
+    var year = $('currentYear');
+    if (year) year.textContent = new Date().getFullYear();
 
-  /* ── Conferir se as senhas coincidem ── */
-  function checkMatch() {
-    var pEl  = $('p');
-    var p2El = $('p2');
-    var mm   = $('matchMessage');
-    if (!p2El || !mm) return;
-    if (!p2El.value) { mm.textContent = ''; mm.style.color = ''; return; }
-    var ok = pEl && (pEl.value === p2El.value);
-    mm.textContent = ok ? '✓ Senhas coincidem' : '✗ As senhas não coincidem';
-    mm.style.color = ok ? '#00c27a' : '#e74c3c';
-  }
+    var passEl = $('p');
+    var pass2El = $('p2');
 
-  /* ── Listeners dos campos de senha ── */
-  var passEl  = $('p');
-  var pass2El = $('p2');
-  if (passEl) {
-    passEl.addEventListener('input', function () {
-      checkStrength(passEl.value);
-      checkMatch();
-    });
-  }
-  if (pass2El) {
-    pass2El.addEventListener('input', checkMatch);
-  }
+    /* OLHO: alterna a visibilidade sem depender do Auth.js. */
+    document.querySelectorAll('.toggle-password').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
+        event.preventDefault();
+        var input = $(btn.getAttribute('data-target'));
+        if (!input) return;
 
-  /* ── Submit ── */
-  var form = $('f');
-  if (form) {
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      hideErr();
+        var mostrar = input.type === 'password';
+        input.type = mostrar ? 'text' : 'password';
 
-      var name     = ($('u')  || { value: '' }).value.trim();
-      var email    = ($('m')  || { value: '' }).value.trim();
-      var pass     = ($('p')  || { value: '' }).value;
-      var pass2    = ($('p2') || { value: '' }).value;
-      var remember = $('rm') ? $('rm').checked : true;
-
-      if (!name)             return showErr('Informe um nome de usuário.');
-      if (!email)            return showErr('Informe um e-mail válido.');
-      if (!pass)             return showErr('Informe uma senha.');
-      if (pass.length < 6)   return showErr('A senha precisa ter pelo menos 6 caracteres.');
-      if (pass !== pass2)    return showErr('As senhas não coincidem.');
-
-      var btn = $('registerButton');
-      var txt = $('buttonText');
-      if (btn) { btn.disabled = true; btn.classList.add('loading'); }
-      if (txt) txt.textContent = 'Criando conta…';
-
-      try {
-        await Auth.init();
-        var err = await Auth.register(name, email, pass, remember);
-        if (err) {
-          showErr(err);
-          if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
-          if (txt) txt.textContent = 'Criar minha conta';
-        } else {
-          if (txt) txt.textContent = 'Conta criada! Entrando…';
-          try { await Auth.deviceCheck(); } catch (_) {}
-          location.replace('index.html');
+        var icon = btn.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-eye', !mostrar);
+          icon.classList.toggle('fa-eye-slash', mostrar);
         }
-      } catch (ex) {
-        showErr('Erro inesperado. Tente novamente.');
-        if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
-        if (txt) txt.textContent = 'Criar minha conta';
-      }
+        btn.setAttribute('aria-label', mostrar ? 'Ocultar senha' : 'Mostrar senha');
+        btn.setAttribute('aria-pressed', mostrar ? 'true' : 'false');
+        input.focus();
+      });
     });
+
+    /* AVALIAÇÃO DA SENHA: atualiza os quatro requisitos em tempo real. */
+    function checkStrength(value) {
+      value = String(value || '');
+      var rules = [
+        { id: 'ruleLength', ok: value.length >= 8 },
+        { id: 'ruleUpper', ok: /[A-ZÀ-Ý]/.test(value) },
+        { id: 'ruleNumber', ok: /[0-9]/.test(value) },
+        { id: 'ruleSpecial', ok: /[^A-Za-zÀ-ÿ0-9\s]/.test(value) }
+      ];
+
+      var score = rules.filter(function (rule) { return rule.ok; }).length;
+      rules.forEach(function (rule) {
+        var element = $(rule.id);
+        if (!element) return;
+        var icon = element.querySelector('i');
+        element.classList.toggle('met', rule.ok);
+        if (icon) icon.className = rule.ok
+          ? 'fa-solid fa-circle-check'
+          : 'fa-regular fa-circle';
+      });
+
+      var colors = ['#ff647c', '#ff9f43', '#f1c40f', '#42d69b'];
+      var labels = ['Muito fraca', 'Fraca', 'Razoável', 'Forte'];
+      document.querySelectorAll('.strength-segment').forEach(function (segment, index) {
+        segment.classList.remove('active', 'weak', 'medium', 'strong');
+        if (index < score) {
+          segment.classList.add('active');
+          segment.style.background = colors[score - 1];
+        } else {
+          segment.style.background = 'rgba(255,255,255,.09)';
+        }
+      });
+
+      var strengthText = $('strengthText');
+      if (strengthText) {
+        strengthText.textContent = value.length === 0 ? 'Não definida' : labels[score === 0 ? 0 : score - 1];
+      }
+      return rules.every(function (rule) { return rule.ok; });
+    }
+
+    /* CONFIRMAÇÃO: compara novamente sempre que qualquer senha mudar. */
+    function checkMatch() {
+      var message = $('matchMessage');
+      if (!message || !pass2El) return false;
+
+      if (!pass2El.value) {
+        message.textContent = '';
+        message.className = 'match-message';
+        pass2El.classList.remove('valid', 'invalid');
+        return false;
+      }
+
+      var matched = !!passEl && passEl.value === pass2El.value;
+      message.textContent = matched ? '✓ Senhas coincidem' : '✗ As senhas não coincidem';
+      message.className = 'match-message show ' + (matched ? 'good' : 'bad');
+      pass2El.classList.toggle('valid', matched);
+      pass2El.classList.toggle('invalid', !matched);
+      return matched;
+    }
+
+    if (passEl) {
+      passEl.addEventListener('input', function () {
+        checkStrength(passEl.value);
+        checkMatch();
+        hideErr();
+      });
+      /* Também calcula se o navegador preencher a senha automaticamente. */
+      checkStrength(passEl.value);
+    }
+
+    if (pass2El) {
+      pass2El.addEventListener('input', function () {
+        checkMatch();
+        hideErr();
+      });
+    }
+
+    /* SUBMISSÃO: valida exatamente os requisitos exibidos na tela. */
+    var form = $('f');
+    if (form) {
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        hideErr();
+
+        var name = ($('u') || {}).value || '';
+        var email = ($('m') || {}).value || '';
+        var password = passEl ? passEl.value : '';
+        var confirmation = pass2El ? pass2El.value : '';
+        var remember = $('rm') ? $('rm').checked : true;
+
+        name = name.trim();
+        email = email.trim();
+
+        if (!name) return showErr('Informe um nome de usuário.');
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          return showErr('Informe um endereço de e-mail válido.');
+        }
+        if (!password) return showErr('Informe uma senha.');
+
+        var allRulesMet = checkStrength(password);
+        if (!allRulesMet) {
+          return showErr('A senha deve cumprir os quatro requisitos: 8 caracteres, letra maiúscula, número e símbolo especial.');
+        }
+        if (!confirmation) return showErr('Confirme sua senha.');
+        if (password !== confirmation) {
+          checkMatch();
+          return showErr('As senhas não coincidem.');
+        }
+
+        var button = $('registerButton');
+        var buttonText = $('buttonText');
+        if (button) {
+          button.disabled = true;
+          button.classList.add('loading');
+        }
+        if (buttonText) buttonText.textContent = 'Criando conta…';
+
+        try {
+          /* A inicialização do Auth acontece somente depois dos controles da tela. */
+          if (!window.Auth || typeof window.Auth.init !== 'function' || typeof window.Auth.register !== 'function') {
+            throw new Error('O arquivo auth.js não foi carregado corretamente.');
+          }
+
+          await window.Auth.init();
+          var error = await window.Auth.register(name, email, password, remember);
+          if (error) {
+            showErr(error);
+            if (button) {
+              button.disabled = false;
+              button.classList.remove('loading');
+            }
+            if (buttonText) buttonText.textContent = 'Criar minha conta';
+            return;
+          }
+
+          if (buttonText) buttonText.textContent = 'Conta criada! Entrando…';
+          try {
+            if (typeof window.Auth.deviceCheck === 'function') await window.Auth.deviceCheck();
+          } catch (deviceError) {
+            /* A criação da conta não deve ser anulada por falha opcional do dispositivo. */
+          }
+          window.location.replace('index.html');
+        } catch (error) {
+          showErr(error && error.message && error.message.indexOf('auth.js') !== -1
+            ? error.message
+            : 'Erro inesperado ao criar a conta. Verifique o auth.js e tente novamente.');
+          if (button) {
+            button.disabled = false;
+            button.classList.remove('loading');
+          }
+          if (buttonText) buttonText.textContent = 'Criar minha conta';
+        }
+      });
+    }
+
+    /* Redirecionamento de usuário já autenticado sem bloquear os eventos da página. */
+    if (window.Auth && typeof window.Auth.init === 'function') {
+      window.Auth.init().then(function () {
+        if (typeof window.Auth.current === 'function' && window.Auth.current()) {
+          var destination = new URLSearchParams(window.location.search).get('next') || 'index.html';
+          window.location.replace(destination);
+        }
+      }).catch(function (error) {
+        console.error('Falha ao inicializar autenticação:', error);
+      });
+    }
   }
 
-}); /* fim DOMContentLoaded */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciarCadastro, { once: true });
+  } else {
+    iniciarCadastro();
+  }
+})();
 </script>
 </body>
 </html>
