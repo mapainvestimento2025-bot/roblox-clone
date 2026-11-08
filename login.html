@@ -1009,7 +1009,646 @@
     </nav>
   </footer>
 
-  <script src="auth.js?v=5"></script>
+  <!-- auth.js embutido inline para funcionar sem servidor -->
+  <script>
+/* auth.js - contas, amigos e mapas.
+   Sem servidor: tudo fica no navegador (localStorage).
+   Com `node server.js`: tudo é guardado no servidor (data.json) e compartilhado entre navegadores/PCs. */
+
+/* SHA-256 em JS puro (usado quando crypto.subtle não existe, ex.: http://IP-da-rede) -> mesmo resultado em qualquer lugar */
+function sha256hex(str) {
+  const b = new TextEncoder().encode(str), l = b.length, pad = new Uint8Array(((l + 9 + 63) >> 6) << 6);
+  pad.set(b); pad[l] = 128; const dv0 = new DataView(pad.buffer); dv0.setUint32(pad.length - 4, (l * 8) >>> 0); dv0.setUint32(pad.length - 8, Math.floor(l * 8 / 2 ** 32));
+  const K = [], H = []; let n = 2, c = 0;
+  while (c < 64) { let p = true; for (let i = 2; i * i <= n; i++) if (n % i === 0) { p = false; break; } if (p) { if (c < 8) H[c] = ((Math.sqrt(n) % 1) * 2 ** 32) | 0; K[c] = ((Math.cbrt(n) % 1) * 2 ** 32) | 0; c++; } n++; }
+  const w = new Int32Array(64), rr = (x, s) => (x >>> s) | (x << (32 - s));
+  for (let o = 0; o < pad.length; o += 64) {
+    const dv = new DataView(pad.buffer, o, 64); for (let i = 0; i < 16; i++) w[i] = dv.getInt32(i * 4);
+    for (let i = 16; i < 64; i++) { const a = w[i - 15], d = w[i - 2]; w[i] = (w[i - 16] + (rr(a, 7) ^ rr(a, 18) ^ (a >>> 3)) + w[i - 7] + (rr(d, 17) ^ rr(d, 19) ^ (d >>> 10))) | 0; }
+    let [a, b2, c2, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) { const t1 = (h + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0, t2 = ((rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & b2) ^ (a & c2) ^ (b2 & c2))) | 0; h = g; g = f; f = e; e = (d + t1) | 0; d = c2; c2 = b2; b2 = a; a = (t1 + t2) | 0; }
+    [a, b2, c2, d, e, f, g, h].forEach((v, i) => H[i] = (H[i] + v) | 0);
+  }
+  return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
+}
+
+// Converte /api/rota ou /api/rota?param=val para /api/api.php?action=rota&param=val
+function apiUrl(path) {
+  const sep = path.indexOf('?');
+  const route = sep >= 0 ? path.slice(5, sep) : path.slice(5); // remove '/api/'
+  const query = sep >= 0 ? '&' + path.slice(sep + 1) : '';
+  return '/api/api.php?action=' + route + query;
+}
+
+const Auth = {
+  users() { try { return JSON.parse(localStorage.getItem('robloxUsers')) || {}; } catch (e) { return {}; } },
+  save(u) { localStorage.setItem('robloxUsers', JSON.stringify(u)); },
+  async hash(p) {
+    try {
+      const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('rbx:' + p));
+      return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+    } catch (e) { return sha256hex('rbx:' + p); }
+  },
+  /* Sessão POR ABA (sessionStorage): cada aba pode ter uma conta diferente.
+     "Manter conectado" guarda uma cópia no localStorage só para reabrir o site depois. */
+  tabKey() { const k = sessionStorage.getItem('robloxSession'); return k && this.users()[k] ? k : null; },
+  tabUser() { const k = this.tabKey(); return k ? this.users()[k].name : null; },
+  remembered() { const k = localStorage.getItem('robloxSession'), u = this.users()[k]; return u ? u.name : null; },
+  current() {
+    let k = this.tabKey();
+    if (!k) { const r = localStorage.getItem('robloxSession'); if (r && this.users()[r]) { sessionStorage.setItem('robloxSession', r); k = r; } }
+    return k ? this.users()[k].name : null;
+  },
+  setSession(key, remember) { sessionStorage.setItem('robloxSession', key); if (remember !== false) localStorage.setItem('robloxSession', key); },
+  require() { const n = this.current(); if (!n) { location.href = 'login.html'; throw new Error('login necessário'); } return n; },
+  async register(name, email, pass, remember) {
+    name = name.trim(); const key = name.toLowerCase(), users = this.users();
+    if (!/^[A-Za-z0-9_]{3,20}$/.test(name)) return 'Usuário: 3 a 20 letras, números ou _ (sem espaços).';
+    if (!/^\S+@\S+\.\S+$/.test(email)) return 'Digite um e-mail válido.';
+    if (pass.length < 6) return 'A senha precisa ter pelo menos 6 caracteres.';
+    await this.init();
+    if (this.server) {
+      const h = await this.hash(pass);
+      const d = await this.device(), j = await this.post('/api/register', { name, email, hash: h, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info });
+      if (j.err) return j.err;
+      /* guarda o hash no cache local para garantir login mesmo sem servidor */
+      const ux = this.users(); if (ux[key]) { ux[key].hash = h; this.save(ux); }
+      this.setSession(key, remember); return null;
+    }
+    if (users[key]) return 'Esse nome de usuário já está em uso.';
+    if (Object.values(users).some(u => u.email === email.toLowerCase())) return 'Esse e-mail já está cadastrado.';
+    users[key] = { name, email: email.toLowerCase(), hash: await this.hash(pass), created: Date.now() };
+    /* marca este usuário como pendente de upload para o servidor */
+    if (!this._pendingImport) this._pendingImport = {};
+    delete this._pendingImport[key];   // força importLocal() a enviá-lo quando servidor ligar
+    this._init = null;                 // força init() a rodar de novo para tentar subir para o servidor
+    this.save(users); this.setSession(key, remember); return null;
+  },
+  async login(name, pass, remember) {
+    const key = name.trim().toLowerCase(); await this.init();
+    const h = await this.hash(pass);
+    if (this.server) {
+      const d = await this.device(), j = await this.post('/api/login', { name, hash: h, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info });
+      if (!j.err) {
+        /* login no servidor ok: guarda hash local para funcionar offline depois */
+        const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
+        this.setSession(key, remember); return null;
+      }
+      /* servidor rejeitou — tenta autenticação local como fallback
+         (cobre o caso de conta criada localmente antes do servidor subir) */
+      const uLocal = this.users()[key];
+      if (uLocal && uLocal.hash && uLocal.hash === h) {
+        /* conta existe localmente com senha correta: sobe para o servidor agora */
+        const d2 = await this.device();
+        await this.post('/api/register', { name: uLocal.name, email: uLocal.email || '', hash: h, hw: d2.hw, dv: d2.dv, mobile: d2.mobile, info: d2.info });
+        const users = this.users(); if (users[key]) { users[key].hash = h; this.save(users); }
+        this.setSession(key, remember); return null;
+      }
+      return j.err;
+    }
+    const u = this.users()[key];
+    if (!u) return 'Conta não encontrada neste dispositivo. Inicie o servidor (node server.js) para recuperar sua conta.';
+    if (u.hash !== h) return 'Usuário ou senha incorretos.';
+    this.setSession(key, remember); return null;
+  },
+  /* ---- identificação do dispositivo (HWID — nível hardware/mobile) ----
+     PC:     WebGL GPU, Canvas pixel hash, AudioContext, fontes, CPU/RAM/tela
+     Mobile: todos os acima + modelo do aparelho (userAgent), resolução física (identifica
+             modelo exato do celular), sensores, toque, "Android ID" equivalente derivado do
+             fingerprint de hardware + MAC address via WebRTC (quando disponível)
+     hw  = impressão digital do hardware — estável, difícil de mudar
+     dv  = UUID persistente em 7 camadas — sobrevive a reinstalação do app/browser/limpeza
+     Ban bate se hw OU dv bater; criar nova conta no mesmo aparelho também é bloqueado. */
+  device() {
+    return this._dev || (this._dev = (async () => {
+      const sha = async s => { try { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].map(x => x.toString(16).padStart(2, '0')).join(''); } catch (e) { return sha256hex(s); } };
+
+      /* ── 1. WebGL GPU: vendor + renderer + parâmetros (identifica chip gráfico do celular) ─── */
+      let gl = '';
+      try {
+        const c = document.createElement('canvas'), g = c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl');
+        if (g) {
+          const x = g.getExtension('WEBGL_debug_renderer_info');
+          /* No celular retorna coisas como "Qualcomm||Adreno (TM) 740" ou "Apple||Apple M2" */
+          gl = x ? (g.getParameter(x.UNMASKED_VENDOR_WEBGL) + '||' + g.getParameter(x.UNMASKED_RENDERER_WEBGL))
+                 : (g.getParameter(g.VENDOR) + '||' + g.getParameter(g.RENDERER));
+          gl += '||' + [g.getParameter(g.MAX_TEXTURE_SIZE), g.getParameter(g.MAX_COMBINED_TEXTURE_IMAGE_UNITS),
+                        g.getParameter(g.MAX_VERTEX_ATTRIBS), g.getParameter(g.MAX_RENDERBUFFER_SIZE)].join(',');
+          /* extensões suportadas — variam por GPU/driver — muito estável */
+          try { const ext = g.getSupportedExtensions(); if (ext) gl += '||' + ext.slice().sort().join(','); } catch(_) {}
+        }
+      } catch (e) {}
+
+      /* ── 2. Canvas 2D: pixel hash — muda por GPU, driver e renderizador de fonte ─────────── */
+      let cv = '';
+      try {
+        const c = document.createElement('canvas'); c.width = 300; c.height = 70;
+        const x = c.getContext('2d');
+        const g = x.createLinearGradient(0, 0, 300, 0); g.addColorStop(0, '#f60'); g.addColorStop(0.5, '#0f0'); g.addColorStop(1, '#069');
+        x.fillStyle = g; x.fillRect(0, 0, 300, 70);
+        x.shadowBlur = 6; x.shadowColor = '#333';
+        x.font = 'bold 20px Arial, Helvetica, sans-serif'; x.fillStyle = 'rgba(10,200,100,0.88)';
+        x.fillText('RbxClone🎮fingerprint©', 5, 26);
+        x.font = 'italic 14px Georgia, serif'; x.fillStyle = 'rgba(255,255,255,0.9)';
+        x.fillText('HWID·Mobile·Ban·2026', 5, 50);
+        /* arc + bezier — comportamento varia por motor de renderização */
+        x.beginPath(); x.arc(270, 35, 22, 0, Math.PI * 2); x.strokeStyle = 'rgba(255,80,80,0.7)'; x.lineWidth = 3; x.stroke();
+        cv = c.toDataURL('image/png');
+      } catch (e) {}
+
+      /* ── 3. AudioContext: soma de amostras — varia por chip de áudio / driver ──────────── */
+      let au = '';
+      try {
+        const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, 44100, 44100);
+        const osc = ctx.createOscillator(); osc.type = 'triangle'; osc.frequency.value = 10000;
+        const comp = ctx.createDynamicsCompressor();
+        [['threshold', -50],['knee', 40],['ratio', 12],['attack', 0],['release', 0.25]].forEach(([p,v]) => { try { comp[p].value = v; } catch(_){} });
+        osc.connect(comp); comp.connect(ctx.destination); osc.start(0);
+        const buf = await ctx.startRendering(), data = buf.getChannelData(0); let sum = 0;
+        for (let i = 4500; i < 5000; i++) sum += Math.abs(data[i]);
+        au = sum.toFixed(10);
+      } catch (e) {}
+
+      /* ── 4. Fontes instaladas via Canvas (no mobile muda entre Android/iOS/MIUI/etc.) ───── */
+      let fontSig = '';
+      try {
+        const probe = document.createElement('canvas'); probe.width = 500; probe.height = 100;
+        const px = probe.getContext('2d'); const T = 'mmwwlliiBBII1234!@#$';
+        const FONTS = ['Arial','Times New Roman','Courier New','Georgia','Verdana','Tahoma','Trebuchet MS','Impact',
+                       'Palatino','Garamond','Comic Sans MS','Calibri','Segoe UI','Consolas','Lucida Console',
+                       /* fonts comuns no Android/iOS: */
+                       'Roboto','Noto Sans','San Francisco','SF Pro','Helvetica Neue','PingFang SC','Hiragino Sans'];
+        px.font = '72px monospace'; const bw = px.measureText(T).width;
+        fontSig = FONTS.map(f => { px.font = '72px "' + f + '", monospace'; return px.measureText(T).width !== bw ? '1' : '0'; }).join('');
+      } catch (e) {}
+
+      /* ── 5. MAC address via WebRTC (candidatos ICE — disponível em Android Chrome/Firefox) ─ */
+      /* Navegadores modernos mascaram o MAC, mas o IP local + tempo de resposta ainda varia */
+      let rtcSig = '';
+      try {
+        await new Promise(res => {
+          const pc = new RTCPeerConnection({ iceServers: [] });
+          pc.createDataChannel('');
+          pc.createOffer().then(o => pc.setLocalDescription(o));
+          const timer = setTimeout(() => { try { pc.close(); } catch(_){} res(); }, 600);
+          pc.onicecandidate = e => {
+            if (!e || !e.candidate) return;
+            /* extrai IP local (192.168.x.x / 10.x / fe80::) — estável na mesma rede wi-fi */
+            const m = e.candidate.candidate.match(/(\d{1,3}\.){3}\d{1,3}|[0-9a-f]{1,4}(:[0-9a-f]{0,4}){2,}/gi);
+            if (m) { rtcSig = m.filter(ip => /^(192\.168|10\.|172\.(1[6-9]|2\d|3[01])\.|fe80)/i.test(ip)).join(','); clearTimeout(timer); try { pc.close(); } catch(_){} res(); }
+          };
+        });
+      } catch (e) {}
+
+      /* ── 6. Modelo do aparelho + sinais exclusivos de mobile ─────────────────────────────── */
+      const n = navigator, uaRaw = n.userAgent || '';
+      /* extrai modelo legível do userAgent:
+         Android: "Mozilla/5.0 (Linux; Android 14; SM-G998B Build/...)" → "Samsung SM-G998B (Android 14)"
+         iPhone:  "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 ...)"        → "iPhone (iOS 17.0)"
+         iPad:    "Mozilla/5.0 (iPad; CPU OS 16_0 ...)"                 → "iPad (iPadOS 16.0)"
+         Win PC:  "Mozilla/5.0 (Windows NT 10.0; Win64; x64 ...)"       → "Windows 10 x64"
+         Mac:     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7 ...)" → "Mac OS X 10.15.7"  */
+      let deviceModel = '—';
+      try {
+        const inner = (uaRaw.match(/\(([^)]+)\)/) || ['',''])[1];
+        if (/Android/i.test(uaRaw)) {
+          const ver  = (uaRaw.match(/Android\s*([\d.]+)/i) || ['',''])[1];
+          /* modelo: último token após o último ";" antes de "Build" ou fim */
+          const mdl  = inner.replace(/Build\/[^;)]+/g,'').split(';').map(s=>s.trim()).filter(Boolean).pop() || '';
+          deviceModel = (mdl ? mdl + ' ' : '') + (ver ? '(Android ' + ver + ')' : '');
+        } else if (/iPhone/i.test(uaRaw)) {
+          const ver = (uaRaw.match(/OS\s*([\d_]+)/i) || ['',''])[1].replace(/_/g,'.');
+          deviceModel = 'iPhone' + (ver ? ' (iOS ' + ver + ')' : '');
+        } else if (/iPad/i.test(uaRaw)) {
+          const ver = (uaRaw.match(/OS\s*([\d_]+)/i) || ['',''])[1].replace(/_/g,'.');
+          deviceModel = 'iPad' + (ver ? ' (iPadOS ' + ver + ')' : '');
+        } else if (/Windows/i.test(uaRaw)) {
+          const nt = (uaRaw.match(/Windows NT\s*([\d.]+)/i) || ['',''])[1];
+          const ntMap = {'10.0':'10/11','6.3':'8.1','6.2':'8','6.1':'7','6.0':'Vista'};
+          const arch = /Win64|x64/i.test(uaRaw) ? ' x64' : /WOW64/i.test(uaRaw) ? ' x86_64' : '';
+          deviceModel = 'Windows ' + (ntMap[nt] || nt) + arch;
+        } else if (/Macintosh|Mac OS/i.test(uaRaw)) {
+          const ver = (uaRaw.match(/Mac OS X\s*([\d_.]+)/i) || ['',''])[1].replace(/_/g,'.');
+          deviceModel = 'Mac OS X ' + ver;
+        } else if (/Linux/i.test(uaRaw)) {
+          deviceModel = 'Linux';
+        } else {
+          deviceModel = inner.replace(/Build\/[^;)]+/g,'').split(';').map(s=>s.trim()).filter(Boolean).slice(0,2).join('; ');
+        }
+        deviceModel = deviceModel.trim() || '—';
+      } catch(_) {}
+      /* versão bruta estável para o hash (números de versão de SO removidos, modelo mantido) */
+      const deviceModelStable = deviceModel.replace(/\d+\.\d+(\.\d+)?/g, 'N');
+      /* resolução física real — identifica modelo exato do celular (ex: 1080×2400 = Samsung A54) */
+      const dpr = Math.round((window.devicePixelRatio || 1) * 100);
+      const physW = Math.round(screen.width  * (window.devicePixelRatio || 1));
+      const physH = Math.round(screen.height * (window.devicePixelRatio || 1));
+      const sysInfo = [
+        n.hardwareConcurrency || 0,    // núcleos de CPU (Snapdragon 8 Gen 3 = 8)
+        n.deviceMemory || 0,           // RAM em GB
+        deviceModelStable,             // modelo estável sem versões de SO
+        uaRaw.replace(/[\d.]+/g,'N'),  // userAgent estável
+        n.language || '',
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        screen.width + 'x' + screen.height,
+        physW + 'x' + physH,           // resolução física (identifica modelo do celular)
+        screen.colorDepth || 0,
+        dpr,
+        n.maxTouchPoints || 0,         // 0=mouse/PC, 1=stylus, 5=touch, 10=multitouch
+        n.platform || '',
+        !!(window.DeviceOrientationEvent || window.DeviceMotionEvent) ? '1' : '0', // tem sensores
+        'vibrate' in n ? '1' : '0',    // motor de vibração (só mobile)
+        'share' in n ? '1' : '0',      // Web Share API (só mobile/PWA)
+        typeof window.ontouchstart !== 'undefined' ? '1' : '0',
+        (n.connection && n.connection.effectiveType) || '',  // '4g'|'wifi'|'3g'
+        rtcSig,                        // IP local da rede (estável na mesma rede)
+      ];
+
+      /* hw = "Android ID" equivalente — derivado de hardware+tela+GPU+áudio+fontes */
+      const hw = await sha(JSON.stringify({ gl, cv, au, fontSig, sys: sysInfo }));
+
+      /* ── 7. UUID persistente em 7 camadas ─────────────────────────────────────────────────
+            Cada camada pode falhar independentemente em mobile (iOS Safari modo privado,
+            Android limpeza de dados de app, etc).  Lemos todas em paralelo e usamos a
+            primeira válida.  Ao gravar, persistimos em todas as 7 ao mesmo tempo.
+            Camadas: localStorage · sessionStorage · cookie (10 anos) · IndexedDB ·
+                     Cache Storage (Service Worker cache) · opaque localStorage key ·
+                     "Android ID" derivado do hw (fallback determinístico)              */
+      const IDB_KEY = 'rbxhwid_v3';
+      const idb = (mode, val) => new Promise(res => {
+        try {
+          const r = indexedDB.open('rbxdevice', 3);
+          r.onupgradeneeded = e => { try { if (!e.target.result.objectStoreNames.contains('k')) e.target.result.createObjectStore('k'); } catch(_){} };
+          r.onerror = () => res(null);
+          r.onsuccess = () => { try {
+            const tx = r.result.transaction('k', mode==='set'?'readwrite':'readonly'), st = tx.objectStore('k');
+            if (mode==='set') { st.put(val, IDB_KEY); tx.oncomplete = () => res(val); tx.onerror = () => res(null); }
+            else { const q = st.get(IDB_KEY); q.onsuccess = () => res(q.result||null); q.onerror = () => res(null); }
+          } catch(_){ res(null); } };
+        } catch(e){ res(null); }
+      });
+      const cacheStore = async (mode, val) => {
+        try {
+          if (!('caches' in window)) return null;
+          const c = await caches.open('rbx-device-v2');
+          if (mode==='set') { await c.put('/__rbxhwid', new Response(val, { headers:{'Content-Type':'text/plain'} })); return val; }
+          const r = await c.match('/__rbxhwid'); return r ? (await r.text()).trim() : null;
+        } catch(e){ return null; }
+      };
+      /* lê todas as camadas em paralelo */
+      let ls=null, ss=null; try { ls=localStorage.getItem('rbxDv3'); } catch(e){}
+      try { ss=sessionStorage.getItem('rbxDv3'); } catch(e){}
+      const ckM = document.cookie.match(/(?:^|; )rbxhwid3=([a-f0-9]{32})/);
+      const ck = ckM ? ckM[1] : null;
+      /* chave alternativa — nome diferente para resistir a limpezas seletivas */
+      let ls2=null; try { ls2=localStorage.getItem('_rbx_d'); } catch(e){}
+      const [idbVal, cacheVal] = await Promise.all([idb('get'), cacheStore('get')]);
+      /* "Android ID" derivado: se nada sobrou, o hw é determinístico — usamos os primeiros 32 chars como fallback */
+      const hwFallback = hw.slice(0, 32);
+      let dv = [ls, ss, ck, ls2, idbVal, cacheVal].find(v => v && /^[a-f0-9]{32}$/.test(v));
+      /* se não achou nenhum UUID salvo, verifica se o hw bate com algum ban antes de gerar novo */
+      if (!dv) dv = hwFallback; /* usa hw como dv inicial — garante que o mesmo aparelho sem storage também é identificado */
+      const isNewDv = ![ls, ss, ck, ls2, idbVal, cacheVal].some(v => v && /^[a-f0-9]{32}$/.test(v));
+      if (isNewDv) {
+        /* gera UUID aleatório real apenas se não havia nenhum armazenado */
+        dv = [...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('');
+      }
+      /* persiste nas 7 camadas em paralelo */
+      await Promise.all([
+        (async()=>{ try { localStorage.setItem('rbxDv3', dv); localStorage.setItem('_rbx_d', dv); } catch(e){} })(),
+        (async()=>{ try { sessionStorage.setItem('rbxDv3', dv); } catch(e){} })(),
+        (async()=>{ try { document.cookie='rbxhwid3='+dv+';max-age=315360000;path=/;SameSite=Lax'; } catch(e){} })(),
+        idb('set', dv),
+        cacheStore('set', dv),
+      ]);
+      /* migra chaves legadas */
+      try { ['rbxDv','rbxDv2'].forEach(k => { const v=localStorage.getItem(k); if(v) localStorage.removeItem(k); }); } catch(e){}
+      const mobile = /Android|iPhone|iPad|iPod|Mobile|Tablet|BlackBerry|IEMobile|Opera Mini/i.test(uaRaw)
+                   || (n.maxTouchPoints > 1 && !/Win/i.test(n.platform));
+      /* info legível para o admin ver no painel */
+      const info = {
+        model: deviceModel,                                        // ex: "SM-G998B (Android 14)" ou "Windows 10 x64"
+        ua: uaRaw.slice(0, 200),                                   // userAgent truncado
+        res: physW + 'x' + physH,                                  // resolução física real
+        dpr: (window.devicePixelRatio || 1).toFixed(2),
+        cpu: n.hardwareConcurrency || 0,
+        ram: n.deviceMemory || 0,
+        lang: n.language || '',
+        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        touch: n.maxTouchPoints || 0,
+        platform: n.platform || '',
+        conn: (n.connection && n.connection.effectiveType) || '',
+        gpu: gl.split('||').slice(0,2).join(' / ').slice(0, 80),   // "Qualcomm / Adreno (TM) 740"
+        localIp: rtcSig || '',
+      };
+      /* retorna hw (fingerprint de hardware) E dv (UUID persistente) — o servidor bane qualquer um dos dois */
+      return { hw, dv, mobile, info };
+    })());
+  },
+  profileUrl(name) { const u = this.users()[(name || '').toLowerCase()]; return 'profile.html?u=' + encodeURIComponent(u ? u.name : name) + (u && u.id ? '&id=' + u.id : ''); },
+  badge(name) {
+    const u = this.users()[(name || '').toLowerCase()];
+    if (!u) return '';
+    let badges = '';
+    /* owner: coroa dourada */
+    if (u.owner) badges += '<i class="fa-solid fa-crown owner-badge" title="Owner" style="color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.7);font-size:.85em;margin-left:3px"></i>';
+    /* admin: escudo vermelho (só se não for owner) */
+    else if (u.admin) badges += '<i class="fa-solid fa-shield-halved admin-badge" title="Administrador" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6);font-size:.9em;margin-left:3px"></i>';
+    /* cargo customizado */
+    if (u.role) {
+      const r = this.roles()[u.role];
+      if (r) badges += `<i class="fa-solid fa-${r.icon||'star'}" title="${r.name}" style="color:${r.color||'#888'};font-size:.85em;margin-left:3px"></i>`;
+    }
+    /* verificado */
+    if (u.verified) badges += '<i class="fa-solid fa-circle-check verified-badge" title="Conta verificada" style="color:#3794ff;font-size:.9em;margin-left:3px"></i>';
+    return badges;
+  },
+  isOwner(name) { const u = this.users()[(name || this.current() || '').toLowerCase()]; return !!(u && u.owner); },
+  isAdmin(name) { const u = this.users()[(name || this.current() || '').toLowerCase()]; return !!(u && (u.admin || u.owner)); },
+  getRole(name) { const u = this.users()[(name || '').toLowerCase()]; if (!u || !u.role) return null; return this.roles()[u.role] || null; },
+  /* tela de banido (cobre a página inteira; some sozinha quando o ban acaba) */
+  showBan(b) {
+    if (!b) return; window.__blocked = true;
+    let o = document.getElementById('banOverlay');
+    if (!o) { o = document.createElement('div'); o.id = 'banOverlay'; o.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0b0c0e;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Segoe UI,sans-serif;padding:20px;text-align:center'; document.body.appendChild(o); }
+    const left = b.until ? Math.max(0, b.until - Date.now()) : 0, hh = Math.floor(left / 36e5), mm = Math.floor(left % 36e5 / 6e4);
+    const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    o.innerHTML = '<div style="max-width:460px"><div style="font-size:64px;color:#e74c3c">⛔</div><h1 style="font-size:28px;font-weight:900;margin:10px 0">Você foi banido</h1><p style="color:#c9ccd1;line-height:1.5">' + esc(b.text || '') + '</p>'
+      + (b.until ? '<p style="margin-top:10px;color:#9aa0a6">Tempo restante: <b style="color:#fff">' + (hh >= 24 ? Math.floor(hh / 24) + ' dia(s) ' + hh % 24 + 'h ' : hh + 'h ') + mm + 'min</b></p>' : '')
+      + '<p style="margin-top:18px;font-size:12px;color:#6b7075">Se acha que foi um engano, fale com a administração.</p>'
+      + (Auth.current() ? '<button onclick="Auth.logout()" style="margin-top:20px;background:#2b2e32;border:1px solid #444;color:#fff;border-radius:8px;padding:9px 22px;font-weight:700;cursor:pointer">Sair da conta</button>' : '') + '</div>';
+    if (!this._banT) this._banT = setInterval(() => { this.deviceCheck(true); }, 15000);
+  },
+  async deviceCheck(recheck) {                    // pergunta ao servidor se este aparelho / conta está banido
+    if (!this.server) return; const d = await this.device(), me = this.current();
+    try { const j = await (await fetch(apiUrl('/api/ban/check'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me, hw: d.hw, dv: d.dv }) })).json();
+      if (j.ban) this.showBan(j.ban); else if (recheck && document.getElementById('banOverlay')) location.reload(); } catch (e) {}
+  },
+  logout() { const k = this.tabKey(); sessionStorage.removeItem('robloxSession'); if (localStorage.getItem('robloxSession') === k) localStorage.removeItem('robloxSession'); location.href = 'login.html'; },
+
+  /* ---- servidor (opcional): contas, amigos e mapas compartilhados ---- */
+  server: false, v: 0,
+  init() {
+    return this._init || (this._init = (async () => {
+      try {
+        const r = await fetch(apiUrl('/api/db?v=0'), { cache: 'no-store' });
+        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j.db) { this.server = true; this.apply(j); await this.importLocal(); } }
+      } catch (e) {}
+      return this.server;
+    })());
+  },
+  async sync() { if (!this.server) return false; try { const j = await (await fetch(apiUrl('/api/db?v=' + this.v), { cache: 'no-store' })).json(); if (j.same) return false; this.apply(j); return true; } catch (e) { return false; } },
+  async post(path, body) { try { const j = await (await fetch(apiUrl(path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).json(); if (j.db) this.apply(j); return j; } catch (e) { return { err: 'Sem conexão com o servidor.' }; } },
+  roles() { try { return JSON.parse(localStorage.getItem('robloxRoles')) || {}; } catch(e) { return {}; } },
+  apply(j) {                                         // copia o banco do servidor para o cache local (localStorage)
+    this.v = j.v; const d = j.db, old = this.users(), users = {};
+    this._pendingImport = {};                        // registra quais keys o servidor já tem
+    for (const k in d.users) { users[k] = Object.assign({}, old[k] && old[k].hash ? { hash: old[k].hash, email: old[k].email } : {}, d.users[k]); if (users[k].bio === undefined && old[k] && old[k].bio) users[k].bio = old[k].bio; this._pendingImport[k] = true; }
+    /* ── preserva contas locais que ainda não foram sincronizadas com o servidor ── */
+    for (const k in old) { if (!users[k] && old[k].hash) { users[k] = old[k]; } }
+    /* ── garante que a sessão atual nunca seja perdida ── */
+    const curKey = this.tabKey() || localStorage.getItem('robloxSession');
+    if (curKey && old[curKey] && !users[curKey]) { users[curKey] = old[curKey]; }
+    localStorage.setItem('robloxUsers', JSON.stringify(users)); localStorage.setItem('robloxGames', JSON.stringify(d.games));
+    if (d.roles) localStorage.setItem('robloxRoles', JSON.stringify(d.roles));
+    for (const [pre, tbl] of [['robloxFriends:', d.friends], ['robloxReq:', d.req]]) {
+      for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith(pre) && !(k.slice(pre.length) in tbl)) localStorage.removeItem(k); }
+      for (const n in tbl) localStorage.setItem(pre + n, JSON.stringify(tbl[n]));
+    }
+  },
+  async importLocal() {                              // envia para o servidor os usuários locais que ele ainda não conhece
+    const serverUsers = this._pendingImport || {};   // conjunto de keys que o servidor já tem (preenchido por apply())
+    const local = this.users();
+    const missing = Object.keys(local).filter(k => local[k].hash && !serverUsers[k]);
+    if (!missing.length) return;
+    const toSend = {}; missing.forEach(k => { toSend[k] = local[k]; });
+    const f = {}, q = {};
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('robloxFriends:')) f[k.slice(14)] = this._get(k); if (k.startsWith('robloxReq:')) q[k.slice(10)] = this._get(k); }
+    try { await fetch(apiUrl('/api/import'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ users: toSend, games: this.games(), friends: f, req: q }) }); } catch (e) {}
+  },
+  games() { try { return JSON.parse(localStorage.getItem('robloxGames')) || []; } catch (e) { return []; } },
+  async publishGame(g) {                             // g = {name, creator, blocks, parts, thumb, desc, serverSize, genre, vip}
+    await this.init();
+    const old = this.games().find(x => x.name === g.name && x.creator === g.creator);
+    g.created = old ? (old.created || old.t || Date.now()) : Date.now();  // mantém a data de criação original
+    g.updated = Date.now();                                               // atualizado agora (nesta publicação)
+    g.visits = old ? (old.visits || 0) : 0;                               // mantém o total de visitas
+    const list = this.games().filter(x => !(x.name === g.name && x.creator === g.creator)); list.push(g);
+    try { localStorage.setItem('robloxGames', JSON.stringify(list)); } catch (e) { g.thumb = ''; localStorage.setItem('robloxGames', JSON.stringify(list)); }
+    if (this.server) { const j = await this.post('/api/game', { creator: g.creator, game: g }); return j.err ? j.err : null; } return null;
+  },
+  async deleteGame(name, creator) {
+    await this.init();
+    localStorage.setItem('robloxGames', JSON.stringify(this.games().filter(x => !(x.name === name && x.creator === creator))));
+    if (this.server) await this.post('/api/game/delete', { name, creator });
+  },
+  async registerVisit(name, creator) {               // +1 visita total ao mapa (chamado ao entrar no jogo)
+    await this.init();
+    const list = this.games(), g = list.find(x => x.name === name && x.creator === creator);
+    if (g) { g.visits = (g.visits || 0) + 1; localStorage.setItem('robloxGames', JSON.stringify(list)); }
+    if (this.server) this.post('/api/game/visit', { name, creator });
+  },
+
+  async vote(name, creator, kind) {                   // 'like' | 'dislike' | 'fav' — alterna o voto da conta atual
+    await this.init(); const me = this.current(), list = this.games(), g = list.find(x => x.name === name && x.creator === creator); if (!g || !me) return;
+    const rm = k => (g[k] = (g[k] || []).filter(n => n !== me)), had = k => (g[k] || []).includes(me);
+    if (kind === 'like' || kind === 'dislike') { const was = had(kind + 's'); rm('likes'); rm('dislikes'); if (!was) g[kind + 's'].push(me); }
+    if (kind === 'fav') { const was = had('favs'); rm('favs'); if (!was) g.favs.push(me); }
+    try { localStorage.setItem('robloxGames', JSON.stringify(list)); } catch (e) {}
+    if (this.server) this.post('/api/game/vote', { name, creator, user: me, kind });
+  },
+
+  /* ---- jogadores online por mapa (tempo real entre abas) ---- */
+  presence: {
+    KEY: 'robloxPresence', TTL: 75000, /* abas em segundo plano são desaceleradas pelo navegador */ server: false, cache: {},
+    /* init(): tenta usar o server.js; se não existir, usa o localStorage (só abas do mesmo navegador/endereço) */
+    async init() { try { const r = await fetch(apiUrl('/api/presence'), { cache: 'no-store' }); if (r.ok && (r.headers.get('content-type') || '').includes('json')) { this.cache = await r.json(); this.server = true; } } catch (e) {} return this.server; },
+    async sync() { if (!this.server) return; try { this.cache = await (await fetch(apiUrl('/api/presence'), { cache: 'no-store' })).json(); } catch (e) {} },
+    readLocal() { try { return JSON.parse(localStorage.getItem(this.KEY)) || {}; } catch (e) { return {}; } },
+    clean(p) { const now = Date.now(); for (const m in p) { for (const u in p[m]) if (now - p[m][u] > this.TTL) delete p[m][u]; if (!Object.keys(p[m]).length) delete p[m]; } return p; },
+    post(path, map, user) { const body = JSON.stringify({ map, user }); try { if (path === 'leave' && navigator.sendBeacon) return navigator.sendBeacon(apiUrl('/api/presence/leave'), new Blob([body], { type: 'application/json' })); } catch (e) {} return fetch(apiUrl('/api/presence/' + path), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {}); },
+    beat(map, user) {
+      if (this.server) { const l = this.cache[map] = this.cache[map] || []; if (!l.includes(user)) l.push(user); this.post('beat', map, user); return; }
+      const p = this.clean(this.readLocal()); (p[map] = p[map] || {})[user] = Date.now(); localStorage.setItem(this.KEY, JSON.stringify(p));
+    },
+    leave(map, user) {
+      if (this.server) { this.post('leave', map, user); return; }
+      const p = this.clean(this.readLocal()); if (p[map]) { delete p[map][user]; if (!Object.keys(p[map]).length) delete p[map]; } localStorage.setItem(this.KEY, JSON.stringify(p));
+    },
+    who(map) { return this.server ? (this.cache[map] || []).slice() : Object.keys(this.clean(this.readLocal())[map] || {}); },
+    count(map) { return this.who(map).length; },
+
+    /* ---- vários servidores por mapa (cada um com sua própria lotação) ----
+       uma "sala" real = baseKey + '#' + índice. instancesOf() lista as salas ativas (com gente dentro);
+       pickServer() escolhe a primeira sala com vaga (ou cria uma nova) -> é isso que faz quem entra
+       cair num servidor vazio quando os outros já estão cheios. */
+    all() { return this.server ? this.cache : this.clean(this.readLocal()); },
+    instancesOf(base) {
+      const all = this.all(), prefix = base + '#', out = {};
+      for (const k in all) if (k.startsWith(prefix)) out[k.slice(prefix.length)] = this.server ? (all[k] || []).length : Object.keys(all[k] || {}).length;
+      return out;
+    },
+    totalCount(base) { const i = this.instancesOf(base); return Object.values(i).reduce((a, b) => a + b, 0); },
+    allWho(base) {
+      const all = this.all(), prefix = base + '#', out = [];
+      for (const k in all) if (k.startsWith(prefix)) out.push(...(this.server ? (all[k] || []) : Object.keys(all[k] || {})));
+      return out;
+    },
+    /* ---- aba/dispositivo: só 1 por conta em cada mapa ---- */
+    tab() { let t = sessionStorage.getItem('robloxTab'); if (!t) { t = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem('robloxTab', t); } return t; },
+    locks() { try { return JSON.parse(localStorage.getItem('robloxLocks')) || {}; } catch (e) { return {}; } },
+    /* entra no mapa: devolve {idx} (servidor escolhido) ou {busy:true} se a conta já está jogando este mapa em outro lugar */
+    async join(base, user, size) {
+      if (this.server) { try { return await (await fetch(apiUrl('/api/join'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'join', base, user, size, tab: this.tab() }) })).json(); } catch (e) {} }
+      const L = this.locks(), k = base + '|' + user, c = L[k], now = Date.now();
+      if (c && c.tab !== this.tab() && now - c.t < this.TTL) return { busy: true };
+      L[k] = { tab: this.tab(), t: now }; localStorage.setItem('robloxLocks', JSON.stringify(L));
+      return { idx: this.pickServer(base, size, Auth.friends(user)) };
+    },
+    refresh(base, user) {
+      if (this.server) { fetch(apiUrl('/api/join'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'refresh', base, user, tab: this.tab() }) }).catch(() => {}); return; }
+      const L = this.locks(), k = base + '|' + user; if (!L[k] || L[k].tab === this.tab()) { L[k] = { tab: this.tab(), t: Date.now() }; localStorage.setItem('robloxLocks', JSON.stringify(L)); }
+    },
+    release(base, user) {
+      if (this.server) { const body = JSON.stringify({ op: 'release', base, user, tab: this.tab() }); try { if (navigator.sendBeacon) return navigator.sendBeacon(apiUrl('/api/join'), new Blob([body], { type: 'application/json' })); } catch (e) {} return; }
+      const L = this.locks(), k = base + '|' + user; if (L[k] && L[k].tab === this.tab()) { delete L[k]; localStorage.setItem('robloxLocks', JSON.stringify(L)); }
+    },
+    pickServer(base, size, friends) {                  // sala do amigo (mesmo cheia) > primeira sala com vaga > abre uma nova
+      const insts = this.instancesOf(base), max = Math.max(1, size || 20);
+      if (friends && friends.length) {
+        const fl = friends.map(f => f.toLowerCase()), all = this.all(), pre = base + '#';
+        const ks = Object.keys(all).filter(k => k.startsWith(pre)).sort((x, y) => +x.slice(pre.length) - +y.slice(pre.length));
+        for (const k of ks) { const us = this.server ? (all[k] || []) : Object.keys(all[k] || {}); if (us.some(u => fl.includes(u.toLowerCase()))) return +k.slice(pre.length); }
+      }
+      let i = 0; while ((insts[i] || 0) >= max) i++;
+      return i;
+    }
+  },
+
+  /* ---- chat do mapa + bate-papo privado (servidor: server.js; sem servidor: localStorage, só abas do mesmo navegador) ---- */
+  chat: {
+    async _j(rawUrl, body) {                              // sempre devolve objeto; erro vem em .err (nunca falha em silêncio)
+      try {
+        const r = await fetch(apiUrl(rawUrl), body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+        if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return { ok: false, old: true };   // servidor antigo (sem rotas de chat)
+        return await r.json();
+      } catch (e) { return { ok: false, err: 'Sem conexão com o servidor.' }; }
+    },
+    old: false,                                        // true = o node server.js em execução é antigo -> chat local (só neste navegador)
+    pair(a, b) { return [a.toLowerCase(), b.toLowerCase()].sort().join('|'); },
+    async mapSend(map, user, msg) {
+      await Auth.init(); msg = String(msg).replace(/\s+/g, ' ').trim().slice(0, 200); if (!msg) return { ok: false };
+      if (Auth.server && !this.old) { const r = await this._j('/api/chat', { map, user, msg }); if (!r.old) return r; this.old = true; }
+      const k = 'robloxMapChat:' + map, l = Auth._get(k), id = Math.max(Date.now(), (l.length ? l[l.length - 1].id : 0) + 1);
+      l.push({ id, u: user, m: msg, t: Date.now() }); while (l.length > 60) l.shift(); Auth._set(k, l); return { ok: true };
+    },
+    async mapGet(map, after) {
+      await Auth.init();
+      if (Auth.server && !this.old) { const r = await this._j('/api/chat?map=' + encodeURIComponent(map) + '&after=' + (after || 0)); if (!r.old) return r; this.old = true; }
+      const l = Auth._get('robloxMapChat:' + map); return { msgs: l.filter(x => x.id > (after || 0)), last: l.length ? l[l.length - 1].id : after || 0 };
+    },
+    async dmSend(me, other, msg, reply) {
+      await Auth.init(); msg = String(msg).trim().slice(0, 500); if (!msg) return { ok: false };
+      if (Auth.server && !this.old) { const r = await this._j('/api/dm', { from: me, to: other, msg, reply }); if (!r.old) return r; this.old = true; }
+      const k = 'robloxDM:' + this.pair(me, other), l = Auth._get(k); const o = { u: me, m: msg, t: Date.now() }; if (reply && typeof reply.m === 'string') o.r = { u: String(reply.u).slice(0, 40), m: reply.m.slice(0, 100), t: +reply.t }; l.push(o); while (l.length > 300) l.shift(); Auth._set(k, l); return { ok: true };
+    },
+    /* dmGet -> { msgs, st:{ r: até quando o outro leu, s: última atividade do outro, online } }.  read=true: conversa aberta e visível (marca como lida) */
+    async dmGet(me, other, read) {
+      await Auth.init();
+      if (Auth.server && !this.old) { const j = await this._j('/api/dm?me=' + encodeURIComponent(me) + '&other=' + encodeURIComponent(other) + (read ? '&read=1' : '')); if (!j.old) return { msgs: j.msgs || [], st: j.st || {} }; this.old = true; }
+      const l = Auth._get('robloxDM:' + this.pair(me, other)), now = Date.now(), rk = f => 'robloxDMRead:' + this.pair(me, other) + ':' + f.toLowerCase();
+      this._touch(me);
+      if (read && l.length && (+localStorage.getItem(rk(me)) || 0) < l[l.length - 1].t) localStorage.setItem(rk(me), String(now));
+      const s = this._seen(other); return { msgs: l, st: { r: +localStorage.getItem(rk(other)) || 0, s, online: now - s < 12000 } };
+    },
+    _touch(u) { try { localStorage.setItem('robloxSeen:' + u.toLowerCase(), String(Date.now())); } catch (e) {} },
+    _seen(u) { return +localStorage.getItem('robloxSeen:' + u.toLowerCase()) || 0; },
+    /* 'read' (2 azuis) | 'delivered' (2 cinzas) | 'sent' (1 cinza) para uma mensagem MINHA, dado st do outro */
+    tick(m, st) { st = st || {}; return (st.r || 0) >= m.t ? 'read' : (st.s || 0) >= m.t ? 'delivered' : 'sent'; },
+    async dmSummary(me) {                              // { amigo: ultimaMensagem(+ts se foi minha) }
+      await Auth.init();
+      if (Auth.server && !this.old) { const j = await this._j('/api/dm/summary?me=' + encodeURIComponent(me)); if (!j.old) return j; this.old = true; }
+      this._touch(me); const out = {};
+      Auth.friends(me).forEach(f => { const l = Auth._get('robloxDM:' + this.pair(me, f)); if (!l.length) return; const m = l[l.length - 1], r = +localStorage.getItem('robloxDMRead:' + this.pair(me, f) + ':' + f.toLowerCase()) || 0;
+        out[f] = Object.assign({}, m, m.u.toLowerCase() === me.toLowerCase() ? { ts: this.tick(m, { r, s: this._seen(f) }) } : {}); });
+      return out;
+    },
+    oldMsg: 'Servidor antigo em execução: o chat só funciona entre abas deste navegador. Para falar com outros PCs/celulares, feche a janela do servidor (ou Ctrl+C) e abra de novo com o iniciar.bat / node server.js.',
+    seenKey(me, f) { return 'robloxDMSeen:' + me.toLowerCase() + ':' + f.toLowerCase(); },
+    markSeen(me, f, t) { try { localStorage.setItem(this.seenKey(me, f), String(t)); } catch (e) {} },
+    unread(me, summary) { return Object.keys(summary).filter(f => summary[f].u.toLowerCase() !== me.toLowerCase() && summary[f].t > (+localStorage.getItem(this.seenKey(me, f)) || 0)); }
+  },
+
+  /* ---- avatar ---- */
+  DEF: { head: '#f5cd30', torso: '#0d69ac', arms: '#f5cd30', legs: '#4b974b' },
+  avatar(n) { const u = this.users()[(n || '').toLowerCase()]; return Object.assign({}, this.DEF, u && u.avatar); },
+  async setBio(bio) {                                // bio do perfil (até 300 caracteres). Devolve { shared:false } se o servidor em execução for antigo
+    bio = String(bio || '').replace(/\n{3,}/g, '\n\n').trim().slice(0, 300);
+    const k = this.tabKey(), us = this.users(); us[k].bio = bio; this.save(us);
+    if (!this.server) return { ok: true, shared: false, server: false };
+    const j = await this.post('/api/bio', { user: us[k].name, bio }); return { ok: true, shared: !j.err, server: true };
+  },
+  setAvatar(av) { const k = this.tabKey(), us = this.users(); us[k].avatar = av; this.save(us); if (this.server) this.post('/api/avatar', { user: us[k].name, avatar: av }); },
+
+  /* ---- amizades (pedido -> aceitar) ---- */
+  _get(k) { try { return JSON.parse(localStorage.getItem(k)) || []; } catch (e) { return []; } },
+  _set(k, l) { localStorage.setItem(k, JSON.stringify(l)); },
+  dn(n) { return this.users()[n.toLowerCase()].name; },
+  has(l, n) { return l.some(x => x.toLowerCase() === n.toLowerCase()); },
+  without(l, n) { return l.filter(x => x.toLowerCase() !== n.toLowerCase()); },
+  friends(n) { return this._get('robloxFriends:' + n.toLowerCase()); },
+  requests(n) { return this._get('robloxReq:' + n.toLowerCase()); }, /* pedidos recebidos */
+  status(me, o) {
+    if (this.has(this.friends(me), o)) return 'friends';
+    if (this.has(this.requests(o), me)) return 'sent';
+    if (this.has(this.requests(me), o)) return 'received';
+    return 'none';
+  },
+  sendRequest(me, o) { const l = this.requests(o); if (!this.has(l, me)) { l.push(this.dn(me)); this._set('robloxReq:' + o.toLowerCase(), l); } if (this.server) this.post('/api/friend', { op: 'request', me, other: o }); },
+  accept(me, from) {
+    if (this.server) this.post('/api/friend', { op: 'accept', me, other: from });
+    this._set('robloxReq:' + me.toLowerCase(), this.without(this.requests(me), from));
+    [[me, from], [from, me]].forEach(([a, b]) => { const f = this.friends(a); if (!this.has(f, b)) { f.push(this.dn(b)); this._set('robloxFriends:' + a.toLowerCase(), f); } });
+  },
+  decline(me, from) { if (this.server) this.post('/api/friend', { op: 'decline', me, other: from }); this._set('robloxReq:' + me.toLowerCase(), this.without(this.requests(me), from)); },
+  unfriend(me, o) { if (this.server) this.post('/api/friend', { op: 'unfriend', me, other: o }); [[me, o], [o, me]].forEach(([a, b]) => this._set('robloxFriends:' + a.toLowerCase(), this.without(this.friends(a), b))); }
+};
+
+/* ---- Online / jogando / visto por último (todas as páginas) ----
+   Amigos veem "Jogando: <mapa>"; quem não é amigo só vê "Online". Só funciona com o node server.js. */
+Auth.pres = {
+  cache: {}, timer: null,
+  last(ts) {                                    // "visto hoje às 14:05" · "visto ontem às 22:10" · "visto por último em 20/10/2026 às 09:30"
+    if (!ts) return 'Offline';
+    const d = new Date(ts), n = new Date(), y = new Date(Date.now() - 864e5), same = (a, b) => a.toDateString() === b.toDateString();
+    const h = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return same(d, n) ? 'visto hoje às ' + h : same(d, y) ? 'visto ontem às ' + h : 'visto por último em ' + d.toLocaleDateString('pt-BR') + ' às ' + h;
+  },
+  get(u) { return this.cache[(u || '').toLowerCase()] || null; },
+  /* { k:'play'|'on'|'off', t:texto, g:mapa } — texto sem HTML */
+  info(u) {
+    const p = this.get(u); if (!p) return { k: 'off', t: 'Offline' };
+    if (p.g) return { k: 'play', t: 'Jogando: ' + p.g, g: p.g };
+    if (p.on) return { k: 'on', t: 'Online' };
+    return { k: 'off', t: p.s ? this.last(p.s) : 'Offline' };
+  },
+  COLOR: { play: '#00b06f', on: '#3b82f6', off: '#6b7280' },
+  async fetch(names) {
+    const me = Auth.current(); if (!me || !Auth.server || !names.length) return false;
+    try { const r = await fetch(apiUrl('/api/status?me=' + encodeURIComponent(me) + '&users=' + encodeURIComponent(names.join(',')), { cache: 'no-store' }); if (!r.ok || !(r.headers.get('content-type') || '').includes('json')) return false;
+      const j = await r.json(); for (const k in j) this.cache[k.toLowerCase()] = j[k]; return true; } catch (e) { return false; }
+  },
+  watch(getNames, cb) {                         // atualiza a cada 4s e chama cb()
+    const run = async () => { if (await this.fetch([].concat(getNames()))) cb(); };
+    run(); setInterval(run, 4000);
+  },
+  async ping() { const me = Auth.current(); if (!me || !Auth.server) return; const d = await Auth.device(); try { const j = await (await fetch(apiUrl('/api/ping'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info }), keepalive: true })).json(); if (j.ban) Auth.showBan(j.ban); } catch (e) {} },
+  start() { if (this.timer) return; this.ping(); this.timer = setInterval(() => this.ping(), 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) this.ping(); }); }
+};
+(function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
+
+
+  </script>
 <script>
 /* ── Verificação rápida: se já estiver logado, vai direto para o destino ── */
 (function(){
