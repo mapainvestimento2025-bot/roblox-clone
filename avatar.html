@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Roblox Clone - Criador de Avatar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="auth.js?v=5"></script>
+<script>
+(function(){
+  // Aguarda auth.js estar disponível (até 5s) antes de redirecionar
+  if (typeof Auth !== 'undefined' && typeof Auth.init === 'function') return;
+  if (typeof Auth !== 'undefined' && typeof Auth.avatar === 'function') return;
+  var tries = 0;
+  var t = setInterval(function(){
+    tries++;
+    if (typeof Auth !== 'undefined') { clearInterval(t); return; }
+    if (tries >= 50) {
+      clearInterval(t);
+      location.reload(true);
+    }
+  }, 100);
+})();
+</script>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111214;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+/* scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
+/* header */
+.site-header{height:48px;background:#111214;border-bottom:1px solid #2e3033;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;z-index:40;flex-shrink:0}
+.brand{font-size:20px;font-weight:900;letter-spacing:-.5px;color:#fff;text-decoration:none}
+.brand i{color:#3794ff;margin-right:4px}
+/* layout */
+.page-wrap{flex:1;display:flex;overflow:hidden;max-height:calc(100vh - 48px)}
+/* left panel: 3D viewer */
+.viewer-panel{width:280px;min-width:220px;background:#1a1c1f;border-right:1px solid #2e3033;display:flex;flex-direction:column;flex-shrink:0}
+#avatarCanvas{flex:1;cursor:grab;touch-action:none;min-height:260px}
+#avatarCanvas:active{cursor:grabbing}
+.viewer-hint{text-align:center;font-size:11px;color:#666;padding:8px;border-top:1px solid #2e3033}
+.viewer-hint i{margin-right:4px}
+/* right panel: editor */
+.editor-panel{flex:1;overflow-y:auto;padding:20px}
+.section-title{font-size:13px;font-weight:700;color:#8a8d91;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.card{background:#1f2124;border:1px solid #2e3033;border-radius:12px;padding:16px;margin-bottom:16px}
+/* color picker row */
+.color-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#15171a;border-radius:8px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.color-row:hover{background:#1d2024}
+.color-row-label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600}
+.color-row-label .part-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.color-preview{width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,.12);flex-shrink:0;cursor:pointer;position:relative;overflow:hidden}
+.color-preview input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none}
+/* presets grid */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.preset-btn{background:#232527;border:1px solid #2e3033;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:.15s;font-size:11px;font-weight:600;color:#ccc}
+.preset-btn:hover{border-color:#3794ff;background:#1e2a3a;color:#fff}
+.preset-btn.active{border-color:#335fff;background:#1a2440;color:#fff}
+.preset-swatch{width:32px;height:32px;border-radius:8px;margin:0 auto 6px;display:flex;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.preset-swatch .s{flex:1}
+/* action buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:0 20px;height:42px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s}
+.btn-primary{background:#335fff;color:#fff}.btn-primary:hover{background:#4d74ff}
+.btn-secondary{background:#232527;border:1px solid #3a3d41;color:#ccc}.btn-secondary:hover{background:#2d3033;color:#fff}
+.btn-success{background:#00b06f;color:#fff}.btn-success:hover{background:#00c880}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+/* toast */
+#toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:#00b06f;color:#fff;padding:10px 24px;border-radius:10px;font-weight:700;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:999;white-space:nowrap}
+/* tabs mobile */
+.tab-bar{display:none;border-bottom:1px solid #2e3033;background:#1a1c1f}
+.tab-btn{flex:1;padding:12px 8px;font-size:12px;font-weight:700;color:#8a8d91;border-bottom:2px solid transparent;cursor:pointer;text-align:center;transition:.15s}
+.tab-btn.on{color:#fff;border-color:#335fff}
+/* mobile bottom nav */
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none;transition:.15s}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+
+/* responsive */
+@media(max-width:767px){
+  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))}
+  .page-wrap{flex-direction:column;overflow:visible;max-height:none}
+  .viewer-panel{width:100%;border-right:none;border-bottom:1px solid #2e3033;min-height:auto}
+  #avatarCanvas{height:260px;min-height:260px}
+  .tab-bar{display:flex}
+  .editor-panel{padding:12px}
+  #mobileNav{display:flex}
+}
+@media(min-width:768px) and (max-width:1023px){
+  .viewer-panel{width:220px}
+}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roblox Clone">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><i class="fa-solid fa-cube"></i>ROBLOX</a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <a href="index.html" style="color:#9a9ea3;font-size:13px;text-decoration:none"><i class="fa-solid fa-house mr-1"></i><span class="hidden md:inline">Início</span></a>
+    <span id="hdrUser" style="font-weight:700;cursor:pointer" onclick="location.href=Auth.profileUrl(ME)"></span>
+    <button onclick="Auth.logout()" style="background:none;border:none;color:#9a9ea3;cursor:pointer;font-size:16px" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+  </div>
+</header>
+
+<div class="page-wrap">
+  <!-- 3D Preview -->
+  <div class="viewer-panel">
+    <!-- Mobile tabs -->
+    <div class="tab-bar">
+      <div class="tab-btn on" onclick="showTab('preview')"><i class="fa-solid fa-person mr-1"></i>Preview</div>
+      <div class="tab-btn" onclick="showTab('editor')"><i class="fa-solid fa-palette mr-1"></i>Editor</div>
+    </div>
+    <div id="tabPreview">
+      <canvas id="avatarCanvas"></canvas>
+      <div class="viewer-hint"><i class="fa-solid fa-arrows-left-right"></i>Arraste para girar</div>
+    </div>
+  </div>
+
+  <!-- Editor Panel -->
+  <div class="editor-panel" id="tabEditor">
+    <h1 style="font-size:20px;font-weight:900;margin-bottom:4px"><i class="fa-solid fa-shirt mr-2 text-[#3794ff]"></i>Criador de Avatar</h1>
+    <p style="color:#8a8d91;font-size:13px;margin-bottom:20px">Personalize as cores do seu personagem e salve seu visual.</p>
+
+    <!-- Colors -->
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-palette mr-2"></i>Cores das Partes</div>
+      <div id="colorPickers"></div>
+    </div>
+
+    <!-- Presets -->
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Estilos Prontos</div>
+      <div class="preset-grid" id="presetGrid"></div>
+    </div>
+
+    <!-- Random & Actions -->
+    <div class="card">
+      <div class="section-title"><i class="fa-solid fa-dice mr-2"></i>Ferramentas</div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="randomize()"><i class="fa-solid fa-shuffle"></i>Aleatório</button>
+        <button class="btn btn-secondary" onclick="applyPreset(DEF_AVATAR)"><i class="fa-solid fa-rotate-left"></i>Restaurar</button>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-success" style="flex:1" onclick="saveAvatar()"><i class="fa-solid fa-floppy-disk"></i>Salvar Avatar</button>
+      <a href="profile.html" class="btn btn-secondary" style="flex:1;text-decoration:none;justify-content:center"><i class="fa-solid fa-user"></i>Ver Perfil</a>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile bottom navigation -->
+<nav id="mobileNav">
+  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a>
+  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
+  <a href="avatar.html" class="active"><i class="fa-solid fa-shirt"></i>Avatar</a>
+  <a href="#" onclick="location.href=Auth.profileUrl(ME);return false"><i class="fa-solid fa-user"></i>Perfil</a>
+</nav>
+
+<div id="toast"></div>
+
+<script>
+const ME = Auth.require();
+document.getElementById('hdrUser').textContent = ME;
+
+const DEF_AVATAR = Auth.DEF || { head:'#f5cd30', torso:'#1e44c8', arms:'#f5cd30', legs:'#1a1a4e' };
+
+const PARTS = [
+  { key:'head',  label:'Cabeça',  icon:'fa-circle-user',  color:'#a78bfa' },
+  { key:'torso', label:'Torso',   icon:'fa-shirt',        color:'#60a5fa' },
+  { key:'arms',  label:'Braços',  icon:'fa-hand',         color:'#34d399' },
+  { key:'legs',  label:'Pernas',  icon:'fa-socks',        color:'#f472b6' }
+];
+
+const PRESETS = [
+  { name:'Clássico', av:{ head:'#f5cd30', torso:'#1e44c8', arms:'#f5cd30', legs:'#1a1a4e' } },
+  { name:'Ninja',    av:{ head:'#e0b184', torso:'#222222', arms:'#222222', legs:'#222222' } },
+  { name:'Rubro',    av:{ head:'#f5cd30', torso:'#c0392b', arms:'#f5cd30', legs:'#7f1d1d' } },
+  { name:'Floresta', av:{ head:'#e0b184', torso:'#27ae60', arms:'#e0b184', legs:'#6b4423' } },
+  { name:'Neon',     av:{ head:'#ffe0bd', torso:'#9b59b6', arms:'#ffe0bd', legs:'#3498db' } },
+  { name:'Gelo',     av:{ head:'#dff6ff', torso:'#74b9ff', arms:'#dff6ff', legs:'#0984e3' } },
+  { name:'Ouro',     av:{ head:'#ffd700', torso:'#b8860b', arms:'#ffd700', legs:'#8b6914' } },
+  { name:'Noite',    av:{ head:'#c084fc', torso:'#1e1b4b', arms:'#c084fc', legs:'#312e81' } },
+  { name:'Chama',    av:{ head:'#fca5a5', torso:'#dc2626', arms:'#fca5a5', legs:'#991b1b' } },
+  { name:'Oceano',   av:{ head:'#a7f3d0', torso:'#065f46', arms:'#a7f3d0', legs:'#064e3b' } },
+  { name:'Rosa',     av:{ head:'#fce7f3', torso:'#ec4899', arms:'#fce7f3', legs:'#9d174d' } },
+  { name:'Terra',    av:{ head:'#d9a86c', torso:'#7c3f00', arms:'#d9a86c', legs:'#4a2300' } }
+];
+
+let cur = Object.assign({}, Auth.avatar(ME));
+let activePreset = null;
+
+/* ---- Build color pickers ---- */
+const pickersEl = document.getElementById('colorPickers');
+PARTS.forEach(p => {
+  const row = document.createElement('div');
+  row.className = 'color-row';
+  row.innerHTML = `
+    <div class="color-row-label">
+      <div class="part-icon" style="background:${p.color}22;color:${p.color}">
+        <i class="fa-solid ${p.icon}"></i>
+      </div>
+      <span>${p.label}</span>
+    </div>
+    <div class="color-preview" title="Clique para mudar a cor">
+      <input type="color" id="c_${p.key}" value="${cur[p.key]}">
+    </div>`;
+  row.querySelector('.color-preview').style.background = cur[p.key];
+  row.onclick = () => row.querySelector('input').click();
+  row.querySelector('input').oninput = e => {
+    cur = { ...cur, [p.key]: e.target.value };
+    row.querySelector('.color-preview').style.background = e.target.value;
+    updateAvatar();
+    activePreset = null;
+    updatePresetHighlight();
+  };
+  pickersEl.appendChild(row);
+});
+
+/* ---- Build presets ---- */
+const presetGrid = document.getElementById('presetGrid');
+PRESETS.forEach((pr, i) => {
+  const btn = document.createElement('div');
+  btn.className = 'preset-btn';
+  btn.dataset.i = i;
+  const sw = document.createElement('div');
+  sw.className = 'preset-swatch';
+  sw.innerHTML = `<div class="s" style="background:${pr.av.torso}"></div><div class="s" style="background:${pr.av.head}"></div>`;
+  btn.appendChild(sw);
+  btn.appendChild(document.createTextNode(pr.name));
+  btn.onclick = () => { applyPreset(pr.av, i); };
+  presetGrid.appendChild(btn);
+});
+
+function applyPreset(av, idx) {
+  cur = Object.assign({}, av);
+  PARTS.forEach(p => {
+    const inp = document.getElementById('c_' + p.key);
+    if (inp) { inp.value = cur[p.key]; inp.closest('.color-preview').style.background = cur[p.key]; }
+  });
+  updateAvatar();
+  activePreset = idx !== undefined ? idx : null;
+  updatePresetHighlight();
+}
+function updatePresetHighlight() {
+  document.querySelectorAll('.preset-btn').forEach((b, i) => b.classList.toggle('active', i === activePreset));
+}
+function randomize() {
+  const rnd = () => '#' + Math.floor(Math.random()*0xffffff).toString(16).padStart(6,'0');
+  applyPreset({ head:rnd(), torso:rnd(), arms:rnd(), legs:rnd() }, null);
+  activePreset = null; updatePresetHighlight();
+}
+function saveAvatar() {
+  Auth.setAvatar(cur);
+  showToast('✓ Avatar salvo!');
+}
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 2000);
+}
+
+/* ---- Mobile tabs ---- */
+function showTab(tab) {
+  const preview = document.getElementById('tabPreview');
+  const editor  = document.getElementById('tabEditor');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('on'));
+  if (tab === 'preview') {
+    preview.style.display = ''; editor.style.display = 'none';
+    document.querySelectorAll('.tab-btn')[0].classList.add('on');
+  } else {
+    preview.style.display = 'none'; editor.style.display = '';
+    document.querySelectorAll('.tab-btn')[1].classList.add('on');
+  }
+}
+// On desktop always show both
+function checkLayout() {
+  if (window.innerWidth >= 768) {
+    document.getElementById('tabPreview').style.display = '';
+    document.getElementById('tabEditor').style.display = '';
+  }
+}
+window.addEventListener('resize', checkLayout); checkLayout();
+
+/* ---- Three.js 3D avatar ---- */
+const canvas = document.getElementById('avatarCanvas');
+const scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+
+let camera, group, mats = {}, faceTexture, faceCtx;
+
+function setupScene() {
+  const W = canvas.offsetWidth || 280, H = canvas.offsetHeight || 320;
+  renderer.setSize(W, H);
+  camera = new THREE.PerspectiveCamera(35, W / H, 0.1, 100);
+  camera.position.set(0, 3.4, 17);
+  camera.lookAt(0, 3.1, 0);
+  scene.clear();
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445566, 0.95));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.8);
+  dl.position.set(5, 10, 8); scene.add(dl);
+  group = new THREE.Group(); scene.add(group);
+  mats = {};
+  const add = (k, w, h, d, x, y) => {
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      new THREE.MeshStandardMaterial({ color: cur[k] })
+    );
+    m.position.set(x, y, 0); group.add(m);
+    (mats[k] = mats[k] || []).push(m); return m;
+  };
+  add('legs', 1, 2, 1, -0.5, 1); add('legs', 1, 2, 1, 0.5, 1);
+  add('torso', 2, 2, 1, 0, 3);
+  add('arms', 1, 2, 1, -1.5, 3); add('arms', 1, 2, 1, 1.5, 3);
+  const head = add('head', 1.6, 1.6, 1.6, 0, 4.8);
+  const fc = document.createElement('canvas'); fc.width = fc.height = 64;
+  faceCtx = fc.getContext('2d');
+  faceTexture = new THREE.CanvasTexture(fc);
+  drawFace();
+  const hb = head.material;
+  head.material = [hb, hb, hb, hb, new THREE.MeshStandardMaterial({ map: faceTexture }), hb];
+  const floor = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.6, 2.6, 0.1, 40),
+    new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.3 })
+  );
+  floor.position.y = -0.05; scene.add(floor);
+  group.rotation.y = -0.5;
+}
+function drawFace() {
+  faceCtx.fillStyle = cur.head; faceCtx.fillRect(0, 0, 64, 64);
+  faceCtx.fillStyle = '#222';
+  faceCtx.fillRect(18, 22, 6, 10); faceCtx.fillRect(40, 22, 6, 10);
+  faceCtx.lineWidth = 4; faceCtx.strokeStyle = '#222';
+  faceCtx.beginPath(); faceCtx.arc(32, 36, 13, 0.15 * Math.PI, 0.85 * Math.PI);
+  faceCtx.stroke(); faceTexture.needsUpdate = true;
+}
+function updateAvatar() {
+  if (!mats) return;
+  Object.keys(mats).forEach(k => {
+    mats[k].forEach(m => {
+      const mat = Array.isArray(m.material) ? m.material[0] : m.material;
+      mat.color.set(cur[k]);
+    });
+  });
+  drawFace();
+}
+setupScene();
+// Re-setup on resize
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(setupScene, 150);
+});
+
+// Drag to rotate
+let drag = false, lastX = 0, t = 0;
+canvas.addEventListener('pointerdown', e => { drag = true; lastX = e.clientX; canvas.setPointerCapture(e.pointerId); });
+window.addEventListener('pointerup', () => drag = false);
+canvas.addEventListener('pointermove', e => { if (drag) { group.rotation.y += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
+// Touch
+canvas.addEventListener('touchstart', e => { drag = true; lastX = e.touches[0].clientX; }, { passive: true });
+canvas.addEventListener('touchend', () => drag = false);
+canvas.addEventListener('touchmove', e => { if (drag) { group.rotation.y += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
+
+// Animate
+const armL = () => mats.arms && mats.arms[0];
+const armR = () => mats.arms && mats.arms[1];
+(function loop() {
+  requestAnimationFrame(loop);
+  t += 0.03;
+  if (!drag) group.rotation.y += 0.004;
+  if (mats.arms && mats.arms.length >= 2) {
+    mats.arms[0].rotation.z = 0.04 + Math.sin(t) * 0.05;
+    mats.arms[1].rotation.z = -0.04 - Math.sin(t) * 0.05;
+  }
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>

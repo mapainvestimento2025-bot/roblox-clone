@@ -1,0 +1,77 @@
+================================================
+  ROBLOX CLONE — Instalação no ProFreeHost
+================================================
+
+PASSO 1 — Criar banco de dados no painel
+-----------------------------------------
+1. Acesse seu painel em profreehost.com
+2. Vá em "MySQL Databases"
+3. Crie um banco de dados (anote o nome completo, ex: id123456_roblox)
+4. Crie um usuário MySQL e anote usuário + senha
+5. Associe o usuário ao banco
+
+PASSO 2 — Editar a configuração do banco
+------------------------------------------
+Abra o arquivo:  api/db.php
+
+Edite as 4 linhas:
+  define('DB_HOST', 'localhost');
+  define('DB_USER', 'SEU_USUARIO_AQUI');   ← coloque seu usuário MySQL
+  define('DB_PASS', 'SUA_SENHA_AQUI');     ← coloque sua senha
+  define('DB_NAME', 'SEU_BANCO_AQUI');     ← coloque o nome do banco
+
+As tabelas são criadas automaticamente na primeira visita ao site.
+
+PASSO 3 — Fazer upload dos arquivos
+-------------------------------------
+Via File Manager do painel ou via FTP:
+1. Envie TODOS os arquivos desta pasta para a raiz do seu site
+   (onde fica o public_html/ ou htdocs/)
+2. Envie também a pasta "api/" com todos os arquivos dentro
+
+Estrutura final no servidor:
+  public_html/
+  ├── index.html
+  ├── login.html
+  ├── register.html
+  ├── profile.html
+  ├── game.html
+  ├── studio.html
+  ├── admin.html
+  ├── batepapo.html
+  ├── avatar.html
+  ├── auth.js
+  ├── sw.js
+  ├── manifest.json
+  ├── icon-192.png
+  ├── icon-512.png
+  ├── .htaccess
+  └── api/
+      ├── db.php        ← EDITAR com suas credenciais
+      ├── api.php
+      └── helpers.php
+
+PASSO 4 — Testar
+------------------
+Acesse:  https://seusite.profreehost.com/api/api.php?action=health
+
+Deve aparecer:  {"ok":true,"db":"mysql","users":0}
+
+Se aparecer erro de DB, verifique as credenciais no api/db.php
+
+PASSO 5 — Primeiro usuário = Admin
+------------------------------------
+O primeiro usuário que se registrar vira automaticamente
+o dono (owner) do site, com acesso total ao painel admin.
+
+================================================
+  ARQUIVOS NÃO NECESSÁRIOS (pode apagar)
+================================================
+  server.js    — era o servidor Node.js (não usado mais)
+  store.js     — integração MySQL do Node (não usado mais)
+  keepalive.js — era para o Render (não usado mais)
+  render.yaml  — configuração do Render (não usado mais)
+  package.json — dependências Node.js (não usado mais)
+  database.sql — opcional (as tabelas são criadas automático)
+
+================================================

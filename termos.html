@@ -1,0 +1,1723 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#111214">
+<meta name="description" content="Termos de Uso do Roblox Clone. Conheça as condições para utilizar nossa plataforma.">
+
+<title>Termos de Uso - Roblox Clone</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --background: #111214;
+    --header: #0b0c0e;
+    --card: #1d1f22;
+    --border: #2e3135;
+    --text: #e4e4e7;
+    --muted: #a1a5ad;
+    --blue: #335fff;
+    --blue-light: #3794ff;
+    --green: #00a665;
+}
+
+* {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    min-width: 320px;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+::selection {
+    background: rgba(51,95,255,.35);
+    color: white;
+}
+
+a {
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+header {
+    background: rgba(11,12,14,.96);
+    backdrop-filter: blur(15px);
+}
+
+.nav-link {
+    color: #a1a1aa;
+    transition: .25s;
+    position: relative;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: white;
+}
+
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -13px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--blue);
+    border-radius: 10px;
+}
+
+.hero {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 0%, rgba(0,166,101,.12), transparent 48%),
+        linear-gradient(180deg, rgba(29,31,34,.55), transparent);
+}
+
+.hero-icon {
+    background: rgba(0,166,101,.13);
+    border: 1px solid rgba(0,166,101,.35);
+    box-shadow: 0 0 40px rgba(0,166,101,.08);
+}
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+}
+
+.section-card {
+    transition: border-color .25s, background .25s;
+    scroll-margin-top: 90px;
+}
+
+.section-card:hover {
+    border-color: #41464e;
+    background: #202226;
+}
+
+.section-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: rgba(51,95,255,.13);
+    border: 1px solid rgba(51,95,255,.25);
+    color: #6c8aff;
+    font-weight: 900;
+    font-size: 13px;
+}
+
+.section-title {
+    color: white;
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.3px;
+}
+
+.section-text {
+    color: #b5b8be;
+    font-size: 14px;
+    line-height: 1.9;
+}
+
+.section-text strong {
+    color: #e4e4e7;
+    font-weight: 700;
+}
+
+.section-text ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 14px;
+}
+
+.section-text ul li {
+    position: relative;
+    padding-left: 27px;
+    margin-bottom: 11px;
+}
+
+.section-text ul li::before {
+    content: "\f00c";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    left: 0;
+    top: 3px;
+    color: var(--green);
+    font-size: 12px;
+}
+
+.toc-link {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 11px 13px;
+    color: #a1a5ad;
+    font-size: 13px;
+    border-radius: 9px;
+    transition: .2s;
+}
+
+.toc-link:hover {
+    color: white;
+    background: #292c31;
+}
+
+.toc-link i {
+    width: 17px;
+    text-align: center;
+    color: #6887ff;
+    flex-shrink: 0;
+}
+
+.info-box {
+    background: rgba(51,95,255,.08);
+    border: 1px solid rgba(51,95,255,.23);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.warning-box {
+    background: rgba(0,166,101,.07);
+    border: 1px solid rgba(0,166,101,.23);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.progress-container {
+    height: 3px;
+    background: #292c31;
+    width: 100%;
+}
+
+#readingProgress {
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg,#335fff,#00a665);
+    transition: width .1s;
+}
+
+.action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 12px 18px;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 750;
+    transition: .25s;
+}
+
+.primary-button {
+    background: var(--blue);
+    color: white;
+}
+
+.primary-button:hover {
+    background: #4d74ff;
+    transform: translateY(-2px);
+}
+
+.secondary-button {
+    background: #2b2e32;
+    border: 1px solid #3d4146;
+    color: white;
+}
+
+.secondary-button:hover {
+    background: #383c42;
+    transform: translateY(-2px);
+}
+
+#backToTop {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: var(--blue);
+    color: white;
+    box-shadow: 0 8px 25px rgba(51,95,255,.25);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: .25s;
+    z-index: 100;
+    border: none;
+}
+
+#backToTop.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+footer a {
+    transition: .2s;
+}
+
+footer a:hover {
+    color: white;
+}
+
+/* MENU MOBILE */
+
+.mobile-menu {
+    display: none;
+}
+
+.mobile-menu-content {
+    display: none;
+}
+
+/* TABLETS E CELULARES */
+
+@media(max-width: 768px) {
+
+    .desktop-nav {
+        display: none !important;
+    }
+
+    .mobile-menu {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #1d1f22;
+        border: 1px solid #2e3135;
+        color: white;
+        font-size: 19px;
+    }
+
+    .mobile-menu:hover {
+        background: #292c31;
+    }
+
+    .mobile-menu-content {
+        display: none;
+        background: #111214;
+        border-top: 1px solid #2e3135;
+        padding: 15px 20px 20px;
+    }
+
+    .mobile-menu-content.open {
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+    }
+
+    .mobile-menu-content a {
+        display: flex;
+        align-items: center;
+        padding: 9px 5px;
+        font-size: 14px;
+    }
+
+    /* CONTEÚDO */
+
+    main {
+        padding: 22px 15px !important;
+    }
+
+    main > div.grid {
+        display: flex !important;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    main > div.grid > aside,
+    main > div.grid > div {
+        width: 100%;
+        min-width: 0;
+    }
+
+    main > div.grid > aside {
+        position: static;
+    }
+
+    /* HERO */
+
+    .hero {
+        padding: 35px 17px !important;
+        border-radius: 15px;
+        margin-bottom: 25px;
+    }
+
+    .hero-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 17px;
+    }
+
+    .hero-icon i {
+        font-size: 26px;
+    }
+
+    .hero h1 {
+        font-size: clamp(27px, 8vw, 36px);
+        line-height: 1.15;
+    }
+
+    .hero p {
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    /* ÍNDICE */
+
+    .toc-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .toc-link {
+        min-width: 0;
+        padding: 11px 8px;
+        font-size: 11px;
+        line-height: 1.5;
+        gap: 7px;
+        overflow-wrap: anywhere;
+    }
+
+    .toc-link i {
+        font-size: 11px;
+    }
+
+    /* SEÇÕES */
+
+    .section-card {
+        width: 100%;
+        padding: 19px 16px !important;
+        border-radius: 13px;
+        scroll-margin-top: 75px;
+    }
+
+    .section-card > div:first-child {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+    }
+
+    .section-number {
+        min-width: 34px;
+        width: 34px;
+        height: 34px;
+        font-size: 11px;
+        border-radius: 9px;
+    }
+
+    .section-title {
+        font-size: 15px;
+        line-height: 1.5;
+        padding-top: 5px;
+    }
+
+    .section-text {
+        font-size: 13px;
+        line-height: 1.85;
+        overflow-wrap: anywhere;
+    }
+
+    .section-text p {
+        margin-bottom: 12px;
+    }
+
+    .section-text ul {
+        padding-left: 0;
+    }
+
+    .section-text ul li {
+        padding-left: 23px;
+        margin-bottom: 12px;
+        line-height: 1.7;
+    }
+
+    /* AVISOS */
+
+    .info-box,
+    .warning-box {
+        padding: 13px;
+    }
+
+    .info-box p,
+    .warning-box p {
+        font-size: 12px;
+        line-height: 1.8;
+    }
+
+    /* BOTÕES */
+
+    .action-button {
+        width: 100%;
+        min-height: 45px;
+        padding: 12px;
+        font-size: 12px;
+        justify-content: center;
+    }
+
+    /* FINALIZAÇÃO */
+
+    main > section.card:last-of-type {
+        padding: 20px 16px !important;
+    }
+
+    main > section.card:last-of-type > div:first-child {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    main > section.card:last-of-type h2 {
+        font-size: 17px;
+    }
+
+    main > section.card:last-of-type p {
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    main > section.card:last-of-type > div:last-child {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* RODAPÉ */
+
+    footer {
+        margin-top: 25px !important;
+    }
+
+    footer > div {
+        padding: 30px 20px !important;
+    }
+
+    footer .grid {
+        grid-template-columns: 1fr !important;
+        gap: 27px;
+    }
+
+    footer .grid > div {
+        width: 100%;
+    }
+
+    footer .grid h3 {
+        margin-bottom: 12px;
+    }
+
+    footer .grid p,
+    footer .grid a {
+        font-size: 13px;
+    }
+
+    footer .border-t {
+        text-align: center;
+    }
+
+    /* VOLTAR AO TOPO */
+
+    #backToTop {
+        width: 43px;
+        height: 43px;
+        right: 14px;
+        bottom: 15px;
+        border-radius: 12px;
+    }
+}
+
+/* CELULARES PEQUENOS */
+
+@media(max-width: 380px) {
+
+    main {
+        padding-left: 11px !important;
+        padding-right: 11px !important;
+    }
+
+    .toc-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .toc-link {
+        font-size: 12px;
+    }
+
+    .section-card {
+        padding: 16px 13px !important;
+    }
+
+    .section-title {
+        font-size: 14px;
+    }
+
+    .section-text {
+        font-size: 12px;
+    }
+
+    .hero h1 {
+        font-size: 27px;
+    }
+
+    .hero p {
+        font-size: 12px;
+    }
+}
+
+/* TABLETS */
+
+@media(min-width: 769px) and (max-width: 1024px) {
+
+    main {
+        padding-left: 22px !important;
+        padding-right: 22px !important;
+    }
+
+    main > div.grid {
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .section-card {
+        padding: 23px !important;
+    }
+}
+
+/* ACESSIBILIDADE */
+
+@media(prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+</style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- PROGRESSO DE LEITURA -->
+<div class="fixed top-0 left-0 w-full z-[110] progress-container">
+    <div id="readingProgress"></div>
+</div>
+
+<!-- CABEÇALHO -->
+<header class="sticky top-0 z-50 border-b border-[#2e3135]">
+
+    <div class="max-w-7xl mx-auto h-[62px] px-4 md:px-7 flex items-center justify-between">
+
+        <a href="index.html" class="flex items-center gap-2 text-xl font-black tracking-tighter">
+            <i class="fa-solid fa-cube text-[#3794ff]"></i>
+            <span>ROBLOX</span>
+        </a>
+
+        <nav class="desktop-nav flex items-center gap-7 text-sm font-semibold">
+            <a href="index.html" class="nav-link">Início</a>
+            <a href="regras.html" class="nav-link">Regras</a>
+            <a href="termos.html" class="nav-link active">Termos</a>
+            <a href="privacidade.html" class="nav-link">Privacidade</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+
+            <span class="hidden sm:inline-flex items-center gap-2 text-xs text-gray-400">
+                <i class="fa-solid fa-shield-halved text-[#00a665]"></i>
+                Central de informações
+            </span>
+
+            <button id="menuButton"
+                class="mobile-menu"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+                aria-controls="mobileMenu">
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- MENU MOBILE -->
+    <div id="mobileMenu" class="mobile-menu-content">
+
+        <a href="index.html" class="nav-link">
+            <i class="fa-solid fa-house mr-2"></i>
+            Início
+        </a>
+
+        <a href="regras.html" class="nav-link">
+            <i class="fa-solid fa-scale-balanced mr-2"></i>
+            Regras
+        </a>
+
+        <a href="termos.html" class="text-white font-bold">
+            <i class="fa-solid fa-file-contract mr-2 text-[#3794ff]"></i>
+            Termos de Uso
+        </a>
+
+        <a href="privacidade.html" class="nav-link">
+            <i class="fa-solid fa-shield mr-2"></i>
+            Privacidade
+        </a>
+
+    </div>
+
+</header>
+
+<!-- CONTEÚDO PRINCIPAL -->
+<main class="max-w-6xl mx-auto px-4 md:px-6 py-9 md:py-14">
+
+    <!-- HERO -->
+    <section class="hero text-center rounded-2xl py-10 md:py-14 mb-10">
+
+        <div class="hero-icon w-[76px] h-[76px] rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <i class="fa-solid fa-file-contract text-[#00a665] text-3xl"></i>
+        </div>
+
+        <div class="flex justify-center mb-4">
+            <span class="text-xs font-bold tracking-wider uppercase text-[#00c982] bg-[#00a665]/10 border border-[#00a665]/25 px-4 py-2 rounded-full">
+                <i class="fa-solid fa-circle-check mr-2"></i>
+                Documento da plataforma
+            </span>
+        </div>
+
+        <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+            Termos de Uso
+        </h1>
+
+        <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-7">
+            Conheça as condições, responsabilidades e diretrizes que regulam
+            o acesso e a utilização do Roblox Clone.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-3 mt-7">
+
+            <span class="text-xs text-gray-400 bg-[#1d1f22] border border-[#2e3135] px-4 py-2 rounded-lg">
+                <i class="fa-regular fa-calendar mr-2 text-[#3794ff]"></i>
+                Atualizado em 03 de novembro de 2026
+            </span>
+
+            <span class="text-xs text-gray-400 bg-[#1d1f22] border border-[#2e3135] px-4 py-2 rounded-lg">
+                <i class="fa-regular fa-clock mr-2 text-[#00a665]"></i>
+                Leitura aproximada: 10 minutos
+            </span>
+
+        </div>
+
+    </section>
+
+    <!-- AVISO -->
+    <div class="info-box mb-8 flex gap-4 items-start">
+
+        <i class="fa-solid fa-circle-info text-[#6084ff] text-xl mt-1 shrink-0"></i>
+
+        <div>
+            <h3 class="text-white font-bold text-sm mb-1">
+                Importante: leia antes de utilizar a plataforma
+            </h3>
+
+            <p class="text-gray-400 text-sm leading-7">
+                Este documento apresenta as regras e condições gerais para
+                utilizar o Roblox Clone. Ao acessar, cadastrar-se ou utilizar
+                os recursos disponíveis, você declara que teve a oportunidade
+                de conhecer estes termos. Caso não concorde com alguma
+                disposição, não utilize os serviços até esclarecer suas dúvidas.
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ÍNDICE E SEÇÕES -->
+    <div class="grid grid-cols-1 lg:grid-cols-[270px_1fr] gap-7 items-start">
+
+        <!-- ÍNDICE -->
+        <aside class="card p-5 lg:sticky lg:top-[85px]">
+
+            <div class="flex items-center gap-3 mb-5">
+
+                <div class="w-9 h-9 rounded-lg bg-[#335fff]/15 flex items-center justify-center">
+                    <i class="fa-solid fa-list text-[#6887ff]"></i>
+                </div>
+
+                <div>
+                    <h2 class="text-white font-bold text-sm">Navegação</h2>
+                    <p class="text-gray-500 text-xs">Índice dos termos</p>
+                </div>
+
+            </div>
+
+            <nav class="toc-grid grid grid-cols-1 gap-1">
+
+                <a href="#secao1" class="toc-link"><i class="fa-solid fa-file-signature"></i> 01. Aceitação</a>
+                <a href="#secao2" class="toc-link"><i class="fa-solid fa-users"></i> 02. Elegibilidade</a>
+                <a href="#secao3" class="toc-link"><i class="fa-solid fa-user-plus"></i> 03. Cadastro</a>
+                <a href="#secao4" class="toc-link"><i class="fa-solid fa-lock"></i> 04. Segurança</a>
+                <a href="#secao5" class="toc-link"><i class="fa-solid fa-user-shield"></i> 05. Responsabilidades</a>
+                <a href="#secao6" class="toc-link"><i class="fa-solid fa-photo-film"></i> 06. Conteúdo</a>
+                <a href="#secao7" class="toc-link"><i class="fa-solid fa-ban"></i> 07. Uso proibido</a>
+                <a href="#secao8" class="toc-link"><i class="fa-solid fa-comments"></i> 08. Comunicação</a>
+                <a href="#secao9" class="toc-link"><i class="fa-solid fa-copyright"></i> 09. Propriedade</a>
+                <a href="#secao10" class="toc-link"><i class="fa-solid fa-gavel"></i> 10. Moderação</a>
+                <a href="#secao11" class="toc-link"><i class="fa-solid fa-triangle-exclamation"></i> 11. Penalidades</a>
+                <a href="#secao12" class="toc-link"><i class="fa-solid fa-server"></i> 12. Disponibilidade</a>
+                <a href="#secao13" class="toc-link"><i class="fa-solid fa-link"></i> 13. Serviços externos</a>
+                <a href="#secao14" class="toc-link"><i class="fa-solid fa-rotate"></i> 14. Alterações</a>
+                <a href="#secao15" class="toc-link"><i class="fa-solid fa-scale-balanced"></i> 15. Legislação</a>
+                <a href="#secao16" class="toc-link"><i class="fa-solid fa-envelope"></i> 16. Contato</a>
+
+            </nav>
+
+            <div class="border-t border-[#2e3135] mt-5 pt-4">
+
+                <p class="text-gray-500 text-xs leading-6">
+                    <i class="fa-solid fa-shield-halved text-[#00a665] mr-1"></i>
+                    Consulte também nossas regras e nossa política de privacidade.
+                </p>
+
+            </div>
+
+        </aside>
+
+        <!-- CONTEÚDO DOS TERMOS -->
+        <div class="space-y-5">
+
+            <section id="secao1" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">01</span>
+                    <h2 class="section-title">Aceitação dos Termos de Uso</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Estes Termos de Uso estabelecem as condições gerais aplicáveis
+                        ao acesso e à utilização do <strong>Roblox Clone</strong>,
+                        incluindo suas páginas, funcionalidades, ferramentas,
+                        sistemas de interação e demais recursos disponibilizados.
+                    </p>
+
+                    <p>
+                        Ao acessar a plataforma, criar uma conta ou utilizar qualquer
+                        funcionalidade, o usuário declara que leu, compreendeu e
+                        concorda com as disposições deste documento, respeitando
+                        também as regras da comunidade e as políticas complementares.
+                    </p>
+
+                    <p>
+                        Caso não concorde com estes termos, deverá interromper
+                        a utilização da plataforma.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao2" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">02</span>
+                    <h2 class="section-title">Elegibilidade e idade mínima</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A utilização da plataforma está condicionada ao cumprimento
+                        dos requisitos legais aplicáveis e à capacidade do usuário
+                        de compreender e respeitar estes termos.
+                    </p>
+
+                    <p>
+                        Quando o usuário for menor de idade, a utilização deverá
+                        observar as exigências legais aplicáveis, incluindo a
+                        autorização ou participação de seus responsáveis legais
+                        quando necessária.
+                    </p>
+
+                    <p>
+                        Os responsáveis devem orientar os menores sobre segurança
+                        digital, comportamento respeitoso, proteção de informações
+                        pessoais e utilização adequada dos recursos disponíveis.
+                    </p>
+
+                    <p>
+                        O usuário deve fornecer informações verdadeiras sempre
+                        que solicitado durante o cadastro.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao3" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">03</span>
+                    <h2 class="section-title">Criação e gerenciamento de conta</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Algumas funcionalidades podem exigir a criação de uma
+                        conta pessoal. Durante o cadastro, o usuário deverá
+                        informar os dados solicitados de maneira correta e atualizada.
+                    </p>
+
+                    <p>Ao criar uma conta, o usuário concorda em:</p>
+
+                    <ul>
+                        <li>Utilizar informações verdadeiras e atualizadas.</li>
+                        <li>Escolher um nome de usuário adequado e respeitoso.</li>
+                        <li>Não utilizar a identidade de outra pessoa.</li>
+                        <li>Não criar contas para prejudicar outros usuários.</li>
+                        <li>Manter seus dados de acesso sob controle.</li>
+                        <li>Não utilizar o cadastro para atividades fraudulentas.</li>
+                    </ul>
+
+                    <p>
+                        A administração poderá analisar cadastros suspeitos
+                        e adotar medidas quando identificar informações falsas,
+                        tentativas de fraude ou violações destes termos.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao4" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">04</span>
+                    <h2 class="section-title">Segurança e proteção da conta</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A proteção das credenciais de acesso é uma responsabilidade
+                        importante de cada usuário. Senhas e outros mecanismos
+                        de autenticação devem ser mantidos em sigilo.
+                    </p>
+
+                    <p>Para proteger sua conta, recomendamos:</p>
+
+                    <ul>
+                        <li>Utilizar uma senha forte e exclusiva.</li>
+                        <li>Não compartilhar sua senha com outras pessoas.</li>
+                        <li>Evitar acessar a conta em dispositivos desconhecidos.</li>
+                        <li>Não clicar em links suspeitos enviados por terceiros.</li>
+                        <li>Sair da conta ao utilizar computadores compartilhados.</li>
+                    </ul>
+
+                    <p>
+                        Caso identifique atividades suspeitas, tentativas de invasão
+                        ou acesso não autorizado, o usuário deverá comunicar a
+                        administração pelos canais de atendimento disponíveis.
+                    </p>
+
+                    <div class="warning-box">
+                        <p class="text-white font-bold mb-1">
+                            <i class="fa-solid fa-lock text-[#00a665] mr-2"></i>
+                            Proteja suas informações
+                        </p>
+
+                        <p>
+                            A equipe administrativa nunca deve solicitar sua senha
+                            pessoal para realizar procedimentos comuns de suporte.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="secao5" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">05</span>
+                    <h2 class="section-title">Responsabilidades dos usuários</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Cada usuário é responsável pelas próprias ações realizadas
+                        dentro da plataforma, incluindo publicações, mensagens,
+                        interações, informações de perfil e demais conteúdos enviados.
+                    </p>
+
+                    <p>É dever de todos:</p>
+
+                    <ul>
+                        <li>Respeitar os demais integrantes da comunidade.</li>
+                        <li>Utilizar os recursos de maneira responsável.</li>
+                        <li>Respeitar os direitos autorais e a privacidade de terceiros.</li>
+                        <li>Não tentar prejudicar o funcionamento do sistema.</li>
+                        <li>Comunicar comportamentos abusivos ou violações.</li>
+                        <li>Respeitar as decisões administrativas legítimas.</li>
+                    </ul>
+
+                    <p>
+                        O usuário também deverá responder pelo uso de sua conta,
+                        observadas as circunstâncias de eventual acesso indevido
+                        e as responsabilidades previstas na legislação aplicável.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao6" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">06</span>
+                    <h2 class="section-title">Conteúdo criado pelos usuários</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A plataforma poderá permitir que os usuários publiquem,
+                        enviem ou compartilhem diferentes tipos de conteúdo,
+                        conforme as funcionalidades disponibilizadas.
+                    </p>
+
+                    <p>
+                        Isso pode incluir imagens, textos, nomes, descrições,
+                        mensagens, criações digitais, mapas e outras informações.
+                    </p>
+
+                    <p>
+                        O usuário declara possuir os direitos ou as autorizações
+                        necessárias para publicar qualquer conteúdo enviado.
+                    </p>
+
+                    <p>
+                        Ao publicar conteúdo, o usuário concede à plataforma
+                        uma licença limitada, não exclusiva e gratuita para
+                        hospedar, armazenar, reproduzir tecnicamente e exibir
+                        esse material na medida necessária para oferecer o serviço.
+                    </p>
+
+                    <p>
+                        Essa autorização não significa transferência de propriedade
+                        do conteúdo. Os direitos do criador permanecem preservados,
+                        conforme a legislação aplicável.
+                    </p>
+
+                    <p>
+                        A administração poderá remover materiais que violem
+                        estes termos, os direitos de terceiros ou as regras
+                        da comunidade.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao7" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">07</span>
+                    <h2 class="section-title">Atividades e comportamentos proibidos</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Para preservar um ambiente seguro, organizado e respeitoso,
+                        determinadas práticas não são permitidas dentro da plataforma.
+                    </p>
+
+                    <p>É expressamente proibido:</p>
+
+                    <ul>
+                        <li>Publicar conteúdos ilegais, discriminatórios ou que promovam violência.</li>
+                        <li>Praticar assédio, perseguição, intimidação ou ameaças.</li>
+                        <li>Realizar tentativas de invasão ou exploração de vulnerabilidades.</li>
+                        <li>Distribuir vírus, arquivos maliciosos ou códigos prejudiciais.</li>
+                        <li>Utilizar bots ou automações não autorizadas para manipular funcionalidades.</li>
+                        <li>Fraudar sistemas, rankings, recompensas ou mecanismos internos.</li>
+                        <li>Divulgar dados pessoais de terceiros sem autorização ou fundamento legal.</li>
+                        <li>Praticar golpes, falsidade de identidade ou tentativas de fraude.</li>
+                        <li>Enviar spam ou mensagens comerciais não autorizadas.</li>
+                        <li>Contornar medidas de segurança ou restrições administrativas.</li>
+                        <li>Utilizar a plataforma para atividades que violem a legislação brasileira.</li>
+                    </ul>
+
+                    <p>
+                        A identificação de qualquer dessas práticas poderá resultar
+                        em análise administrativa e aplicação das medidas cabíveis.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao8" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">08</span>
+                    <h2 class="section-title">Comunicação e interação</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Caso existam recursos de mensagens, comentários, interações
+                        ou comunicação entre usuários, sua utilização deverá ocorrer
+                        de maneira respeitosa e responsável.
+                    </p>
+
+                    <p>
+                        As ferramentas de comunicação não devem ser utilizadas
+                        para ameaçar, constranger, perseguir, enganar ou prejudicar
+                        outras pessoas.
+                    </p>
+
+                    <p>
+                        Os usuários devem evitar compartilhar informações sensíveis,
+                        senhas, documentos pessoais, endereços residenciais ou
+                        outros dados privados em espaços públicos ou conversas
+                        com desconhecidos.
+                    </p>
+
+                    <p>
+                        Denúncias de abuso poderão ser encaminhadas à administração
+                        para avaliação, respeitando a privacidade e os procedimentos
+                        aplicáveis.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao9" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">09</span>
+                    <h2 class="section-title">Propriedade intelectual</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Os elementos originais desenvolvidos para o Roblox Clone,
+                        incluindo código-fonte, identidade visual, elementos
+                        gráficos, interfaces, textos institucionais e componentes
+                        próprios, poderão estar protegidos pelas normas de
+                        propriedade intelectual.
+                    </p>
+
+                    <p>
+                        Nenhum usuário poderá copiar, distribuir, comercializar,
+                        modificar ou utilizar materiais protegidos de maneira
+                        não autorizada.
+                    </p>
+
+                    <p>
+                        Os conteúdos criados pelos próprios usuários continuam
+                        sujeitos aos direitos de seus respectivos autores.
+                    </p>
+
+                    <p>
+                        Caso seja identificado material que infrinja direitos
+                        autorais ou outros direitos de propriedade intelectual,
+                        a administração poderá avaliar a denúncia e adotar
+                        providências.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao10" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">10</span>
+                    <h2 class="section-title">Moderação e administração</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A administração tem a função de acompanhar o funcionamento
+                        da plataforma, analisar denúncias e preservar a segurança
+                        e a integridade da comunidade.
+                    </p>
+
+                    <p>
+                        Quando houver indícios de violação destes termos, a equipe
+                        poderá realizar análises proporcionais à situação,
+                        respeitando os direitos dos usuários e a legislação aplicável.
+                    </p>
+
+                    <p>Entre as medidas administrativas possíveis estão:</p>
+
+                    <ul>
+                        <li>Orientação ou advertência ao usuário.</li>
+                        <li>Remoção de conteúdo irregular.</li>
+                        <li>Restrição temporária de determinadas funcionalidades.</li>
+                        <li>Suspensão temporária de acesso.</li>
+                        <li>Encerramento de contas em situações justificadas.</li>
+                        <li>Encaminhamento de situações às autoridades competentes quando necessário.</li>
+                    </ul>
+
+                    <p>
+                        Sempre que possível e adequado, as decisões poderão
+                        ser acompanhadas de uma justificativa e de orientações
+                        sobre os procedimentos de contestação disponíveis.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao11" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">11</span>
+                    <h2 class="section-title">Suspensões e penalidades</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A violação das regras poderá resultar em medidas
+                        administrativas, considerando a gravidade da ocorrência,
+                        a reincidência, os riscos envolvidos e as circunstâncias
+                        identificadas.
+                    </p>
+
+                    <p>As possíveis penalidades incluem:</p>
+
+                    <ul>
+                        <li>Advertência formal.</li>
+                        <li>Remoção de publicações ou materiais.</li>
+                        <li>Bloqueio temporário de funcionalidades.</li>
+                        <li>Suspensão temporária da conta.</li>
+                        <li>Encerramento permanente da conta, quando justificado.</li>
+                    </ul>
+
+                    <p>
+                        Medidas de segurança adicionais poderão ser adotadas
+                        quando forem legalmente justificadas e necessárias
+                        para proteger a plataforma e seus usuários.
+                    </p>
+
+                    <p>
+                        A aplicação de penalidades não elimina eventuais
+                        responsabilidades previstas na legislação.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao12" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">12</span>
+                    <h2 class="section-title">Disponibilidade e funcionamento</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A plataforma busca oferecer uma experiência estável,
+                        acessível e funcional. Entretanto, podem ocorrer
+                        interrupções decorrentes de manutenção, atualizações,
+                        falhas técnicas, problemas de infraestrutura ou
+                        situações fora do controle administrativo.
+                    </p>
+
+                    <p>
+                        Algumas funcionalidades poderão ser modificadas,
+                        temporariamente suspensas ou descontinuadas para
+                        melhorias, correções e manutenção.
+                    </p>
+
+                    <p>
+                        A administração adotará esforços razoáveis para
+                        preservar a continuidade dos serviços, sem garantir
+                        disponibilidade ininterrupta.
+                    </p>
+
+                    <p>
+                        Esta disposição não exclui direitos obrigatórios
+                        dos usuários previstos na legislação aplicável.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao13" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">13</span>
+                    <h2 class="section-title">Links e serviços de terceiros</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        A plataforma poderá apresentar links, ferramentas,
+                        bibliotecas, integrações ou serviços fornecidos
+                        por terceiros.
+                    </p>
+
+                    <p>
+                        Esses recursos podem estar sujeitos a termos,
+                        políticas de privacidade e condições próprias
+                        de seus respectivos fornecedores.
+                    </p>
+
+                    <p>
+                        Antes de utilizar serviços externos, recomendamos
+                        que o usuário consulte as informações disponibilizadas
+                        pelo fornecedor responsável.
+                    </p>
+
+                    <p>
+                        A existência de um link externo não representa
+                        necessariamente aprovação ou garantia sobre
+                        o conteúdo ou funcionamento do serviço indicado.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao14" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">14</span>
+                    <h2 class="section-title">Alterações destes termos</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Estes Termos de Uso poderão ser atualizados para
+                        acompanhar mudanças na plataforma, novas funcionalidades,
+                        melhorias de segurança ou alterações legais.
+                    </p>
+
+                    <p>
+                        Quando houver modificações relevantes, a administração
+                        buscará disponibilizar informações sobre as alterações
+                        por meio dos canais apropriados.
+                    </p>
+
+                    <p>
+                        A versão vigente estará disponível nesta página,
+                        acompanhada da respectiva data de atualização.
+                    </p>
+
+                    <p>
+                        Recomendamos consultar este documento periodicamente
+                        para conhecer as condições atuais de utilização.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao15" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">15</span>
+                    <h2 class="section-title">Legislação aplicável e direitos</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Estes termos deverão ser interpretados de acordo
+                        com a legislação brasileira aplicável, respeitando
+                        os direitos e garantias legalmente assegurados
+                        aos usuários.
+                    </p>
+
+                    <p>
+                        Entre as normas que poderão ser relevantes,
+                        conforme a natureza do serviço e a situação,
+                        estão o Marco Civil da Internet
+                        (Lei nº 12.965/2014), a Lei Geral de Proteção
+                        de Dados Pessoais (Lei nº 13.709/2018) e o
+                        Código de Defesa do Consumidor, quando aplicável.
+                    </p>
+
+                    <p>
+                        Nenhuma disposição destes termos deverá ser
+                        interpretada como renúncia a direitos que não
+                        possam ser afastados por acordo entre as partes.
+                    </p>
+
+                    <p>
+                        Caso alguma disposição seja considerada inválida
+                        ou inexigível, as demais disposições permanecerão
+                        aplicáveis na medida permitida pela legislação.
+                    </p>
+                </div>
+            </section>
+
+            <section id="secao16" class="card section-card p-6 md:p-7">
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="section-number">16</span>
+                    <h2 class="section-title">Contato e atendimento</h2>
+                </div>
+
+                <div class="section-text space-y-3">
+                    <p>
+                        Se você tiver dúvidas sobre estes Termos de Uso,
+                        precisar de esclarecimentos ou desejar comunicar
+                        alguma situação relacionada à utilização da
+                        plataforma, poderá procurar os canais de
+                        atendimento disponibilizados pela administração.
+                    </p>
+
+                    <p>
+                        Ao entrar em contato, procure descrever a situação
+                        com clareza, informando os detalhes necessários
+                        para que a equipe possa compreender sua solicitação.
+                    </p>
+
+                    <p>
+                        Não envie senhas ou informações confidenciais
+                        em solicitações de suporte.
+                    </p>
+
+                    <div class="info-box mt-4">
+                        <div class="flex items-center gap-3">
+
+                            <div class="w-10 h-10 rounded-xl bg-[#335fff]/20 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-headset text-[#6887ff]"></i>
+                            </div>
+
+                            <div>
+                                <h3 class="text-white font-bold text-sm">
+                                    Precisa de ajuda?
+                                </h3>
+
+                                <p class="text-gray-400 text-xs mt-1">
+                                    Consulte os canais de atendimento disponíveis na plataforma.
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+    <!-- FINALIZAÇÃO -->
+    <section class="card p-6 md:p-8 mt-10">
+
+        <div class="flex flex-col md:flex-row items-center gap-5">
+
+            <div class="w-14 h-14 shrink-0 rounded-2xl bg-[#00a665]/15 border border-[#00a665]/25 flex items-center justify-center">
+                <i class="fa-solid fa-shield-heart text-[#00c982] text-2xl"></i>
+            </div>
+
+            <div class="flex-1 text-center md:text-left">
+                <h2 class="text-white text-lg font-black mb-2">
+                    Uma comunidade melhor começa com respeito
+                </h2>
+
+                <p class="text-gray-400 text-sm leading-7">
+                    A colaboração de todos é fundamental para manter
+                    um ambiente organizado, seguro e agradável.
+                    Respeite as regras e ajude a construir uma boa
+                    experiência para todos.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="border-t border-[#2e3135] mt-6 pt-6 flex flex-wrap justify-center md:justify-start gap-3">
+
+            <a href="privacidade.html" class="action-button primary-button">
+                <i class="fa-solid fa-shield-halved"></i>
+                Política de Privacidade
+            </a>
+
+            <a href="regras.html" class="action-button secondary-button">
+                <i class="fa-solid fa-scale-balanced"></i>
+                Regras da Comunidade
+            </a>
+
+            <a href="index.html" class="action-button secondary-button">
+                <i class="fa-solid fa-house"></i>
+                Voltar ao início
+            </a>
+
+        </div>
+
+    </section>
+
+    <p class="text-center text-gray-600 text-xs leading-6 mt-7 max-w-3xl mx-auto">
+        Este documento é um modelo institucional para a plataforma Roblox Clone.
+        Antes de sua publicação como documento juridicamente vinculante,
+        adapte as disposições às funcionalidades efetivamente existentes
+        e submeta o conteúdo à revisão jurídica.
+    </p>
+
+</main>
+
+<!-- RODAPÉ -->
+<footer class="border-t border-[#2e3135] mt-12 bg-[#0b0c0e]">
+
+    <div class="max-w-7xl mx-auto px-5 py-10">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-9">
+
+            <div>
+
+                <a href="index.html" class="flex items-center gap-2 text-xl font-black tracking-tighter">
+                    <i class="fa-solid fa-cube text-[#3794ff]"></i>
+                    ROBLOX
+                </a>
+
+                <p class="text-gray-500 text-sm leading-7 mt-4 max-w-xs">
+                    Uma plataforma digital dedicada à interação,
+                    criatividade e experiências online.
+                </p>
+
+            </div>
+
+            <div>
+
+                <h3 class="text-white font-bold text-sm mb-4">
+                    Navegação
+                </h3>
+
+                <div class="flex flex-col gap-3 text-sm text-gray-500">
+                    <a href="index.html">Início</a>
+                    <a href="regras.html">Regras da Comunidade</a>
+                    <a href="termos.html">Termos de Uso</a>
+                    <a href="privacidade.html">Política de Privacidade</a>
+                </div>
+
+            </div>
+
+            <div>
+
+                <h3 class="text-white font-bold text-sm mb-4">
+                    Informações
+                </h3>
+
+                <div class="space-y-3 text-sm text-gray-500">
+
+                    <p>
+                        <i class="fa-solid fa-file-contract text-[#3794ff] mr-2"></i>
+                        Termos e condições
+                    </p>
+
+                    <p>
+                        <i class="fa-solid fa-shield-halved text-[#00a665] mr-2"></i>
+                        Segurança e privacidade
+                    </p>
+
+                    <p>
+                        <i class="fa-solid fa-users text-[#3794ff] mr-2"></i>
+                        Comunidade
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="border-t border-[#2e3135] mt-9 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
+
+            <p class="text-gray-600 text-xs text-center">
+                © 2026 Roblox Clone. Todos os direitos reservados.
+            </p>
+
+            <p class="text-gray-600 text-xs flex items-center gap-2">
+                Desenvolvido com
+                <i class="fa-solid fa-heart text-[#00a665]"></i>
+                para a comunidade.
+            </p>
+
+        </div>
+
+    </div>
+
+</footer>
+
+<!-- BOTÃO VOLTAR AO TOPO -->
+<button id="backToTop"
+    aria-label="Voltar ao topo"
+    title="Voltar ao topo">
+
+    <i class="fa-solid fa-arrow-up"></i>
+
+</button>
+
+<!-- JAVASCRIPT -->
+<script>
+
+// ======================================
+// MENU MOBILE
+// ======================================
+
+const menuButton = document.getElementById('menuButton');
+const mobileMenu = document.getElementById('mobileMenu');
+
+menuButton.addEventListener('click', () => {
+
+    const opened = mobileMenu.classList.toggle('open');
+
+    menuButton.setAttribute('aria-expanded', opened);
+
+    menuButton.setAttribute(
+        'aria-label',
+        opened ? 'Fechar menu' : 'Abrir menu'
+    );
+
+    menuButton.innerHTML = opened
+        ? '<i class="fa-solid fa-xmark"></i>'
+        : '<i class="fa-solid fa-bars"></i>';
+
+});
+
+// FECHAR MENU AO CLICAR EM UM LINK
+
+document.querySelectorAll('#mobileMenu a').forEach(link => {
+
+    link.addEventListener('click', () => {
+
+        mobileMenu.classList.remove('open');
+
+        menuButton.setAttribute('aria-expanded', 'false');
+
+        menuButton.setAttribute('aria-label', 'Abrir menu');
+
+        menuButton.innerHTML = '<i class="fa-solid fa-bars"></i>';
+
+    });
+
+});
+
+// FECHAR MENU AO PRESSIONAR ESC
+
+document.addEventListener('keydown', event => {
+
+    if (event.key === 'Escape') {
+
+        mobileMenu.classList.remove('open');
+
+        menuButton.setAttribute('aria-expanded', 'false');
+
+        menuButton.setAttribute('aria-label', 'Abrir menu');
+
+        menuButton.innerHTML = '<i class="fa-solid fa-bars"></i>';
+
+    }
+
+});
+
+// ======================================
+// PROGRESSO DE LEITURA
+// ======================================
+
+const progress = document.getElementById('readingProgress');
+
+function updateReadingProgress() {
+
+    const scrollTop = window.scrollY;
+
+    const documentHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+
+    const percentage = documentHeight > 0
+        ? (scrollTop / documentHeight) * 100
+        : 0;
+
+    progress.style.width = Math.min(100, percentage) + '%';
+
+}
+
+window.addEventListener(
+    'scroll',
+    updateReadingProgress,
+    { passive: true }
+);
+
+// ======================================
+// BOTÃO VOLTAR AO TOPO
+// ======================================
+
+const backToTop = document.getElementById('backToTop');
+
+function updateBackToTop() {
+
+    if (window.scrollY > 450) {
+
+        backToTop.classList.add('visible');
+
+    } else {
+
+        backToTop.classList.remove('visible');
+
+    }
+
+}
+
+window.addEventListener(
+    'scroll',
+    updateBackToTop,
+    { passive: true }
+);
+
+backToTop.addEventListener('click', () => {
+
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+
+});
+
+// ======================================
+// NAVEGAÇÃO SUAVE DO ÍNDICE
+// ======================================
+
+document.querySelectorAll('.toc-link').forEach(link => {
+
+    link.addEventListener('click', event => {
+
+        const target = document.querySelector(
+            link.getAttribute('href')
+        );
+
+        if (target) {
+
+            event.preventDefault();
+
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+
+            history.replaceState(
+                null,
+                '',
+                link.getAttribute('href')
+            );
+
+        }
+
+    });
+
+});
+
+// ======================================
+// INICIALIZAÇÃO
+// ======================================
+
+updateReadingProgress();
+updateBackToTop();
+
+</script>
+
+
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>
+</html>

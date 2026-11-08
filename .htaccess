@@ -1,0 +1,43 @@
+# BrplayBox - Apache (.htaccess)
+# Domínio: braplaybox.unaux.com
+
+Options -Indexes
+
+# ---- HTTPS redirect (compatível com Cloudflare / InfinityFree) ----
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ---- HSTS (1 ano) ----
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+# Bloqueia acesso direto a arquivos sensíveis
+<FilesMatch "^(database\.sql|store\.js|keepalive\.js|\.gitignore)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Sem cache para a API (evita resposta antiga)
+<FilesMatch "api\.php$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+    Header set Pragma "no-cache"
+</FilesMatch>
+
+# Sem cache para auth.js (garante que o navegador sempre pegue a versão nova)
+<FilesMatch "auth\.js$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+    Header set Pragma "no-cache"
+</FilesMatch>
+
+# Compressão
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
+</IfModule>
+
+# Headers de segurança (reduz aviso "Site perigoso")
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"

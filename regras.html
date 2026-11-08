@@ -1,0 +1,1386 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0c0e">
+
+    <title>Regras da Comunidade - Roblox Clone</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 100px;
+        }
+
+        body {
+            margin: 0;
+            background: #111214;
+            color: #e4e4e7;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        ::selection {
+            background: #335fff;
+            color: white;
+        }
+
+        /* HEADER */
+
+        .main-header {
+            height: 66px;
+            background: rgba(11, 12, 14, .96);
+            border-bottom: 1px solid #2e3135;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(18px);
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: 950;
+            letter-spacing: -1px;
+            color: white;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-link {
+            color: #a1a1aa;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: .2s;
+            padding: 22px 0;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link.active {
+            color: white;
+            border-color: #335fff;
+        }
+
+        .mobile-menu-button {
+            display: none;
+            width: 42px;
+            height: 42px;
+            border: 1px solid #303238;
+            background: #1d1f22;
+            color: white;
+            border-radius: 11px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .mobile-menu {
+            display: none;
+            background: #101114;
+            border-bottom: 1px solid #2e3135;
+            padding: 12px 18px 18px;
+        }
+
+        .mobile-menu.open {
+            display: block;
+        }
+
+        .mobile-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: .2s;
+        }
+
+        .mobile-menu a:hover,
+        .mobile-menu a.active {
+            background: #1a2040;
+            color: white;
+        }
+
+        /* CONTEÚDO */
+
+        .page-container {
+            width: min(100% - 40px, 1000px);
+            margin: auto;
+            padding: 65px 0 80px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 55px;
+        }
+
+        .hero-icon {
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 25px;
+            color: #3794ff;
+            background: linear-gradient(145deg, #1b2857, #151b36);
+            border: 1px solid rgba(55, 148, 255, .35);
+            box-shadow: 0 10px 45px rgba(51, 95, 255, .12);
+            font-size: 35px;
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 46px);
+            font-weight: 950;
+            letter-spacing: -1.8px;
+            color: white;
+            line-height: 1.15;
+            margin: 0 0 15px;
+        }
+
+        .hero-description {
+            max-width: 650px;
+            margin: auto;
+            color: #92949d;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 22px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 13px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .badge-blue {
+            background: #1a2040;
+            color: #93b5ff;
+            border: 1px solid #29366b;
+        }
+
+        .badge-green {
+            background: #103526;
+            color: #6ee7b7;
+            border: 1px solid #20583f;
+        }
+
+        /* AVISO */
+
+        .intro-notice {
+            display: flex;
+            gap: 16px;
+            padding: 21px;
+            margin-bottom: 28px;
+            background: linear-gradient(120deg, #172247, #191b25);
+            border: 1px solid #293d78;
+            border-radius: 15px;
+        }
+
+        .intro-notice > i {
+            color: #60a5fa;
+            font-size: 23px;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .intro-notice h2 {
+            color: white;
+            font-size: 15px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+
+        .intro-notice p {
+            color: #b8c5e2;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* CARDS */
+
+        .rules-container {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .rule-card {
+            background: #1d1f22;
+            border: 1px solid #2e3135;
+            border-radius: 17px;
+            overflow: hidden;
+            transition: border-color .25s, transform .25s;
+        }
+
+        .rule-card:hover {
+            border-color: #424a60;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 17px;
+            padding: 23px 25px;
+            border-bottom: 1px solid #2e3135;
+        }
+
+        .section-icon {
+            width: 49px;
+            height: 49px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 20px;
+        }
+
+        .icon-blue {
+            background: #1a2040;
+            color: #3794ff;
+        }
+
+        .icon-purple {
+            background: #251d38;
+            color: #b59aff;
+        }
+
+        .icon-red {
+            background: #351c20;
+            color: #fb7185;
+        }
+
+        .card-header h2 {
+            color: white;
+            font-size: 19px;
+            font-weight: 850;
+            margin: 0 0 5px;
+        }
+
+        .card-header p {
+            color: #92949d;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        .rules-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rule-item {
+            display: flex;
+            gap: 17px;
+            align-items: flex-start;
+            padding: 20px 24px;
+            border-bottom: 1px solid #2e3135;
+            transition: background .2s;
+        }
+
+        .rule-item:last-child {
+            border-bottom: none;
+        }
+
+        .rule-item:hover {
+            background: rgba(255,255,255,.018);
+        }
+
+        .rule-number {
+            width: 37px;
+            height: 37px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .number-blue {
+            background: #1a2040;
+            color: #65a4ff;
+        }
+
+        .number-purple {
+            background: #251d38;
+            color: #c4a7ff;
+        }
+
+        .rule-content {
+            min-width: 0;
+            padding-top: 1px;
+        }
+
+        .rule-content h3 {
+            color: #f4f4f5;
+            font-size: 14px;
+            font-weight: 800;
+            margin: 0 0 7px;
+        }
+
+        .rule-content p {
+            color: #9b9da6;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* PENALIDADES */
+
+        .penalties-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+            padding: 23px;
+        }
+
+        .penalty-card {
+            background: #15171a;
+            border: 1px solid #303238;
+            border-radius: 13px;
+            padding: 19px;
+            transition: .25s;
+        }
+
+        .penalty-card:hover {
+            border-color: #4a5060;
+            transform: translateY(-2px);
+        }
+
+        .penalty-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .penalty-heading i {
+            font-size: 20px;
+        }
+
+        .penalty-heading h3 {
+            color: white;
+            font-size: 14px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .penalty-card p {
+            color: #999ba4;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        /* AVISO FINAL */
+
+        .final-notice {
+            padding: 26px;
+            margin-top: 28px;
+            border: 1px solid #293d78;
+            border-radius: 17px;
+            background: linear-gradient(120deg, #1a2040, #1d1f22);
+        }
+
+        .final-notice-content {
+            display: flex;
+            gap: 17px;
+            align-items: flex-start;
+        }
+
+        .final-notice-icon {
+            color: #60a5fa;
+            font-size: 25px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .final-notice h2 {
+            font-size: 18px;
+            font-weight: 850;
+            color: white;
+            margin: 0 0 8px;
+        }
+
+        .final-notice p {
+            color: #c2c8d8;
+            font-size: 13px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 9px;
+            min-height: 43px;
+            padding: 0 17px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: .2s;
+        }
+
+        .primary-button {
+            color: white;
+            background: #335fff;
+        }
+
+        .primary-button:hover {
+            background: #4d74ff;
+            transform: translateY(-1px);
+        }
+
+        .secondary-button {
+            color: white;
+            background: #2b2e32;
+            border: 1px solid #41454c;
+        }
+
+        .secondary-button:hover {
+            background: #383c42;
+        }
+
+        /* FOOTER */
+
+        .main-footer {
+            border-top: 1px solid #2e3135;
+            background: #0b0c0e;
+            padding: 32px 20px;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 22px;
+            margin-bottom: 18px;
+        }
+
+        .footer-links a {
+            color: #858791;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-copy {
+            color: #656771;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        /* PROGRESSO */
+
+        .reading-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #335fff, #3794ff);
+            z-index: 200;
+            transition: width .1s linear;
+        }
+
+        .back-to-top {
+            position: fixed;
+            right: 22px;
+            bottom: 22px;
+            width: 45px;
+            height: 45px;
+            border-radius: 13px;
+            background: #335fff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 5px 25px rgba(51,95,255,.3);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: .25s;
+            z-index: 80;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .back-to-top:hover {
+            background: #4d74ff;
+        }
+
+        /* RESPONSIVIDADE TABLET */
+
+        @media (max-width: 768px) {
+            .main-header {
+                height: 62px;
+            }
+
+            .desktop-nav {
+                display: none !important;
+            }
+
+            .mobile-menu-button {
+                display: flex;
+            }
+
+            .page-container {
+                width: min(100% - 32px, 650px);
+                padding-top: 45px;
+                padding-bottom: 60px;
+            }
+
+            .hero {
+                margin-bottom: 38px;
+            }
+
+            .hero-icon {
+                width: 76px;
+                height: 76px;
+                font-size: 30px;
+                border-radius: 22px;
+                margin-bottom: 20px;
+            }
+
+            .hero h1 {
+                letter-spacing: -1px;
+            }
+
+            .card-header {
+                padding: 20px;
+            }
+
+            .rule-item {
+                padding: 18px 20px;
+            }
+
+            .penalties-grid {
+                padding: 18px;
+            }
+        }
+
+        /* RESPONSIVIDADE CELULAR */
+
+        @media (max-width: 520px) {
+            .page-container {
+                width: calc(100% - 26px);
+                padding-top: 36px;
+            }
+
+            .hero {
+                margin-bottom: 30px;
+            }
+
+            .hero-icon {
+                width: 70px;
+                height: 70px;
+                font-size: 27px;
+                border-radius: 19px;
+            }
+
+            .hero h1 {
+                font-size: 30px;
+                margin-bottom: 12px;
+            }
+
+            .hero-description {
+                font-size: 13px;
+                line-height: 1.75;
+            }
+
+            .hero-badges {
+                gap: 7px;
+                margin-top: 17px;
+            }
+
+            .badge {
+                font-size: 10px;
+                padding: 7px 10px;
+            }
+
+            .intro-notice {
+                padding: 16px;
+                gap: 12px;
+                border-radius: 13px;
+            }
+
+            .intro-notice > i {
+                font-size: 19px;
+            }
+
+            .intro-notice h2 {
+                font-size: 14px;
+            }
+
+            .intro-notice p {
+                font-size: 12px;
+            }
+
+            .rules-container {
+                gap: 17px;
+            }
+
+            .rule-card {
+                border-radius: 14px;
+            }
+
+            .card-header {
+                padding: 17px 15px;
+                gap: 13px;
+            }
+
+            .section-icon {
+                width: 43px;
+                height: 43px;
+                border-radius: 12px;
+                font-size: 17px;
+            }
+
+            .card-header h2 {
+                font-size: 15px;
+            }
+
+            .card-header p {
+                font-size: 11px;
+            }
+
+            .rule-item {
+                padding: 16px 14px;
+                gap: 12px;
+            }
+
+            .rule-number {
+                width: 32px;
+                height: 32px;
+                border-radius: 10px;
+                font-size: 12px;
+            }
+
+            .rule-content h3 {
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            .rule-content p {
+                font-size: 12px;
+                line-height: 1.75;
+            }
+
+            .penalties-grid {
+                grid-template-columns: 1fr;
+                padding: 14px;
+                gap: 11px;
+            }
+
+            .penalty-card {
+                padding: 16px;
+            }
+
+            .penalty-card p {
+                font-size: 12px;
+            }
+
+            .final-notice {
+                padding: 19px 16px;
+                border-radius: 14px;
+            }
+
+            .final-notice-content {
+                gap: 12px;
+            }
+
+            .final-notice-icon {
+                font-size: 21px;
+            }
+
+            .final-notice h2 {
+                font-size: 16px;
+            }
+
+            .final-notice p {
+                font-size: 12px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-button {
+                width: 100%;
+                min-height: 45px;
+            }
+
+            .footer-links {
+                gap: 13px 18px;
+            }
+
+            .footer-links a {
+                font-size: 12px;
+            }
+
+            .main-footer {
+                padding: 27px 15px;
+            }
+
+            .back-to-top {
+                width: 42px;
+                height: 42px;
+                right: 14px;
+                bottom: 14px;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .hero h1 {
+                font-size: 26px;
+            }
+
+            .card-header h2 {
+                font-size: 14px;
+            }
+
+            .rule-item {
+                gap: 9px;
+                padding-left: 11px;
+                padding-right: 11px;
+            }
+
+            .rule-content p {
+                font-size: 11px;
+            }
+
+            .badge {
+                font-size: 9px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: .01ms !important;
+                animation-duration: .01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="reading-progress" id="readingProgress"></div>
+
+    <!-- HEADER -->
+    <header class="main-header">
+        <div class="max-w-7xl mx-auto h-full px-4 md:px-6 flex items-center justify-between">
+
+            <a href="index.html" class="logo">
+                <i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>
+                ROBLOX
+            </a>
+
+            <nav class="desktop-nav flex items-center gap-7 h-full">
+                <a href="index.html" class="nav-link">Início</a>
+                <a href="regras.html" class="nav-link active">Regras</a>
+                <a href="termos.html" class="nav-link">Termos</a>
+                <a href="privacidade.html" class="nav-link">Privacidade</a>
+            </nav>
+
+            <button
+                class="mobile-menu-button"
+                id="mobileMenuButton"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+                aria-controls="mobileMenu"
+                type="button"
+            >
+                <i class="fa-solid fa-bars" id="menuIcon"></i>
+            </button>
+
+        </div>
+
+        <nav class="mobile-menu" id="mobileMenu">
+            <a href="index.html">
+                <i class="fa-solid fa-house w-5"></i>
+                Início
+            </a>
+
+            <a href="regras.html" class="active">
+                <i class="fa-solid fa-scale-balanced w-5"></i>
+                Regras da Comunidade
+            </a>
+
+            <a href="termos.html">
+                <i class="fa-solid fa-file-contract w-5"></i>
+                Termos de Uso
+            </a>
+
+            <a href="privacidade.html">
+                <i class="fa-solid fa-shield-halved w-5"></i>
+                Política de Privacidade
+            </a>
+        </nav>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="page-container">
+
+        <!-- HERO -->
+        <section class="hero">
+
+            <div class="hero-icon">
+                <i class="fa-solid fa-scale-balanced"></i>
+            </div>
+
+            <h1>Regras da Comunidade</h1>
+
+            <p class="hero-description">
+                Nosso objetivo é manter um ambiente seguro, divertido e respeitoso
+                para todos os jogadores. Conheça as regras e ajude a construir
+                uma comunidade melhor para todos.
+            </p>
+
+            <div class="hero-badges">
+                <span class="badge badge-green">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    Atualizado em outubro de 2026
+                </span>
+
+                <span class="badge badge-blue">
+                    <i class="fa-solid fa-users"></i>
+                    Para todos os usuários
+                </span>
+            </div>
+
+        </section>
+
+        <!-- AVISO INICIAL -->
+        <section class="intro-notice">
+
+            <i class="fa-solid fa-circle-info"></i>
+
+            <div>
+                <h2>Leia antes de jogar</h2>
+
+                <p>
+                    Estas regras se aplicam a todos os usuários da plataforma,
+                    independentemente do tempo de cadastro ou nível de experiência.
+                    Ao utilizar nossos serviços, você concorda em respeitar as
+                    diretrizes apresentadas nesta página.
+                </p>
+            </div>
+
+        </section>
+
+        <div class="rules-container">
+
+            <!-- REGRAS DO CHAT DO MAPA -->
+            <section class="rule-card">
+
+                <div class="card-header">
+
+                    <div class="section-icon icon-blue">
+                        <i class="fa-solid fa-map"></i>
+                    </div>
+
+                    <div>
+                        <h2>Regras do Chat do Mapa</h2>
+                        <p>Válidas durante partidas em qualquer mapa</p>
+                    </div>
+
+                </div>
+
+                <div class="rules-list">
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">1</div>
+
+                        <div class="rule-content">
+                            <h3>Respeite todos os jogadores</h3>
+
+                            <p>
+                                Insultos, ofensas, xingamentos ou qualquer forma
+                                de desrespeito no chat são proibidos. Trate os
+                                outros como gostaria de ser tratado.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">2</div>
+
+                        <div class="rule-content">
+                            <h3>Proibido spam e flood</h3>
+
+                            <p>
+                                Não envie mensagens repetidas, caracteres
+                                aleatórios ou mensagens em excesso em curto
+                                período de tempo. Utilize o chat de maneira
+                                responsável.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">3</div>
+
+                        <div class="rule-content">
+                            <h3>Sem divulgação de links externos</h3>
+
+                            <p>
+                                Não é permitido compartilhar links de outros
+                                sites, Discord, grupos de WhatsApp ou qualquer
+                                endereço externo no chat do mapa.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">4</div>
+
+                        <div class="rule-content">
+                            <h3>Proibido conteúdo impróprio</h3>
+
+                            <p>
+                                Qualquer conteúdo de natureza sexual, violenta
+                                de forma explícita, racista, homofóbica ou
+                                discriminatória é estritamente proibido.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">5</div>
+
+                        <div class="rule-content">
+                            <h3>Proibido trapacear e usar hacks</h3>
+
+                            <p>
+                                O uso de hacks, exploits, scripts ou qualquer
+                                modificação que dê vantagem desleal no jogo
+                                resulta em ban imediato por HWID.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-blue">6</div>
+
+                        <div class="rule-content">
+                            <h3>Jogue de forma colaborativa</h3>
+
+                            <p>
+                                Sabotar propositalmente a experiência de outros
+                                jogadores (griefing) ou abandonar partidas
+                                repetidamente prejudica a comunidade e não é
+                                tolerado.
+                            </p>
+                        </div>
+                    </article>
+
+                </div>
+            </section>
+
+            <!-- REGRAS GERAIS -->
+            <section class="rule-card">
+
+                <div class="card-header">
+
+                    <div class="section-icon icon-purple">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+
+                    <div>
+                        <h2>Regras Gerais da Plataforma</h2>
+                        <p>Aplicam-se em toda a plataforma</p>
+                    </div>
+
+                </div>
+
+                <div class="rules-list">
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">1</div>
+
+                        <div class="rule-content">
+                            <h3>Uma conta por pessoa</h3>
+
+                            <p>
+                                Cada pessoa deve usar apenas uma conta. Criar
+                                múltiplas contas para burlar penalidades ou
+                                obter vantagens é proibido.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">2</div>
+
+                        <div class="rule-content">
+                            <h3>Não se passe por outras pessoas</h3>
+
+                            <p>
+                                Criar contas com nomes iguais ou similares a
+                                outros jogadores, moderadores ou administradores
+                                com intenção de enganar é proibido.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">3</div>
+
+                        <div class="rule-content">
+                            <h3>Conteúdo dos mapas</h3>
+
+                            <p>
+                                Mapas publicados devem seguir as regras de
+                                conteúdo. Mapas com tema adulto, violência
+                                extrema, conteúdo racista ou ilegal serão
+                                removidos.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">4</div>
+
+                        <div class="rule-content">
+                            <h3>Privacidade e segurança</h3>
+
+                            <p>
+                                Não compartilhe dados pessoais (endereço,
+                                telefone, senha) no chat. Nunca solicite dados
+                                pessoais de outros jogadores.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">5</div>
+
+                        <div class="rule-content">
+                            <h3>Proibido tentar hackear a plataforma</h3>
+
+                            <p>
+                                Tentativas de acessar dados de outros usuários,
+                                explorar vulnerabilidades da plataforma ou
+                                realizar ataques resultam em ban permanente
+                                e possível ação legal.
+                            </p>
+                        </div>
+                    </article>
+
+                    <article class="rule-item">
+                        <div class="rule-number number-purple">6</div>
+
+                        <div class="rule-content">
+                            <h3>Respeite as decisões da moderação</h3>
+
+                            <p>
+                                As decisões dos administradores são finais.
+                                Criar cenas públicas ou assediar a equipe de
+                                moderação não é tolerado.
+                            </p>
+                        </div>
+                    </article>
+
+                </div>
+            </section>
+
+            <!-- PENALIDADES -->
+            <section class="rule-card">
+
+                <div class="card-header">
+
+                    <div class="section-icon icon-red">
+                        <i class="fa-solid fa-gavel"></i>
+                    </div>
+
+                    <div>
+                        <h2>Penalidades</h2>
+                        <p>Como aplicamos as punições</p>
+                    </div>
+
+                </div>
+
+                <div class="penalties-grid">
+
+                    <article class="penalty-card">
+
+                        <div class="penalty-heading">
+                            <i class="fa-solid fa-clock text-sky-400"></i>
+                            <h3>Ban Temporário</h3>
+                        </div>
+
+                        <p>
+                            De 1 hora a 365 dias, dependendo da gravidade.
+                            Primeira infração geralmente resulta em aviso
+                            ou ban curto.
+                        </p>
+
+                    </article>
+
+                    <article class="penalty-card">
+
+                        <div class="penalty-heading">
+                            <i class="fa-solid fa-microchip text-purple-400"></i>
+                            <h3>Ban por HWID</h3>
+                        </div>
+
+                        <p>
+                            Bloqueia o dispositivo, impossibilitando criar
+                            novas contas. Aplicado a cheaters e infratores
+                            reincidentes.
+                        </p>
+
+                    </article>
+
+                    <article class="penalty-card">
+
+                        <div class="penalty-heading">
+                            <i class="fa-solid fa-envelope text-amber-400"></i>
+                            <h3>Ban por E-mail</h3>
+                        </div>
+
+                        <p>
+                            Bloqueia o e-mail, impedindo login e novo
+                            cadastro. Aplicado junto a outros tipos de ban.
+                        </p>
+
+                    </article>
+
+                    <article class="penalty-card">
+
+                        <div class="penalty-heading">
+                            <i class="fa-solid fa-skull-crossbones text-red-400"></i>
+                            <h3>Ban Permanente</h3>
+                        </div>
+
+                        <p>
+                            Exclusão completa da conta. Reservado para
+                            violações gravíssimas. Irreversível.
+                        </p>
+
+                    </article>
+
+                </div>
+            </section>
+
+        </div>
+
+        <!-- DENÚNCIAS -->
+        <section class="final-notice">
+
+            <div class="final-notice-content">
+
+                <i class="fa-solid fa-circle-info final-notice-icon"></i>
+
+                <div class="flex-1 min-w-0">
+
+                    <h2>Denúncias e suporte</h2>
+
+                    <p>
+                        Viu alguém infringindo as regras? Entre em contato
+                        com um administrador. Sua ajuda é essencial para
+                        manter a comunidade saudável, segura e agradável
+                        para todos os jogadores.
+                    </p>
+
+                    <div class="action-buttons">
+
+                        <a href="index.html" class="action-button primary-button">
+                            <i class="fa-solid fa-house"></i>
+                            Página inicial
+                        </a>
+
+                        <a href="termos.html" class="action-button secondary-button">
+                            <i class="fa-solid fa-file-contract"></i>
+                            Termos de uso
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+
+        <div class="footer-links">
+
+            <a href="regras.html">Regras</a>
+            <a href="termos.html">Termos de Uso</a>
+            <a href="privacidade.html">Política de Privacidade</a>
+            <a href="index.html">Início</a>
+
+        </div>
+
+        <p class="footer-copy">
+            © 2026 Roblox Clone — Plataforma de jogos online.
+            Todos os direitos reservados.
+        </p>
+
+    </footer>
+
+    <!-- VOLTAR AO TOPO -->
+    <button
+        class="back-to-top"
+        id="backToTop"
+        type="button"
+        aria-label="Voltar ao topo"
+        title="Voltar ao topo"
+    >
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // MENU MOBILE
+
+        const menuButton = document.getElementById('mobileMenuButton');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+
+        menuButton.addEventListener('click', function () {
+            const isOpen = mobileMenu.classList.toggle('open');
+
+            menuButton.setAttribute('aria-expanded', String(isOpen));
+
+            menuIcon.className = isOpen
+                ? 'fa-solid fa-xmark'
+                : 'fa-solid fa-bars';
+        });
+
+        // FECHAR MENU AO CLICAR EM UM LINK
+
+        mobileMenu.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                mobileMenu.classList.remove('open');
+
+                menuButton.setAttribute('aria-expanded', 'false');
+                menuIcon.className = 'fa-solid fa-bars';
+            });
+        });
+
+        // FECHAR MENU COM ESC
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                mobileMenu.classList.remove('open');
+
+                menuButton.setAttribute('aria-expanded', 'false');
+                menuIcon.className = 'fa-solid fa-bars';
+            }
+        });
+
+        // PROGRESSO DE LEITURA
+
+        const readingProgress = document.getElementById('readingProgress');
+        const backToTop = document.getElementById('backToTop');
+
+        function updatePageProgress() {
+            const scrollTop = window.scrollY;
+
+            const documentHeight =
+                document.documentElement.scrollHeight - window.innerHeight;
+
+            const progress = documentHeight > 0
+                ? (scrollTop / documentHeight) * 100
+                : 0;
+
+            readingProgress.style.width = Math.min(progress, 100) + '%';
+
+            if (scrollTop > 350) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        }
+
+        window.addEventListener('scroll', updatePageProgress, {
+            passive: true
+        });
+
+        window.addEventListener('resize', updatePageProgress);
+
+        updatePageProgress();
+
+        // VOLTAR AO TOPO
+
+        backToTop.addEventListener('click', function () {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    </script>
+
+
+
+<style id="mobileNavStyle">
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){#mobileNav{display:flex}body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}}
+</style>
+<nav id="mobileNav"><a href="index.html"><i class="fa-solid fa-house"></i>Início</a><a href="batepapo.html"><i class="fa-solid fa-comments"></i>Chat</a><a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a><a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a><a href="#" id="mobileProfileLink_nav"><i class="fa-solid fa-user"></i>Perfil</a></nav>
+<script>(function(){var ml=document.getElementById('mobileProfileLink_nav');if(ml&&typeof Auth!=='undefined'){var n=Auth.current?Auth.current():null;if(n)ml.href=Auth.profileUrl(n);}})();</script>
+</body>
+</html>

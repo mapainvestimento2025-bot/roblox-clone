@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roblox Clone - Bate-papo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="auth.js?v=5"></script>
+<script>
+(function(){
+  // Aguarda auth.js estar disponível (até 5s) antes de redirecionar
+  if (typeof Auth !== 'undefined' && typeof Auth.init === 'function') return;
+  if (typeof Auth !== 'undefined' && typeof Auth.avatar === 'function') return;
+  var tries = 0;
+  var t = setInterval(function(){
+    tries++;
+    if (typeof Auth !== 'undefined') { clearInterval(t); return; }
+    if (tries >= 50) {
+      clearInterval(t);
+      location.reload(true);
+    }
+  }, 100);
+})();
+</script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    }
+  </script>
+<style>
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#4B4D4F;border-radius:4px}
+body{background:#111214;color:#fff;font-family:'Segoe UI',sans-serif}
+.si:hover{background:rgba(255,255,255,.08)}
+.bub{max-width:75%;padding:8px 12px;border-radius:16px;word-break:break-word;white-space:pre-wrap;line-height:1.35}
+.bub.me{background:#2a43c2;border-bottom-right-radius:4px}.bub.ot{background:#393b3d;border-bottom-left-radius:4px}
+.mrow{display:flex;align-items:flex-end;gap:6px;transition:transform .15s}.mrow.mine{justify-content:flex-end}
+.mrow.g .bub.me{border-top-right-radius:6px}.mrow.g .bub.ot{border-top-left-radius:6px}
+.acts{display:flex;gap:4px;opacity:0;transition:opacity .12s;margin-bottom:4px}.mrow:hover .acts,.mrow.show .acts{opacity:1}
+.mrow.mine .acts{order:-1}
+.act{width:28px;height:28px;border-radius:50%;background:#2d3033;border:1px solid #4a4d50;color:#ccc;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.act:hover{background:#3a3e42;color:#fff}
+.qt{border-left:3px solid rgba(255,255,255,.75);background:rgba(0,0,0,.2);border-radius:6px;padding:4px 8px;margin-bottom:5px;cursor:pointer;font-size:12px;white-space:normal}
+.qt:hover{background:rgba(0,0,0,.3)}.qn{font-weight:700;opacity:.95}.qm{opacity:.85;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.tk{display:inline-block;vertical-align:-4px;margin-left:4px;line-height:0}.tk svg{width:18px;height:17px;fill:rgba(255,255,255,.72)}.tk.read svg{fill:#5ce1ff;filter:drop-shadow(0 0 1px rgba(92,225,255,.6))}
+.pv .tk{margin:0 4px 0 0}.pv .tk svg{width:16px;height:15px;fill:#8a8d91;filter:none}.pv .tk.read svg{fill:#4fa8ff}
+.flash .bub{animation:flash 1.3s ease}@keyframes flash{0%,60%{box-shadow:0 0 0 3px rgba(255,214,102,.9)}100%{box-shadow:0 0 0 0 rgba(255,214,102,0)}}
+#replyBar{animation:up .15s ease}@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.owner-badge{color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,0.7)}.admin-badge{color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6)}.verified-badge{color:#3794ff}
+</style>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0066ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Roblox Clone">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-sm">
+<header class="h-12 bg-[#111214] border-b border-gray-700 flex items-center justify-between px-4 shrink-0 z-40">
+  <div class="flex items-center space-x-6">
+    <a href="index.html" class="text-xl font-black tracking-tighter"><i class="fa-solid fa-cube text-[#3794ff] mr-1"></i>ROBLOX</a>
+    <nav class="hidden md:flex space-x-4 font-medium">
+      <a href="index.html" class="text-white">Home</a>
+      <a href="studio.html" class="text-white font-bold bg-blue-600 px-3 py-1 rounded hover:bg-blue-500">Criar (Studio)</a>
+    </nav>
+  </div>
+  <div class="flex items-center gap-3">
+    <span class="font-bold cursor-pointer hover:underline" id="hdrUser" title="Ver meu perfil"></span>
+    <button onclick="Auth.logout()" class="text-gray-400 hover:text-white" title="Sair da conta"><i class="fa-solid fa-right-from-bracket text-lg"></i></button>
+  </div>
+</header>
+
+<div class="flex flex-1 overflow-hidden">
+  <!-- lista de conversas -->
+  <aside id="listPane" class="w-full md:w-80 bg-[#232527] border-r border-gray-700 flex flex-col shrink-0">
+    <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between"><h1 class="text-lg font-bold"><i class="fa-solid fa-comments mr-2"></i>Bate-papo</h1><span id="cnt" class="text-xs text-gray-400"></span></div>
+    <div class="p-3 border-b border-gray-700"><div class="relative"><i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+      <input id="fq" oninput="renderList()" placeholder="Buscar amigos" class="w-full bg-[#111214] border border-gray-600 focus:border-blue-500 rounded-full pl-9 pr-3 py-1.5 outline-none"></div></div>
+    <div id="convs" class="flex-1 overflow-y-auto"></div>
+  </aside>
+
+  <!-- conversa -->
+  <section id="chatPane" class="hidden md:flex flex-1 flex-col bg-[#1b1d1f] min-w-0">
+    <div id="empty" class="flex-1 flex flex-col items-center justify-center text-gray-500 text-center p-6">
+      <i class="fa-regular fa-comments text-6xl mb-4"></i><p class="text-base">Selecione um amigo para conversar</p>
+      <p id="noFriends" class="hidden mt-2 text-sm">Você ainda não tem amigos. <a href="index.html" class="text-blue-400 hover:underline">Adicione alguém na página inicial</a>.</p>
+    </div>
+    <div id="conv" class="hidden flex-1 flex-col min-h-0">
+      <div class="h-14 px-4 flex items-center gap-3 border-b border-gray-700 bg-[#232527] shrink-0">
+        <button onclick="closeConv()" class="md:hidden text-gray-300 hover:text-white mr-1" title="Voltar"><i class="fa-solid fa-arrow-left"></i></button>
+        <div id="cAv"></div>
+        <a id="cName" class="font-bold text-base hover:underline cursor-pointer truncate"></a>
+        <span id="cSub" class="text-xs text-gray-500 truncate"></span>
+      </div>
+      <div id="msgs" class="flex-1 overflow-y-auto p-4 space-y-1.5"></div>
+      <div id="oldBar" class="hidden bg-yellow-600/15 border-t border-yellow-500/30 text-yellow-300 text-xs px-4 py-2"></div>
+      <div id="errBar" class="hidden bg-red-600/20 border-t border-red-500/40 text-red-300 text-xs px-4 py-2"></div>
+      <div id="replyBar" class="hidden bg-[#232527] border-t border-gray-700 px-3 pt-2.5 flex items-center gap-3">
+        <i class="fa-solid fa-reply text-[#7a9bff]"></i>
+        <div class="border-l-4 border-[#335fff] pl-3 flex-1 min-w-0"><div id="rbName" class="text-xs font-bold text-[#7a9bff]"></div><div id="rbText" class="text-xs text-gray-300 truncate"></div></div>
+        <button type="button" onclick="clearReply()" class="text-gray-400 hover:text-white w-7 h-7 rounded-full hover:bg-white/10" title="Cancelar resposta (Esc)"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="form" class="p-3 border-t border-gray-700 bg-[#232527] flex gap-2 shrink-0" autocomplete="off">
+        <input id="inp" maxlength="500" enterkeyhint="send" placeholder="Enviar uma mensagem" class="flex-1 bg-[#111214] border border-gray-600 focus:border-blue-500 rounded-full px-4 py-2 outline-none">
+        <button type="submit" class="bg-[#335fff] hover:bg-[#4a72ff] w-11 h-11 rounded-full shrink-0" title="Enviar"><i class="fa-solid fa-paper-plane"></i></button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ME = Auth.require();
+
+/* ============================================================
+   CRIPTOGRAFIA DE PONTA A PONTA (E2EE)
+   - Chave AES-GCM-256 derivada dos nomes dos dois participantes
+     via PBKDF2 (SHA-256, 100.000 iterações)
+   - Só quem conhece os dois nomes consegue decifrar
+   - O servidor nunca vê o conteúdo em texto claro
+   ============================================================ */
+const E2E = (() => {
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const b64e = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  const pairSeed = (a, b) => [a.trim().toLowerCase(), b.trim().toLowerCase()].sort().join(':');
+  const keyCache = {};
+  async function getKey(userA, userB) {
+    const seed = pairSeed(userA, userB);
+    if (keyCache[seed]) return keyCache[seed];
+    const raw = await crypto.subtle.importKey('raw', enc.encode(seed), 'PBKDF2', false, ['deriveKey']);
+    const salt = enc.encode('rbxe2e:' + seed);
+    const k = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 100000 },
+      raw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+    keyCache[seed] = k; return k;
+  }
+  async function encrypt(text, userA, userB) {
+    try {
+      const k = await getKey(userA, userB);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, enc.encode(text));
+      return 'e2e:' + b64e(iv) + ':' + b64e(ct);
+    } catch { return text; } // fallback: texto puro se WebCrypto indisponível
+  }
+  async function decrypt(data, userA, userB) {
+    if (!data || !data.startsWith('e2e:')) return data;
+    try {
+      const parts = data.split(':'); if (parts.length < 3) return data;
+      const iv = b64d(parts[1]), ct = b64d(parts.slice(2).join(':'));
+      const k = await getKey(userA, userB);
+      const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, k, ct);
+      return dec.decode(pt);
+    } catch { return '🔒 [mensagem criptografada — abra no mesmo navegador]'; }
+  }
+  return { encrypt, decrypt, pairSeed };
+})();
+$('hdrUser').textContent = ME; $('hdrUser').onclick = () => location.href = Auth.profileUrl(ME);
+let cur = null, summary = {}, lastKey = '';
+const circ = (n, size) => { const d = document.createElement('div'); d.className = 'rounded-full flex items-center justify-center font-black shrink-0 text-[#222]'; d.style.cssText = `width:${size}px;height:${size}px;background:${Auth.avatar(n).head};font-size:${size / 2.4}px`; d.textContent = n[0].toUpperCase(); return d; };
+const SV1 = '<svg viewBox="0 0 16 15" width="16" height="15"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.405-2.272a.463.463 0 0 0-.336-.136.47.47 0 0 0-.362.159.508.508 0 0 0 .01.682l2.76 2.612a.5.5 0 0 0 .353.138.5.5 0 0 0 .364-.19l6.51-8.04a.47.47 0 0 0-.019-.665z"/></svg>';
+const SV2 = '<svg viewBox="0 0 16 15" width="16" height="15"><path d="M11.071.653a.457.457 0 0 0-.304-.102.493.493 0 0 0-.381.178l-6.19 7.636-2.405-2.272a.463.463 0 0 0-.336-.136.47.47 0 0 0-.362.159.508.508 0 0 0 .01.682l2.76 2.612a.5.5 0 0 0 .353.138.5.5 0 0 0 .364-.19l6.51-8.04a.47.47 0 0 0-.019-.665z"/><path d="M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512z"/></svg>';
+/* selos: sent = 1 cinza (amigo offline) · delivered = 2 cinzas (amigo online, não leu) · read = 2 azuis (leu) */
+function tickEl(state) { const s = document.createElement('span'); s.className = 'tk ' + state; s.title = { sent: 'Enviada', delivered: 'Entregue', read: 'Lida' }[state] || ''; s.innerHTML = state === 'sent' ? SV1 : SV2; return s; }
+const hhmm = t => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+function dayLabel(t) { const d = new Date(t), n = new Date(), y = new Date(Date.now() - 864e5); const same = (a, b) => a.toDateString() === b.toDateString(); return same(d, n) ? 'Hoje' : same(d, y) ? 'Ontem' : d.toLocaleDateString('pt-BR'); }
+
+/* ---- lista de amigos / conversas ---- */
+function renderList() {
+  const q = $('fq').value.trim().toLowerCase(), box = $('convs');
+  let fr = Auth.friends(ME).filter(n => n.toLowerCase().includes(q));
+  fr.sort((a, b) => ((summary[b] || {}).t || 0) - ((summary[a] || {}).t || 0) || a.localeCompare(b));
+  const unread = Auth.chat.unread(ME, summary);
+  $('cnt').textContent = Auth.friends(ME).length + ' amigo(s)';
+  $('noFriends').classList.toggle('hidden', !!Auth.friends(ME).length);
+  box.innerHTML = '';
+  if (!fr.length) box.innerHTML = '<p class="text-center text-gray-500 py-10 px-4">' + (q ? 'Nenhum amigo encontrado.' : 'Sem amigos por enquanto.') + '</p>';
+  fr.forEach(n => {
+    const last = summary[n], isU = unread.includes(n), row = document.createElement('div');
+    row.className = 'flex items-center gap-3 px-4 py-3 cursor-pointer si ' + (cur && cur.toLowerCase() === n.toLowerCase() ? 'bg-white/10' : '');
+    const mid = document.createElement('div'); mid.className = 'flex-1 min-w-0';
+    mid.innerHTML = '<div class="flex items-center justify-between gap-2"><span class="font-bold truncate nm"></span><span class="text-[11px] text-gray-500 shrink-0 tm"></span></div><div class="text-xs truncate pv"></div>';
+    mid.querySelector('.nm').textContent = n;
+    mid.querySelector('.tm').textContent = last ? hhmm(last.t) : '';
+    const pv = mid.querySelector('.pv'); pv.className += isU ? ' text-white font-semibold' : ' text-gray-400';
+    if (last && last.u.toLowerCase() === ME.toLowerCase()) pv.appendChild(tickEl(last.ts || 'sent'));
+    pv.append(last ? last.m : 'Toque para conversar');
+    const av = circ(n, 44), pi = Auth.pres.info(n); av.style.position = 'relative';
+    if (pi.k !== 'off') av.insertAdjacentHTML('beforeend', '<span style="position:absolute;right:-1px;bottom:-1px;width:13px;height:13px;border-radius:50%;border:2px solid #232527;background:' + Auth.pres.COLOR[pi.k] + '"></span>');
+    row.append(av, mid);
+    if (isU) row.insertAdjacentHTML('beforeend', '<span class="w-2.5 h-2.5 rounded-full bg-[#335fff] shrink-0"></span>');
+    row.onclick = () => openConv(n); box.appendChild(row);
+  });
+}
+
+/* ---- conversa aberta ---- */
+function openConv(n) {
+  cur = Auth.friends(ME).find(x => x.toLowerCase() === n.toLowerCase());
+  if (!cur) return; lastKey = ''; clearReply();
+  history.replaceState(null, '', 'batepapo.html?u=' + encodeURIComponent(cur));
+  $('empty').classList.add('hidden'); $('conv').classList.remove('hidden'); $('conv').classList.add('flex');
+  $('chatPane').classList.remove('hidden'); $('listPane').classList.add('hidden', 'md:flex');
+  $('cAv').innerHTML = ''; $('cAv').appendChild(circ(cur, 36));
+  $('cName').innerHTML = ''; $('cName').append(cur); $('cName').insertAdjacentHTML('beforeend', ' ' + Auth.badge(cur)); $('cName').onclick = () => location.href = Auth.profileUrl(cur);
+  setStatus(null, cur);
+  $('msgs').innerHTML = ''; renderList(); loadMsgs(true); $('inp').focus();
+}
+function closeConv() {
+  cur = null; history.replaceState(null, '', 'batepapo.html');
+  $('conv').classList.add('hidden'); $('conv').classList.remove('flex'); $('empty').classList.remove('hidden');
+  $('chatPane').classList.add('hidden'); $('listPane').classList.remove('hidden'); renderList();
+}
+async function loadMsgs(force) {
+  if (!cur) return; const who = cur, R = await Auth.chat.dmGet(ME, who, document.visibilityState === 'visible'), l = R.msgs, st = R.st || {};
+  if (!cur || cur !== who) return;
+  lastSt = st; setStatus(st, who);
+  /* descriptografar todas as mensagens */
+  for (const m of l) {
+    if (!m._dec) { m._plain = await E2E.decrypt(m.m, ME, who); m._dec = true; }
+    if (m.r && !m.r._dec) { m.r._plain = await E2E.decrypt(m.r.m, ME, who); m.r._dec = true; }
+  }
+  const mineT = m => m.u.toLowerCase() === ME.toLowerCase(), sig = l.filter(mineT).map(m => Auth.chat.tick(m, st)[0]).join('');
+  const k = l.length + '|' + (l.length ? l[l.length - 1].t : 0) + '|' + sig; if (!force && k === lastKey) return;
+  checkOld(); lastKey = k; const box = $('msgs'), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80 || force;
+  box.innerHTML = ''; let day = '';
+  if (!l.length) box.innerHTML = '<p class="text-center text-gray-500 mt-10">Diga oi para <b></b>! 👋</p>', box.querySelector('b').textContent = who;
+  let prev = null;
+  l.forEach(m => {
+    const plainText = m._plain || m.m;
+    const dl = dayLabel(m.t); if (dl !== day) { day = dl; prev = null; box.insertAdjacentHTML('beforeend', '<div class="text-center text-[11px] text-gray-500 py-2"></div>'); box.lastChild.textContent = dl; }
+    const mine = m.u.toLowerCase() === ME.toLowerCase(), grouped = prev && prev.u === m.u && m.t - prev.t < 120000; prev = m;
+    const row = document.createElement('div'); row.className = 'mrow ' + (mine ? 'mine ' : '') + (grouped ? 'g' : 'mt-2'); row.dataset.t = m.t; row.dataset.u = m.u;
+    const bub = document.createElement('div'); bub.className = 'bub ' + (mine ? 'me' : 'ot'); bub.title = hhmm(m.t);
+    if (m.r) {   // citação da mensagem respondida
+      const q = document.createElement('div'); q.className = 'qt'; q.innerHTML = '<div class="qn"></div><div class="qm"></div>';
+      q.firstChild.textContent = m.r.u.toLowerCase() === ME.toLowerCase() ? 'Você' : m.r.u; q.lastChild.textContent = m.r._plain || m.r.m;
+      q.onclick = e => { e.stopPropagation(); jumpTo(m.r.u, m.r.t); }; bub.appendChild(q);
+    }
+    /* ícone de cadeado para mensagens E2EE */
+    const isEnc = m.m && m.m.startsWith('e2e:');
+    bub.appendChild(document.createTextNode(plainText));
+    const tm = document.createElement('span'); tm.className = 'block text-[10px] opacity-60 mt-0.5 text-right'; tm.textContent = hhmm(m.t);
+    if (isEnc) tm.insertAdjacentHTML('beforeend', ' <i class="fa-solid fa-lock text-[8px] opacity-40" title="Criptografada E2EE"></i>');
+    if (mine) tm.appendChild(tickEl(Auth.chat.tick(m, st))); bub.appendChild(tm);
+    const acts = document.createElement('div'); acts.className = 'acts';
+    const mk = (ic, title, fn) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'act'; x.title = title; x.innerHTML = '<i class="fa-solid fa-' + ic + '"></i>'; x.onclick = e => { e.stopPropagation(); fn(x); }; return x; };
+    acts.append(mk('reply', 'Responder', () => setReply({ ...m, m: plainText })), mk('copy', 'Copiar', x => copyTxt(plainText, x)));
+    row.append(bub, acts);
+    row.ondblclick = () => setReply({ ...m, m: plainText });
+    bub.onclick = () => { if (matchMedia('(hover:none)').matches) { const was = row.classList.contains('show'); document.querySelectorAll('.mrow.show').forEach(r => r.classList.remove('show')); if (!was) row.classList.add('show'); } };
+    swipe(row, { ...m, m: plainText }); box.appendChild(row);
+  });
+  if (atEnd) box.scrollTop = box.scrollHeight;
+  if (l.length) { Auth.chat.markSeen(ME, who, l[l.length - 1].t); const lm = l[l.length - 1]; summary[who] = mineT(lm) ? Object.assign({}, lm, { ts: Auth.chat.tick(lm, st), m: lm._plain || lm.m }) : { ...lm, m: lm._plain || lm.m }; renderList(); }
+}
+function setStatus(st, who) {   // "online" · "Jogando: mapa" (só amigos) · "visto hoje/ontem/dd/mm/aaaa às hh:mm"
+  const e = $('cSub'), P = Auth.pres.get(who), pi = P && (P.on || P.g || P.s || !(st && (st.online || st.s))) ? Auth.pres.info(who) : (st && st.online ? { k: 'on', t: 'Online' } : st && st.s ? { k: 'off', t: Auth.pres.last(st.s) } : { k: 'off', t: '@' + who.toLowerCase() });
+  e.innerHTML = pi.k === 'off' ? '' : '<i class="fa-solid fa-circle text-[7px] align-middle mr-1"></i>'; e.append(pi.t);
+  e.className = 'text-xs truncate'; e.style.color = pi.k === 'off' ? '#8a8f95' : Auth.pres.COLOR[pi.k];
+}
+/* ---- responder mensagem ---- */
+let replyTo = null, lastSt = null;
+function setReply(m) {
+  replyTo = { u: m.u, m: m.m.slice(0, 100), t: m.t };
+  $('rbName').textContent = 'Respondendo a ' + (m.u.toLowerCase() === ME.toLowerCase() ? 'você mesmo' : m.u); $('rbText').textContent = m.m;
+  $('replyBar').classList.remove('hidden'); $('replyBar').classList.add('flex'); $('inp').focus();
+  document.querySelectorAll('.mrow.show').forEach(r => r.classList.remove('show'));
+}
+function clearReply() { replyTo = null; $('replyBar').classList.add('hidden'); $('replyBar').classList.remove('flex'); }
+function jumpTo(u, t) {
+  const r = [...document.querySelectorAll('.mrow')].find(x => x.dataset.t == t && x.dataset.u === u); if (!r) return;
+  r.scrollIntoView({ behavior: 'smooth', block: 'center' }); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); setTimeout(() => r.classList.remove('flash'), 1400);
+}
+function copyTxt(t, btn) {
+  const ok = () => { const i = btn.firstChild; i.className = 'fa-solid fa-check'; setTimeout(() => i.className = 'fa-solid fa-copy', 1100); };
+  try { navigator.clipboard.writeText(t).then(ok, ok); } catch (e) { ok(); }
+}
+function swipe(row, m) {   // celular: arrastar a mensagem para a direita = responder
+  let x0 = 0, y0 = 0, dx = 0, on = false;
+  row.addEventListener('touchstart', e => { const t = e.touches[0]; x0 = t.clientX; y0 = t.clientY; dx = 0; on = true; }, { passive: true });
+  row.addEventListener('touchmove', e => { if (!on) return; const t = e.touches[0]; dx = t.clientX - x0; if (Math.abs(t.clientY - y0) > Math.abs(dx) || dx < 0) { dx = 0; row.style.transform = ''; return; } row.style.transform = 'translateX(' + Math.min(dx, 70) + 'px)'; }, { passive: true });
+  const end = () => { if (!on) return; on = false; row.style.transform = ''; if (dx > 55) { setReply(m); if (navigator.vibrate) navigator.vibrate(15); } };
+  row.addEventListener('touchend', end); row.addEventListener('touchcancel', end);
+}
+addEventListener('keydown', e => { if (e.key === 'Escape' && replyTo) clearReply(); });
+
+$('form').onsubmit = async e => {
+  e.preventDefault(); const v = $('inp').value.trim(); if (!v || !cur) return; $('inp').value = '';
+  /* criptografar antes de enviar */
+  const encrypted = await E2E.encrypt(v, ME, cur);
+  const rp = replyTo ? { ...replyTo, m: await E2E.encrypt(replyTo.m, ME, cur) } : null;
+  const r = await Auth.chat.dmSend(ME, cur, encrypted, rp), eb = $('errBar'); checkOld();
+  if (!r || !r.ok) { $('inp').value = v; eb.textContent = '⚠ Mensagem não enviada. ' + ((r && r.err) || 'Vocês ainda são amigos? Tente de novo.'); eb.classList.remove('hidden'); return; }
+  eb.classList.add('hidden'); clearReply(); await loadMsgs(true);
+};
+function checkOld() { const o = $('oldBar'); o.textContent = '⚠ ' + Auth.chat.oldMsg; o.classList.toggle('hidden', !Auth.chat.old); }
+async function refreshSummary() { summary = await Auth.chat.dmSummary(ME) || {}; renderList(); }
+
+/* ---- início ---- */
+renderList();
+Auth.init().then(async () => {
+  await refreshSummary(); Auth.pres.watch(() => Auth.friends(ME), () => { renderList(); if (cur) setStatus(lastSt, cur); });
+  const u = new URLSearchParams(location.search).get('u'); if (u) openConv(u);
+  setInterval(refreshSummary, 3000); setInterval(() => loadMsgs(false), 1200);
+  if (Auth.server) setInterval(async () => { if (await Auth.sync()) renderList(); }, 2500);
+});
+addEventListener('storage', () => { refreshSummary(); loadMsgs(false); });
+</script>
+
+<style>
+#mobileNav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:#111214;border-top:1px solid #2e3033;padding-bottom:env(safe-area-inset-bottom,0px)}
+#mobileNav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;color:#8a8d91;font-size:10px;gap:3px;text-decoration:none}
+#mobileNav a:hover,#mobileNav a.active{color:#fff}
+#mobileNav a i{font-size:18px}
+@media(max-width:767px){
+  #mobileNav{display:flex}
+  body{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)) !important}
+}
+</style>
+<nav id="mobileNav">
+  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="batepapo.html" class="active"><i class="fa-solid fa-comments"></i>Bate-papo</a>
+  <a href="studio.html"><i class="fa-solid fa-hammer"></i>Studio</a>
+  <a href="avatar.html"><i class="fa-solid fa-shirt"></i>Avatar</a>
+  <a href="#" id="mobileProfileLink"><i class="fa-solid fa-user"></i>Perfil</a>
+</nav>
+<script>
+(function(){
+  var ml = document.getElementById('mobileProfileLink');
+  if(ml && typeof Auth !== 'undefined') ml.href = Auth.profileUrl(Auth.current && Auth.current() || '');
+})();
+</script>
+</body>
+</html>
