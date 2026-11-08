@@ -642,6 +642,8 @@ Auth.pres = {
   async ping() { const me = Auth.current(); if (!me || !Auth.server) return; const d = await Auth.device(); try { const j = await (await fetch(apiUrl('/api/ping'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user: me, hw: d.hw, dv: d.dv, mobile: d.mobile, info: d.info }), keepalive: true })).json(); if (j.ban) Auth.showBan(j.ban); } catch (e) {} },
   start() { if (this.timer) return; this.ping(); this.timer = setInterval(() => this.ping(), 10000); document.addEventListener('visibilitychange', () => { if (!document.hidden) this.ping(); }); }
 };
+/* Expõe Auth globalmente para funcionar tanto como script externo quanto inline */
+window.Auth = Auth;
 (function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
 
 
