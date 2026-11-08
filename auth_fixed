@@ -635,3 +635,4 @@ Auth.pres = {
 /* Expõe Auth globalmente para funcionar tanto como script externo quanto inline */
 window.Auth = Auth;
 (function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
+
