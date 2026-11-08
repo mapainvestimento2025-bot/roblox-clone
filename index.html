@@ -10,19 +10,27 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="auth.js?v=5"></script>
 <script>
+/* ── Guarda de autenticação: redireciona para login.html ANTES de renderizar a página ── */
 (function(){
-  // Aguarda auth.js estar disponível (até 5s) antes de redirecionar
-  if (typeof Auth !== 'undefined' && typeof Auth.init === 'function') return;
-  if (typeof Auth !== 'undefined' && typeof Auth.avatar === 'function') return;
-  var tries = 0;
-  var t = setInterval(function(){
-    tries++;
-    if (typeof Auth !== 'undefined') { clearInterval(t); return; }
-    if (tries >= 50) {
-      clearInterval(t);
-      location.reload(true);
-    }
-  }, 100);
+  /* Verifica sessão no localStorage/sessionStorage (mesma lógica do Auth.current()) */
+  function getSession() {
+    try {
+      var tabKey = sessionStorage.getItem('robloxSession');
+      var users = JSON.parse(localStorage.getItem('robloxUsers') || '{}');
+      if (tabKey && users[tabKey]) return tabKey;
+      var remembered = localStorage.getItem('robloxSession');
+      if (remembered && users[remembered]) {
+        sessionStorage.setItem('robloxSession', remembered);
+        return remembered;
+      }
+    } catch(e) {}
+    return null;
+  }
+  /* Se não houver sessão válida, redireciona imediatamente para login */
+  if (!getSession()) {
+    location.replace('login.html?next=' + encodeURIComponent(location.pathname + location.search + location.hash));
+    throw new Error('Redirecionando para login…');
+  }
 })();
 </script>
 
