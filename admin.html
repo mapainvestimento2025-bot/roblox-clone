@@ -761,6 +761,15 @@ td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
     <input id="gp" type="password" class="inp mb-3" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')enter()">
     <button class="btn b1 w-full !py-2.5 !text-sm" onclick="enter()">Entrar no painel</button>
     <p id="gerr" class="text-red-400 text-sm mt-3 hidden"></p>
+
+    <!-- Botão de auto-promoção (modo local sem servidor) -->
+    <div id="selfAdminBox" class="mt-5 border border-dashed border-red-900/40 rounded-lg p-4 hidden">
+      <p class="text-xs text-gray-400 mb-3"><i class="fa-solid fa-crown text-yellow-400 mr-1"></i><b>Modo local</b> — sem servidor. Promova sua conta diretamente:</p>
+      <button class="w-full text-sm font-bold py-2 px-3 rounded-lg bg-[#c0392b] hover:bg-[#e74c3c] transition-colors text-white" onclick="selfPromote()">
+        <i class="fa-solid fa-user-shield mr-2"></i>Me tornar Owner / Admin
+      </button>
+      <p id="selfAdminMsg" class="text-xs mt-2 hidden"></p>
+    </div>
   </div>
 </main>
 
@@ -1318,8 +1327,21 @@ addEventListener('keydown', e => { if (e.key === 'Escape') { closeBan(); closeDe
 (async () => {
   try { const c = JSON.parse(sessionStorage.getItem('admCred')); if (c) { CRED = c; const j = await call('list'); if (!j.err) show(j); else CRED = null; } } catch {}
   const me = Auth.current(); if (me && !$('gu').value) $('gu').value = me;
+  // Exibe botão de auto-promoção se não houver servidor
+  if (!Auth.server) { const b = document.getElementById('selfAdminBox'); if (b) b.classList.remove('hidden'); }
 })();
 setInterval(async () => { if (CRED && D) { const [j] = await Promise.all([call('list'), fetchStats()]); if (!j.err) { D = j; render(); } } }, 8000);
+
+function selfPromote() {
+  const me = Auth.current();
+  const msg = document.getElementById('selfAdminMsg');
+  if (!me) { if(msg){msg.textContent='❌ Faça login primeiro.';msg.className='text-xs mt-2 text-red-400';msg.classList.remove('hidden');} return; }
+  const users = Auth.users(), key = me.toLowerCase();
+  if (!users[key]) { if(msg){msg.textContent='❌ Conta não encontrada.';msg.className='text-xs mt-2 text-red-400';msg.classList.remove('hidden');} return; }
+  users[key].admin = true; users[key].owner = true; Auth.save(users);
+  if(msg){msg.textContent='✅ '+users[key].name+' agora é Owner! Recarregando...';msg.className='text-xs mt-2 text-green-400';msg.classList.remove('hidden');}
+  setTimeout(() => location.reload(), 1200);
+}
 </script>
 
 <style>

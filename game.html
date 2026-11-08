@@ -1729,6 +1729,105 @@ function gameLoop(now) {
 requestAnimationFrame(gameLoop);
 
 /* ════════════════════════════════════════════════
+   CLICK-TO-MOVE (clicar no chão para andar)
+════════════════════════════════════════════════ */
+const _ray = new THREE.Raycaster();
+const _mouse = new THREE.Vector2();
+let _clickTarget = null;
+let _clickDragged = false;
+
+renderer.domElement.addEventListener('mousedown', e => {
+  if (e.button === 0) _clickDragged = false;
+});
+renderer.domElement.addEventListener('mousemove', e => {
+  if (e.buttons & 1) _clickDragged = true;
+});
+renderer.domElement.addEventListener('mouseup', e => {
+  if (e.button !== 0 || _clickDragged) return;
+  if (document.pointerLockElement) return;
+
+  const chatOv = document.getElementById('chatOverlay');
+  if (chatOv && !chatOv.classList.contains('hidden')) return;
+  const menuOv = document.getElementById('menuOverlay');
+  if (menuOv && menuOv.style.display === 'flex') return;
+
+  _mouse.x =  (e.clientX / innerWidth)  * 2 - 1;
+  _mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+  _ray.setFromCamera(_mouse, camera);
+
+  const meshes = [];
+  scene.traverse(obj => { if (obj.isMesh) meshes.push(obj); });
+  const hits = _ray.intersectObjects(meshes, false);
+  if (!hits.length) return;
+
+  const pt = hits[0].point;
+  _clickTarget = { x: pt.x, z: pt.z };
+
+  // Indicador visual
+  let ind = document.getElementById('_clickInd');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = '_clickInd';
+    ind.style.cssText =
+      'position:fixed;pointer-events:none;z-index:50;width:36px;height:36px;' +
+      'border:3px solid #00e0ff;border-radius:50%;transform:translate(-50%,-50%);' +
+      'animation:_clickPop .6s ease forwards;';
+    const st = document.createElement('style');
+    st.textContent =
+      '@keyframes _clickPop{0%{opacity:1;transform:translate(-50%,-50%) scale(.4)}' +
+      '60%{opacity:.9;transform:translate(-50%,-50%) scale(1.1)}' +
+      '100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}';
+    document.head.appendChild(st);
+    document.body.appendChild(ind);
+  }
+  ind.style.left = e.clientX + 'px';
+  ind.style.top  = e.clientY + 'px';
+  ind.style.animation = 'none';
+  void ind.offsetWidth;
+  ind.style.animation = '_clickPop .6s ease forwards';
+});
+
+{
+  const _origRender = renderer.render.bind(renderer);
+  let _lastCtmT = performance.now();
+  renderer.render = function(sc, cam) {
+    const now = performance.now();
+    const dt2 = Math.min(.05, (now - _lastCtmT) / 1000);
+    _lastCtmT = now;
+
+    if (_clickTarget) {
+      if (keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||
+          keys.ArrowUp||keys.ArrowDown||keys.ArrowLeft||keys.ArrowRight||
+          Math.abs(joyF)>.05||Math.abs(joyS)>.05) {
+        _clickTarget = null;
+      } else {
+        const dx = _clickTarget.x - pos.x;
+        const dz = _clickTarget.z - pos.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist < 0.5) {
+          _clickTarget = null;
+        } else {
+          const sp = 15;
+          const nx = dx / dist, nz = dz / dist;
+          pos.x += nx * sp * dt2;
+          pos.z += nz * sp * dt2;
+          face = Math.atan2(nx, nz);
+          let dyaw = face - yaw;
+          dyaw = Math.atan2(Math.sin(dyaw), Math.cos(dyaw));
+          yaw += dyaw * Math.min(1, dt2 * 3);
+          walkT += dt2 * (sp / 15) * 10;
+          const sw = Math.sin(walkT) * .85;
+          armL.rotation.x = sw; armR.rotation.x = -sw;
+          legL.rotation.x = -sw; legR.rotation.x = sw;
+        }
+      }
+    }
+
+    _origRender(sc, cam);
+  };
+}
+
+/* ════════════════════════════════════════════════
    OUTROS JOGADORES (interpolação suave)
 ════════════════════════════════════════════════ */
 const others = {};

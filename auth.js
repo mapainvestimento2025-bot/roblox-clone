@@ -636,3 +636,37 @@ Auth.pres = {
 window.Auth = Auth;
 (function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
 
+/* ════════════════════════════════════════════════
+   HELPERS DE ADMIN (console do navegador F12)
+     setAdmin('nome')    → vira admin
+     setOwner('nome')    → vira owner
+     removeAdmin('nome') → remove permissões
+     listUsers()         → lista usuários
+════════════════════════════════════════════════ */
+window.setAdmin = function(name) {
+  if (!name) { console.warn('⚠️  Uso: setAdmin("nomeDoUsuário")'); return; }
+  const users = Auth.users(), key = name.toLowerCase();
+  if (!users[key]) { console.warn('❌ Usuário "' + name + '" não encontrado. Use listUsers()'); return; }
+  users[key].admin = true; Auth.save(users);
+  console.log('✅ ' + users[key].name + ' agora é ADMIN. Recarregue a página.');
+};
+window.setOwner = function(name) {
+  if (!name) { console.warn('⚠️  Uso: setOwner("nomeDoUsuário")'); return; }
+  const users = Auth.users(), key = name.toLowerCase();
+  if (!users[key]) { console.warn('❌ Usuário "' + name + '" não encontrado. Use listUsers()'); return; }
+  users[key].owner = true; users[key].admin = true; Auth.save(users);
+  console.log('✅ ' + users[key].name + ' agora é OWNER. Recarregue a página.');
+};
+window.removeAdmin = function(name) {
+  if (!name) { console.warn('⚠️  Uso: removeAdmin("nomeDoUsuário")'); return; }
+  const users = Auth.users(), key = name.toLowerCase();
+  if (!users[key]) { console.warn('❌ Usuário não encontrado.'); return; }
+  delete users[key].admin; delete users[key].owner; Auth.save(users);
+  console.log('✅ Permissões removidas de ' + users[key].name + '. Recarregue.');
+};
+window.listUsers = function() {
+  const list = Object.values(Auth.users()).map(u => ({ nome: u.name, admin: !!(u.admin), owner: !!(u.owner), logado: Auth.current() === u.name }));
+  if (!list.length) { console.log('Nenhum usuário.'); return; }
+  console.table(list); return list;
+};
+

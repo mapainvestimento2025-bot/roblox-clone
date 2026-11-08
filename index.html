@@ -1999,6 +1999,7 @@ function openModal(g) {
 
     renderStats(g);
 
+    gameModal.classList.remove('hidden');
     gameModal.style.display = 'flex';
 
     document.body.style.overflow = 'hidden';
@@ -2123,6 +2124,7 @@ function editInStudio() {
 function closeModal() {
 
     gameModal.style.display = 'none';
+    gameModal.classList.add('hidden');
 
     document.body.style.overflow = '';
 
