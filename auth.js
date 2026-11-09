@@ -637,36 +637,49 @@ window.Auth = Auth;
 (function () { const go = () => { try { Auth.init().then(on => { if (!on) return; Auth.deviceCheck(); if (Auth.current()) Auth.pres.start(); }); } catch (e) {} }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go(); })();
 
 /* ════════════════════════════════════════════════
-   HELPERS DE ADMIN (console do navegador F12)
-     setAdmin('nome')    → vira admin
-     setOwner('luizgustavo4828')    → vira owner
-     removeAdmin('nome') → remove permissões
-     listUsers()         → lista usuários
+   HELPERS DE ADMIN — console do navegador (F12)
+   Uso:
+     setAdmin('nomeDoUsuário')    → vira admin
+     setOwner('nomeDoUsuário')    → vira owner (nível máximo)
+     removeAdmin('nomeDoUsuário') → remove permissões
+     listUsers()                  → lista todos os usuários
 ════════════════════════════════════════════════ */
-window.setAdmin = function(name) {
+window.setAdmin = async function(name) {
   if (!name) { console.warn('⚠️  Uso: setAdmin("nomeDoUsuário")'); return; }
+  await Auth.init();
   const users = Auth.users(), key = name.toLowerCase();
   if (!users[key]) { console.warn('❌ Usuário "' + name + '" não encontrado. Use listUsers()'); return; }
   users[key].admin = true; Auth.save(users);
-  console.log('✅ ' + users[key].name + ' agora é ADMIN. Recarregue a página.');
+  if (Auth.server) {
+    // Com servidor: usa a rota de admin se houver CRED salva, senão avisa
+    console.log('ℹ️  Com servidor ativo, use o painel admin.html para promover usuários via banco de dados.');
+  }
+  console.log('✅ ' + users[key].name + ' agora é ADMIN no cache local. Recarregue a página.');
 };
-window.setOwner = function(name) {
+window.setOwner = async function(name) {
   if (!name) { console.warn('⚠️  Uso: setOwner("nomeDoUsuário")'); return; }
+  await Auth.init();
   const users = Auth.users(), key = name.toLowerCase();
   if (!users[key]) { console.warn('❌ Usuário "' + name + '" não encontrado. Use listUsers()'); return; }
   users[key].owner = true; users[key].admin = true; Auth.save(users);
-  console.log('✅ ' + users[key].name + ' agora é OWNER. Recarregue a página.');
+  if (Auth.server) {
+    console.log('ℹ️  Com servidor ativo, use o painel admin.html para promover usuários via banco de dados.');
+  }
+  console.log('✅ ' + users[key].name + ' agora é OWNER no cache local. Recarregue a página.');
 };
-window.removeAdmin = function(name) {
+window.removeAdmin = async function(name) {
   if (!name) { console.warn('⚠️  Uso: removeAdmin("nomeDoUsuário")'); return; }
+  await Auth.init();
   const users = Auth.users(), key = name.toLowerCase();
   if (!users[key]) { console.warn('❌ Usuário não encontrado.'); return; }
   delete users[key].admin; delete users[key].owner; Auth.save(users);
   console.log('✅ Permissões removidas de ' + users[key].name + '. Recarregue.');
 };
-window.listUsers = function() {
-  const list = Object.values(Auth.users()).map(u => ({ nome: u.name, admin: !!(u.admin), owner: !!(u.owner), logado: Auth.current() === u.name }));
-  if (!list.length) { console.log('Nenhum usuário.'); return; }
+window.listUsers = async function() {
+  await Auth.init();
+  if (Auth.server) { try { await Auth.sync(); } catch(e) {} }
+  const list = Object.values(Auth.users()).map(u => ({ nome: u.name, admin: !!(u.admin), owner: !!(u.owner), logado: (Auth.current()||'').toLowerCase() === u.name.toLowerCase() }));
+  if (!list.length) { console.log('Nenhum usuário cadastrado ainda.'); return; }
   console.table(list); return list;
 };
 

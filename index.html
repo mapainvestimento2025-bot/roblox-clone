@@ -1565,7 +1565,10 @@ function renderFriends() {
     document.getElementById('friendCount').textContent = f.length;
 }
 
-function renderRequests() {
+async function renderRequests() {
+
+    // Puxa pedidos de amizade do servidor se disponível
+    if (Auth.server) { try { await Auth.sync(); } catch(e) {} }
 
     const r = Auth.requests(ME);
     const box = document.getElementById('reqList');
@@ -1607,13 +1610,13 @@ function renderRequests() {
     });
 }
 
-function refresh() {
+async function refresh() {
 
     renderFriends();
-    renderRequests();
+    await renderRequests();
 
     if (!addModal.classList.contains('hidden')) {
-        renderAdd();
+        await renderAdd();
     }
 }
 
@@ -1640,17 +1643,25 @@ function closeAdd() {
 
 }
 
-function renderAdd() {
+async function renderAdd() {
 
     const q = addQ.value.trim().toLowerCase();
 
     const box = document.getElementById('addList');
 
-    box.innerHTML = '';
+    // Mostra loading enquanto sincroniza com o servidor
+    box.innerHTML = '<p class="text-center text-gray-400 py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Buscando...</p>';
+
+    // Se tiver servidor, sincroniza o cache local com o banco antes de listar
+    if (Auth.server) {
+        try { await Auth.sync(); } catch(e) {}
+    }
 
     const list = Object.values(Auth.users())
         .filter(u => u.name.toLowerCase() !== ML && u.name.toLowerCase().includes(q))
         .slice(0,30);
+
+    box.innerHTML = '';
 
     if (!list.length) {
 
@@ -2170,7 +2181,7 @@ function updateCounts() {
 
     });
 
-    if (current && gameModal.style.display === 'flex') {
+    if (current && !gameModal.classList.contains('hidden')) {
 
         renderStats(current);
 
@@ -2228,75 +2239,101 @@ setInterval(chatDot,4000);
 /* ---- INICIALIZAÇÃO ---- */
 
 renderFriends();
-
 renderRequests();
-
 renderGames();
-
 updateCounts();
 
 const admShow = () => {
-
     document.getElementById('admLink')
         .classList.toggle('hidden',!Auth.isAdmin(ME));
-
 };
-
 admShow();
 
 let paramDone = false;
-
 function openFromParam() {
-
     if (paramDone) return;
-
     const k = new URLSearchParams(location.search).get('g');
-
     if (!k) return;
-
     const g = loadGames().find(x => gid(x) === k);
-
-    if (g) {
-
-        paramDone = true;
-
-        openModal(g);
-
-    }
-
+    if (g) { paramDone = true; openModal(g); }
 }
-
 openFromParam();
 
-Auth.init().then(on => {
+/* ── Sincronização com o servidor ─────────────────────────
+   - Ao carregar: sincroniza imediatamente e re-renderiza tudo
+   - Polling a cada 5s: detecta novos mapas publicados por qualquer pessoa
+   - storage event: detecta publicações feitas na mesma aba/mesmo browser
+──────────────────────────────────────────────────────── */
+async function syncAndRender() {
+    const changed = await Auth.sync();
+    if (changed) {
+        renderGames();
+        renderFriends();
+        await renderRequests();
+        updateCounts();
+        admShow();
+        openFromParam();
+    }
+    return changed;
+}
 
-    if (!on) return;
+// Escuta mudanças no localStorage (outra aba do mesmo browser publicou um mapa)
+addEventListener('storage', e => {
+    if (e.key === 'robloxGames') {
+        renderGames();
+        updateCounts();
+    }
+    if (e.key === 'robloxUsers' || e.key?.startsWith('robloxFriends:') || e.key?.startsWith('robloxReq:')) {
+        renderFriends();
+        renderRequests();
+        updateCounts();
+    }
+});
 
+/* ── Banner de confirmação pós-publicação ─────────────── */
+(function checkJustPublished() {
+    const name = localStorage.getItem('robloxDraftName');
+    if (!name) return;
+    // Só mostra se viemos do Studio (referrer ou flag)
+    const fromStudio = document.referrer.includes('studio.html') ||
+                       sessionStorage.getItem('_fromStudio');
+    sessionStorage.removeItem('_fromStudio');
+    if (!fromStudio) return;
+    // Mostra banner de sucesso
+    const banner = document.createElement('div');
+    banner.style.cssText =
+        'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;' +
+        'background:#00b06f;color:#fff;font-weight:700;font-size:14px;' +
+        'padding:10px 24px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.4);' +
+        'animation:_bannerIn .3s ease;pointer-events:none;';
+    banner.textContent = '✅ Mapa "' + name + '" publicado com sucesso!';
+    const s = document.createElement('style');
+    s.textContent = '@keyframes _bannerIn{from{opacity:0;top:0px}to{opacity:1;top:16px}}';
+    document.head.appendChild(s);
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 3500);
+})();
+
+Auth.init().then(async on => {
     admShow();
-
-    Auth.pres.watch(
-        () => Auth.friends(ME),
-        renderFriends
-    );
-
-    refresh();
-
-    renderGames();
-
     openFromParam();
 
-    setInterval(async () => {
+    if (on) {
+        // Servidor disponível: sincroniza imediatamente ao carregar
+        // (garante que mapa recém publicado aparece para todos)
+        await syncAndRender();
 
-        if (await Auth.sync()) {
+        Auth.pres.watch(() => Auth.friends(ME), renderFriends);
 
-            refresh();
+        // Polling a cada 5s para capturar novos mapas de qualquer pessoa
+        setInterval(syncAndRender, 5000);
+    } else {
+        // Sem servidor: re-renderiza com dados locais (cobre mesmo browser)
+        renderGames();
+        Auth.pres.watch(() => Auth.friends(ME), renderFriends);
+    }
 
-            renderGames();
-
-        }
-
-    },2000);
-
+    refresh();
 });
 
 </script>

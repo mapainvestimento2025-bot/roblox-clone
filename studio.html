@@ -1340,7 +1340,7 @@ async function confirmPublish(){
   closePost();toast('Publicando...');
   const err=await Auth.publishGame({name,creator:ME,blocks:parts.length,parts:serialize(),thumb:makeThumb(),desc,serverSize,genre,vip:pgVip});
   if(err)return toast(err,'error');
-  localStorage.setItem('robloxDraftName',name);location.href='index.html';
+  localStorage.setItem('robloxDraftName',name);sessionStorage.setItem('_fromStudio','1');location.href='index.html';
 }
 
 /* ================= Ajuda / Atalhos ================= */
