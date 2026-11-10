@@ -1032,12 +1032,9 @@ function sha256hex(str) {
   return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
 }
 
-// Converte /api/rota ou /api/rota?param=val para /api/api.php?action=rota&param=val
+
 function apiUrl(path) {
-  const sep = path.indexOf('?');
-  const route = sep >= 0 ? path.slice(5, sep) : path.slice(5); // remove '/api/'
-  const query = sep >= 0 ? '&' + path.slice(sep + 1) : '';
-  return '/api/api.php?action=' + route + query;
+  return path;
 }
 
 const Auth = {
