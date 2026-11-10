@@ -1,9 +1,34 @@
 {
+  "rewrites": [
+    { "source": "/api/ban/check",      "destination": "/check" },
+    { "source": "/api/dm/summary",     "destination": "/summary" },
+    { "source": "/api/game/delete",    "destination": "/delete" },
+    { "source": "/api/game/visit",     "destination": "/visit" },
+    { "source": "/api/game/vote",      "destination": "/vote" },
+    { "source": "/api/presence/beat",  "destination": "/beat" },
+    { "source": "/api/presence/leave", "destination": "/leave" },
+    { "source": "/api/db",             "destination": "/db" },
+    { "source": "/api/register",       "destination": "/register" },
+    { "source": "/api/login",          "destination": "/login" },
+    { "source": "/api/bio",            "destination": "/bio" },
+    { "source": "/api/avatar",         "destination": "/avatar" },
+    { "source": "/api/friend",         "destination": "/friend" },
+    { "source": "/api/game",           "destination": "/game" },
+    { "source": "/api/chat",           "destination": "/chat" },
+    { "source": "/api/dm",             "destination": "/dm" },
+    { "source": "/api/presence",       "destination": "/presence" },
+    { "source": "/api/ping",           "destination": "/ping" },
+    { "source": "/api/status",         "destination": "/status" },
+    { "source": "/api/join",           "destination": "/join" },
+    { "source": "/api/import",         "destination": "/import" },
+    { "source": "/api/admin",          "destination": "/admin" },
+    { "source": "/api/stats",          "destination": "/stats" }
+  ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Origin",  "value": "*" },
         { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
         { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
