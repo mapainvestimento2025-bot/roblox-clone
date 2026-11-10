@@ -35,15 +35,6 @@ function sha256hex(str) {
 function apiUrl(path) {
   return path;
 }
-// Forçar modo servidor se não estiver em localhost
-(function() {
-  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '';
-  if (!isLocal) {
-    // Sobrescrever Auth.server após init para garantir que fique true
-    const origInit = typeof Auth !== 'undefined' ? null : null;
-    window._forceServer = true;
-  }
-})();
 
 const Auth = {
   users() { try { return JSON.parse(localStorage.getItem('robloxUsers')) || {}; } catch (e) { return {}; } },
@@ -395,16 +386,9 @@ const Auth = {
   server: false, v: 0,
   init() {
     return this._init || (this._init = (async () => {
-      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '';
-      // Fora de localhost (Vercel, etc) sempre usa modo servidor
-      if (!isLocal) this.server = true;
       try {
         const r = await fetch(apiUrl('/api/db?v=0'), { cache: 'no-store' });
-        if (r.ok && (r.headers.get('content-type') || '').includes('json')) {
-          const j = await r.json();
-          if (j.db) { this.server = true; this.apply(j); await this.importLocal(); }
-          else { this.server = true; } // banco vazio mas API funcionando
-        }
+        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j.db) { this.server = true; this.apply(j); await this.importLocal(); } }
       } catch (e) {}
       return this.server;
     })());
@@ -727,31 +711,19 @@ body {
 }
 
 .gcard {
-    transition: transform .2s, box-shadow .2s;
-    border-radius: 10px;
-    overflow: hidden;
+    transition: transform .2s;
 }
 
 .gcard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,.45);
+    transform: translateY(-3px);
 }
 
 .gcard:hover .gi {
-    transform: scale(1.07);
-}
-
-.gcard:hover h3 {
-    color: #fff;
+    transform: scale(1.1);
 }
 
 .gi {
-    transition: transform .3s ease;
-}
-
-.gcard .aspect-square {
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    transition: .2s;
 }
 
 /* Sidebar */
@@ -1316,30 +1288,28 @@ body {
 
                 <div id="mCreator" class="text-gray-400 text-sm mt-1.5 flex items-center gap-2 flex-wrap"></div>
 
-                <div class="flex flex-wrap items-center gap-3 mt-4">
+                <div class="flex items-center gap-4 mt-4 text-sm">
 
-                    <div class="flex items-center gap-2 bg-[#2a2d32] rounded-xl px-3 py-2">
-                        <i class="fa-solid fa-eye text-[#3794ff] text-base"></i>
-                        <div>
-                            <b id="mVisBig" class="text-white text-base"></b>
-                            <span class="text-gray-500 text-xs ml-1">visitas</span>
-                        </div>
+                    <div class="flex items-center gap-1.5 text-gray-300">
+                        <i class="fa-solid fa-eye text-[#3794ff]"></i>
+                        <b id="mVisBig" class="text-white"></b>
+                        <span class="text-gray-500">visitas</span>
                     </div>
 
-                    <div class="flex items-center gap-2 bg-[#2a2d32] rounded-xl px-3 py-2">
-                        <i class="fa-solid fa-user-group text-[#00b06f] text-base"></i>
-                        <div>
-                            <b id="mActBig" class="text-white text-base"></b>
-                            <span class="text-gray-500 text-xs ml-1">jogando agora</span>
-                        </div>
+                    <div class="w-px h-4 bg-gray-700"></div>
+
+                    <div class="flex items-center gap-1.5 text-gray-300">
+                        <i class="fa-solid fa-user-group text-[#00b06f]"></i>
+                        <b id="mActBig" class="text-white"></b>
+                        <span class="text-gray-500">jogando</span>
                     </div>
 
-                    <div class="flex items-center gap-2 bg-[#2a2d32] rounded-xl px-3 py-2 cursor-pointer" onclick="toggleFav()">
-                        <i class="fa-solid fa-heart text-pink-400 text-base"></i>
-                        <div>
-                            <b id="mFavBig" class="text-white text-base"></b>
-                            <span class="text-gray-500 text-xs ml-1">favoritos</span>
-                        </div>
+                    <div class="w-px h-4 bg-gray-700"></div>
+
+                    <div class="flex items-center gap-1.5 text-gray-300">
+                        <i class="fa-solid fa-heart text-pink-400"></i>
+                        <b id="mFavBig" class="text-white"></b>
+                        <span class="text-gray-500">favoritos</span>
                     </div>
 
                 </div>
@@ -1649,7 +1619,9 @@ async function refresh() {
 
 function openAdd() {
 
-    addNote.textContent = '';  // Sempre modo servidor na Vercel
+    addNote.textContent = Auth.server
+        ? ''
+        : '⚠ Modo local: só aparecem contas criadas neste navegador.';
 
     addModal.classList.remove('hidden');
     addModal.classList.add('flex');
@@ -1841,17 +1813,11 @@ function renderGames() {
         d.innerHTML =
             '<div class="aspect-square rounded-lg overflow-hidden mb-2 relative">' +
             '<div class="gi absolute inset-0 flex items-center justify-center bg-cover bg-center">' +
-            '<i class="fa-solid fa-cube text-5xl text-white/80"></i>' +
-            '</div>' +
-            '<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none"></div>' +
-            '<div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">' +
-            '<span class="vis-cnt text-[11px] font-semibold text-white/90 flex items-center gap-1"><i class="fa-solid fa-eye text-[10px] text-blue-300"></i></span>' +
-            '<span class="live-cnt text-[11px] font-semibold"></span>' +
-            '</div>' +
-            '</div>' +
+            '<i class="fa-solid fa-cube text-6xl text-white"></i>' +
+            '</div></div>' +
             '<h3 class="font-bold text-sm truncate"></h3>' +
-            '<div class="text-xs text-gray-400 mt-0.5 flex items-center flex-wrap gap-x-2">' +
-            '<span class="by truncate max-w-full"></span></div>';
+            '<div class="text-xs text-gray-400 mt-1 flex items-center flex-wrap gap-x-3">' +
+            '<span class="by"></span><span class="cnt"></span></div>';
 
         const gi = d.querySelector('.gi');
 
@@ -1866,19 +1832,9 @@ function renderGames() {
 
         d.querySelector('h3').textContent = g.name;
 
-        d.querySelector('.by').append('Por ', creatorEl(g.creator));
+        d.querySelector('.by').append('Por ',creatorEl(g.creator));
 
-        // visitas
-        d.querySelector('.vis-cnt').appendChild(
-            Object.assign(document.createTextNode(''), { textContent: '' })
-        );
-        const visTxt = d.querySelector('.vis-cnt');
-        visTxt.lastChild && visTxt.removeChild(visTxt.lastChild);
-        visTxt.insertAdjacentHTML('beforeend', fmtCount(g.visits || 0) + ' visitas');
-
-        // jogando agora
-        const liveCnt = d.querySelector('.live-cnt');
-        liveCnt.dataset.k = g.name + '|' + g.creator;
+        d.querySelector('.cnt').dataset.k = g.name + '|' + g.creator;
 
         d.onclick = () => openModal(g);
 
@@ -2212,13 +2168,13 @@ function deleteGame() {
 
 function updateCounts() {
 
-    document.querySelectorAll('.live-cnt').forEach(el => {
+    document.querySelectorAll('.cnt').forEach(el => {
 
         const n = Auth.presence.totalCount(el.dataset.k);
 
         el.innerHTML = n
-            ? `<span class="text-green-400 flex items-center gap-1"><i class="fa-solid fa-circle text-[7px] align-middle animate-pulse"></i>${n} jogando</span>`
-            : '';
+            ? `<span class="text-green-400"><i class="fa-solid fa-circle text-[7px] align-middle mr-1"></i>${n} jogando</span>`
+            : '<span class="text-gray-500"><i class="fa-solid fa-user text-[9px] mr-1"></i>0</span>';
 
     });
 

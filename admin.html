@@ -32,15 +32,6 @@ function sha256hex(str) {
 function apiUrl(path) {
   return path;
 }
-// Forçar modo servidor se não estiver em localhost
-(function() {
-  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '';
-  if (!isLocal) {
-    // Sobrescrever Auth.server após init para garantir que fique true
-    const origInit = typeof Auth !== 'undefined' ? null : null;
-    window._forceServer = true;
-  }
-})();
 
 const Auth = {
   users() { try { return JSON.parse(localStorage.getItem('robloxUsers')) || {}; } catch (e) { return {}; } },
@@ -392,16 +383,9 @@ const Auth = {
   server: false, v: 0,
   init() {
     return this._init || (this._init = (async () => {
-      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname === '';
-      // Fora de localhost (Vercel, etc) sempre usa modo servidor
-      if (!isLocal) this.server = true;
       try {
         const r = await fetch(apiUrl('/api/db?v=0'), { cache: 'no-store' });
-        if (r.ok && (r.headers.get('content-type') || '').includes('json')) {
-          const j = await r.json();
-          if (j.db) { this.server = true; this.apply(j); await this.importLocal(); }
-          else { this.server = true; } // banco vazio mas API funcionando
-        }
+        if (r.ok && (r.headers.get('content-type') || '').includes('json')) { const j = await r.json(); if (j.db) { this.server = true; this.apply(j); await this.importLocal(); } }
       } catch (e) {}
       return this.server;
     })());
@@ -796,7 +780,6 @@ td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
     <div class="flex border-b border-[#2e3135] overflow-x-auto">
       <div class="tab on" data-t="users"><i class="fa-solid fa-users"></i>Usuários</div>
       <div class="tab" data-t="bans"><i class="fa-solid fa-gavel"></i>Banimentos <span id="banNtab" class="text-xs bg-[#c0392b] rounded-full px-1.5 ml-0.5 leading-5"></span></div>
-      <div class="tab" data-t="warnings"><i class="fa-solid fa-triangle-exclamation"></i>Avisos <span id="warnNtab" class="text-xs bg-[#b45309] rounded-full px-1.5 ml-0.5 leading-5"></span></div>
       <div class="tab hidden" data-t="roles" id="tab_roles"><i class="fa-solid fa-crown" style="color:#ffd700"></i>Cargos</div>
     </div>
 
@@ -815,7 +798,6 @@ td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
     </div>
 
     <!-- ABA BANIMENTOS -->
-    <div id="p_warnings" class="p-4 hidden"></div>
     <div id="p_bans" class="p-4 hidden">
       <div class="flex flex-wrap gap-2 mb-4">
         <button class="btab on" data-bt="all"><i class="fa-solid fa-list"></i>Todos<span class="cnt bg-[#2e3135]" id="bc_all">0</span></button>
@@ -930,31 +912,6 @@ td{padding:9px 10px;border-top:1px solid #2a2d31;vertical-align:middle}
 
 <div id="toast"></div>
 
-<!-- Modal de Aviso para Staff -->
-<div id="wm" class="hidden fixed inset-0 z-50 bg-black/80 items-center justify-center p-4" onclick="if(event.target===this)closeWarn()">
-  <div class="card w-full max-w-md p-6 rounded-2xl">
-    <div class="flex items-center justify-between mb-5">
-      <h3 class="text-lg font-bold flex items-center gap-2">
-        <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i>
-        Enviar Aviso para <span id="wmName" class="text-yellow-400 ml-1"></span>
-      </h3>
-      <button onclick="closeWarn()" class="text-gray-400 hover:text-white w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <p class="text-sm text-gray-400 mb-4">
-      <i class="fa-solid fa-shield-halved text-orange-400 mr-1"></i>
-      Membros da equipe (admin/mod) <b>não podem ser banidos</b>. Em vez disso, envie um aviso formal registrado no painel.
-    </p>
-    <label class="text-xs text-gray-400 block mb-1">Motivo do aviso *</label>
-    <textarea id="wmReason" class="inp w-full h-24 resize-none mb-4" placeholder="Descreva o motivo do aviso..."></textarea>
-    <div class="flex gap-3 justify-end">
-      <button class="btn b2 !px-4 !py-2" onclick="closeWarn()">Cancelar</button>
-      <button class="btn !px-4 !py-2" style="background:#b45309;color:#fff" onclick="doWarn()">
-        <i class="fa-solid fa-triangle-exclamation mr-1"></i>Enviar Aviso
-      </button>
-    </div>
-  </div>
-</div>
-
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -984,7 +941,7 @@ async function show(j) {
   if (rolesTab) rolesTab.classList.toggle('hidden', !amOwner);
   await fetchStats(); render();
 }
-function render() { renderKpis(); renderUsers(); renderBans(); renderWarnings(); if (!$('p_roles').classList.contains('hidden')) renderRoles(); }
+function render() { renderKpis(); renderUsers(); renderBans(); if (!$('p_roles').classList.contains('hidden')) renderRoles(); }
 
 /* KPIs */
 async function fetchStats() { try { const j = await (await fetch(apiUrl('/api/stats'), { cache: 'no-store' })).json(); STATS = j; } catch (e) {} }
@@ -1000,8 +957,7 @@ function renderKpis() {
     k('cubes','#a78bfa', fmtN(totalJogos)+' / '+fmtN(totalPecas), 'Jogos / Peças') +
     k('eye','#00b06f', fmtN(STATS.totalViews), 'Views totais') +
     k('signal','#22d3ee', STATS.online, 'Online agora') +
-    k('ban','#e74c3c', D.bans.length, 'Banimentos') +
-    k('triangle-exclamation','#f59e0b', (D.warnings||[]).length, 'Avisos');
+    k('ban','#e74c3c', D.bans.length, 'Banimentos');
 }
 
 /* ===== MODAL DE DISPOSITIVOS ===== */
@@ -1147,8 +1103,6 @@ function renderUsers() {
     const isMe    = u.name.toLowerCase() === CRED.user.toLowerCase();
     const isOw    = !!u.owner;
     const isAdm   = !!u.admin;
-    const isMod   = !!u.mod;
-    const amAdmin = !!(D && D.isAdmin);
     const cantTouch = isOw && !isMe; /* ninguém mexe no owner exceto ele mesmo */
 
     /* botão admin — só owner vê habilitado, e nunca no próprio owner */
@@ -1160,25 +1114,17 @@ function renderUsers() {
            <i class="fa-solid fa-user-shield mr-1"></i>${isAdm?'Tirar admin':'Dar admin'}
          </button>`);
 
-    /* botão banir / avisar — owner/admin não recebem ban, apenas aviso */
-    const isMod = !!u.mod;
-    const isStaff = isOw || isAdm || isMod; // staff nunca leva ban
-    // Pode banir: alvo não é staff, não é eu; owner bane qualquer não-owner; admin bane não-admin/não-owner
-    const canBan = !isStaff && !isMe && (amOwner || (!isAdm && !isMod));
-    // Pode avisar: alvo é admin ou mod (não owner), não é eu, e quem avisa tem permissão suficiente
-    const canWarn = !isOw && !isMe && isStaff && (amOwner || (amAdmin && !isAdm));
+    /* botão banir — admin pode banir usuários normais; owner pode banir qualquer um exceto si */
+    const canBan = !isOw && !isMe && (amOwner || (!isAdm));
     const banBtn = canBan
       ? `<button class="btn b4" onclick="openBan('${esc(u.name)}','hwid')"><i class="fa-solid fa-gavel mr-1"></i>Banir</button>`
-      : canWarn
-        ? `<button class="btn" style="background:#b45309;color:#fff" onclick="openWarn('${esc(u.name)}')"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Avisar</button>`
-        : '';
+      : '';
 
     return `<tr class="ov hover:bg-white/[.02]">
       <td class="text-gray-400 font-mono">#${u.id}</td>
       <td>
         <a href="profile.html?u=${encodeURIComponent(u.name)}&id=${u.id}" class="font-bold hover:underline">${esc(u.name)}</a>
-        ${isOw ? '<i class="fa-solid fa-crown text-xs ml-1" title="Owner" style="color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,0.6)"></i>' : (isAdm ? '<i class="fa-solid fa-shield-halved text-xs ml-1" title="Administrador" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6)"></i>' : (isMod ? '<i class="fa-solid fa-shield text-xs ml-1" title="Moderador" style="color:#f97316"></i>' : ''))}
-        ${(u.warnings||[]).length ? `<span title="${(u.warnings||[]).length} aviso(s)" style="display:inline-flex;align-items:center;gap:2px;background:#78350f;color:#fcd34d;border-radius:6px;font-size:10px;padding:1px 5px;margin-left:4px"><i class="fa-solid fa-triangle-exclamation" style="font-size:9px"></i>${(u.warnings||[]).length}</span>` : ''}
+        ${isOw ? '<i class="fa-solid fa-crown text-xs ml-1" title="Owner" style="color:#ffd700;text-shadow:0 0 8px rgba(255,215,0,0.6)"></i>' : (isAdm ? '<i class="fa-solid fa-shield-halved text-xs ml-1" title="Administrador" style="color:#ff4444;text-shadow:0 0 8px rgba(255,68,68,0.6)"></i>' : '')}
         ${u.verified?' <i class="fa-solid fa-circle-check text-[#3794ff] text-xs" title="Verificado"></i>':''}
         ${roleBadge}
       </td>
@@ -1215,31 +1161,6 @@ const TL = {
   temp:  { label:'Temporário', color:'#38bdf8', icon:'fa-clock' },
   perm:  { label:'Permanente', color:'#ef4444', icon:'fa-skull-crossbones' },
 };
-/* ===== AVISOS ===== */
-function renderWarnings() {
-  const box = $('p_warnings');
-  if (!box) return;
-  const ws = (D.users || []).flatMap(u => (u.warnings || []).map(w => ({...w, userName: u.name})));
-  ws.sort((a,b) => b.t - a.t);
-  if (!ws.length) { box.innerHTML = '<p class="text-center text-gray-500 py-10">Nenhum aviso registrado.</p>'; return; }
-  box.innerHTML = `<table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-400 border-b border-white/10">
-    <th class="pb-2 pr-4">Usuário</th><th class="pb-2 pr-4">Motivo</th><th class="pb-2 pr-4">Por</th><th class="pb-2 pr-4">Data</th><th class="pb-2"></th>
-  </tr></thead><tbody>` +
-  ws.map(w => `<tr class="border-b border-white/5 hover:bg-white/[.02]">
-    <td class="py-2 pr-4 font-bold text-yellow-400">${esc(w.userName)}</td>
-    <td class="py-2 pr-4 text-gray-300">${esc(w.reason)}</td>
-    <td class="py-2 pr-4 text-gray-400">${esc(w.by||'')}</td>
-    <td class="py-2 pr-4 text-gray-500 text-xs">${new Date(w.t).toLocaleString('pt-BR')}</td>
-    <td class="py-2"><button class="btn b4 !py-1 !px-2 text-xs" onclick="removeWarn(${w.id})"><i class="fa-solid fa-trash"></i></button></td>
-  </tr>`).join('') + '</tbody></table>';
-}
-async function removeWarn(id) {
-  if (!confirm('Remover este aviso?')) return;
-  const j = await call('warn_delete', { id });
-  if (j.err) return toast(j.err, true);
-  D = j; render(); toast('Aviso removido.');
-}
-
 function renderBans() {
   const all = D.bans;
   for (const bt of ['all','hwid','ip','email','temp','perm']) {
@@ -1247,7 +1168,6 @@ function renderBans() {
     const el = $('bc_'+bt); if (el) el.textContent = cnt || '';
   }
   $('banNtab').textContent = all.length || '';
-  if($('warnNtab')) $('warnNtab').textContent = ((D.users||[]).flatMap(u=>(u.warnings||[])).length) || '';
   const list = curBanType === 'all' ? all : all.filter(b=>b.type===curBanType);
   $('bempty').classList.toggle('hidden', !!list.length);
   $('brows').innerHTML = list.map(b => {
@@ -1275,7 +1195,6 @@ document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
   $('p_users').classList.toggle('hidden', t.dataset.t!=='users');
   $('p_bans').classList.toggle('hidden', t.dataset.t!=='bans');
-  $('p_warnings').classList.toggle('hidden', t.dataset.t!=='warnings');
   $('p_roles').classList.toggle('hidden', t.dataset.t!=='roles');
   if (t.dataset.t === 'roles') renderRoles();
 });
@@ -1391,24 +1310,6 @@ function setKind(k) {
   $('bmWarn').textContent = k==='perm'?'⚠ Isto APAGA a conta, mapas, amizades e mensagens. Não tem como desfazer.':k==='hwid'?'O dispositivo só é reconhecido se o usuário já entrou nesta versão do site.':k==='ip'?'⚠ Banir um IP pode afetar outros usuários na mesma rede.':'';
 }
 function closeBan() { $('bm').classList.add('hidden'); $('bm').classList.remove('flex'); }
-
-/* ===== MODAL DE AVISO ===== */
-let warnTarget = null;
-function openWarn(name) {
-  warnTarget = name;
-  $('wmName').textContent = name;
-  $('wmReason').value = '';
-  $('wm').classList.remove('hidden'); $('wm').classList.add('flex');
-}
-function closeWarn() { $('wm').classList.add('hidden'); $('wm').classList.remove('flex'); }
-async function doWarn() {
-  const reason = $('wmReason').value.trim();
-  if (!reason) return toast('Informe o motivo do aviso.', true);
-  const j = await call('warn', { target: warnTarget, reason });
-  if (j.err) return toast(j.err, true);
-  D = j; render(); toast('⚠ Aviso enviado para ' + warnTarget);
-  closeWarn();
-}
 async function doBan() {
   const x = { target, kind, reason: $('bmReason').value };
   if(kind==='email'){x.email=$('bmEmail').value.trim();if(!x.email&&!target)return toast('Informe o e-mail',true)}
@@ -1420,7 +1321,7 @@ async function doBan() {
   if(await act('ban',x,'Ban aplicado com sucesso'))closeBan();
 }
 
-addEventListener('keydown', e => { if (e.key === 'Escape') { closeBan(); closeWarn(); closeDevModal(); } });
+addEventListener('keydown', e => { if (e.key === 'Escape') { closeBan(); closeDevModal(); } });
 
 /* Restore session */
 (async () => {
@@ -1428,8 +1329,7 @@ addEventListener('keydown', e => { if (e.key === 'Escape') { closeBan(); closeWa
   try { const c = JSON.parse(sessionStorage.getItem('admCred')); if (c) { CRED = c; const j = await call('list'); if (!j.err) show(j); else CRED = null; } } catch {}
   const me = Auth.current(); if (me && !$('gu').value) $('gu').value = me;
   // Exibe botão de auto-promoção apenas quando não há servidor
-  // Botão de auto-promoção só aparece em localhost sem servidor
-  if (!Auth.server && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) { const b = document.getElementById('selfAdminBox'); if (b) b.classList.remove('hidden'); }
+  if (!Auth.server) { const b = document.getElementById('selfAdminBox'); if (b) b.classList.remove('hidden'); }
 })();
 setInterval(async () => { if (CRED && D) { const [j] = await Promise.all([call('list'), fetchStats()]); if (!j.err) { D = j; render(); } } }, 8000);
 
