@@ -1,43 +1,19 @@
-# BrplayBox - Apache (.htaccess)
-# Domínio: braplaybox.unaux.com
+# CORS para chamadas da Vercel
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 
-Options -Indexes
-
-# ---- HTTPS redirect (compatível com Cloudflare / InfinityFree) ----
 RewriteEngine On
-RewriteCond %{HTTPS} off
-RewriteCond %{HTTP:X-Forwarded-Proto} !https
-RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
 
-# ---- HSTS (1 ano) ----
-Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
-
-# Bloqueia acesso direto a arquivos sensíveis
-<FilesMatch "^(database\.sql|store\.js|keepalive\.js|\.gitignore)$">
-    Order Allow,Deny
+# Protege db.php de acesso direto no navegador
+<Files "db.php">
+    Order Deny,Allow
     Deny from all
-</FilesMatch>
+    Allow from 127.0.0.1
+</Files>
 
-# Sem cache para a API (evita resposta antiga)
-<FilesMatch "api\.php$">
-    Header set Cache-Control "no-store, no-cache, must-revalidate"
-    Header set Pragma "no-cache"
-</FilesMatch>
-
-# Sem cache para auth.js (garante que o navegador sempre pegue a versão nova)
-<FilesMatch "auth\.js$">
-    Header set Cache-Control "no-store, no-cache, must-revalidate"
-    Header set Pragma "no-cache"
-</FilesMatch>
-
-# Compressão
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json
-</IfModule>
-
-# Headers de segurança (reduz aviso "Site perigoso")
-Header always set X-Content-Type-Options "nosniff"
-Header always set X-Frame-Options "SAMEORIGIN"
-Header always set X-XSS-Protection "1; mode=block"
-Header always set Referrer-Policy "strict-origin-when-cross-origin"
-Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+php_flag display_errors Off
+php_value max_execution_time 30
+php_value memory_limit 64M
