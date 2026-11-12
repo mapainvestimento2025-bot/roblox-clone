@@ -1,12 +1,13 @@
 {
   "rewrites": [
-    { "source": "/api/ban/check",      "destination": "/api/check" },
-    { "source": "/api/dm/summary",     "destination": "/api/summary" },
-    { "source": "/api/game/delete",    "destination": "/api/delete" },
-    { "source": "/api/game/visit",     "destination": "/api/visit" },
-    { "source": "/api/game/vote",      "destination": "/api/vote" },
-    { "source": "/api/presence/beat",  "destination": "/api/beat" },
-    { "source": "/api/presence/leave", "destination": "/api/leave" }
+    { "source": "/api/db.json",         "destination": "/api/db" },
+    { "source": "/api/ban/check",       "destination": "/api/check" },
+    { "source": "/api/dm/summary",      "destination": "/api/summary" },
+    { "source": "/api/game/delete",     "destination": "/api/delete" },
+    { "source": "/api/game/visit",      "destination": "/api/visit" },
+    { "source": "/api/game/vote",       "destination": "/api/vote" },
+    { "source": "/api/presence/beat",   "destination": "/api/beat" },
+    { "source": "/api/presence/leave",  "destination": "/api/leave" }
   ],
   "headers": [
     {
