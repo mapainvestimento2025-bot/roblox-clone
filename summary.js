@@ -1,6 +1,6 @@
-import { phpGet } from './_db.js';
-export default async function handler(req, res) {
+const { phpGet } = require('./_db.js');
+module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   try { return res.status(200).json(await phpGet('dm_summary', { me: req.query?.me || '' })); }
   catch (e) { return res.status(500).json({ err: e.message }); }
-}
+};
